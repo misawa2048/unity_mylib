@@ -8,11 +8,9 @@ Shader "Custom/SpriteVtxCol" {
 SubShader {
 	Tags { "RenderType"="Opaque" "Queue"="Geometry" "IgnoreProjector"="true" }
 	Pass {
-//		AlphaTest Greater 0.5
 		ZTest Less
 		ZWrite On
-//		ColorMask RGBA
-		Blend SrcAlpha OneMinusSrcAlpha
+//		Blend SrcAlpha OneMinusSrcAlpha
 		
 		CGPROGRAM
 		#pragma vertex vert
