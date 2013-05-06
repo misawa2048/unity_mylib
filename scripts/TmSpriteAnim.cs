@@ -60,7 +60,7 @@ public class TmSpriteAnim : MonoBehaviour {
 
 	
 	void Awake(){
-		_tgetMat = outMatreial!=null ? outMatreial : renderer.material;
+		_tgetMat = outMatreial!=null ? outMatreial : renderer.sharedMaterial;
 		_texSizeInv = new  Vector2(1.0f/(float)(_tgetMat.mainTexture.width),1.0f/(float)(_tgetMat.mainTexture.height));
 		_defSize = size;
 		if(!scaleAtUv){
@@ -155,6 +155,7 @@ public class TmSpriteAnim : MonoBehaviour {
 		if(_id < animations.Length){
 			_currentAnm = animations[_id];
 			_animPtr = 0.0f;
+			_isEndOfFrame = false;
 			updateAnim();
 			ret = true;
 		}
@@ -188,7 +189,7 @@ public class TmSpriteAnim : MonoBehaviour {
 	
 	private void updateAnim(){
 		int animFrame = Mathf.FloorToInt(_animPtr);
-		if(animFrame < _currentAnm.frames.Length){
+		if((_currentAnm!=null)&&(animFrame < _currentAnm.frames.Length)){
 			int viewFrame = _currentAnm.frames[animFrame];
 			_uvPos = _uvOfs+_defFrames[viewFrame];
 			if(outMatreial!=null){
