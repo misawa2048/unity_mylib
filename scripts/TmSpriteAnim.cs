@@ -47,8 +47,10 @@ public class TmSpriteAnim : MonoBehaviour {
 	private AnimAttribute _animAttrOld;
 	private Vector2 _uvOfs;
 	private Vector2 _uvPos;
+	private Vector3[] _defVerts;
 	private Vector2 _texSizeInv;
 	private Mesh _mesh = null;
+	private Vector2[] _defUvs = null;
 	private Material _tgetMat;
 	private bool _isEndOfFrame;
 	public bool isEndFrame{ get{ return (_isEndOfFrame); } }
@@ -78,6 +80,12 @@ public class TmSpriteAnim : MonoBehaviour {
 				meshFilter.mesh = _mesh;
 				initMesh4(_mesh);
 			}
+			_defVerts = new Vector3[_mesh.vertexCount];
+			_defUvs = new Vector2[_mesh.vertexCount];
+			for(int ii = 0; ii < _mesh.vertexCount; ++ii){
+				_defVerts[ii] = new Vector3(_mesh.vertices[ii].x,_mesh.vertices[ii].y,_mesh.vertices[ii].z);
+				_defUvs[ii] = new Vector2(_mesh.uv[ii].x,_mesh.uv[ii].y);
+			}			
 			_defFrames = new Vector2[frames.Length];
 			for(int ii = 0; ii < frames.Length; ++ii){
 				_defFrames[ii] = frames[ii];
@@ -186,6 +194,14 @@ public class TmSpriteAnim : MonoBehaviour {
 		}
 		return _mesh;
 	}
+	public Mesh setMeshScale(Vector3 _scale){
+		Vector3[] scaleVecs = new Vector3[_mesh.vertexCount];
+		for(int ii = 0; ii < _mesh.vertexCount; ++ii){
+			scaleVecs[ii] = Vector3.Scale(_defVerts[ii], _scale);
+		}
+		_mesh.vertices = scaleVecs;
+		return _mesh;
+	}
 	
 	private void updateAnim(){
 		int animFrame = Mathf.FloorToInt(_animPtr);
@@ -217,15 +233,15 @@ public class TmSpriteAnim : MonoBehaviour {
 	}
 	private Mesh setMeshUv(){
 		if(_mesh!=null){
-			Vector2[] defUv = {new Vector2(0,1),new Vector2(1,1),new Vector2(1,0),new Vector2(0,0)};
+			Vector2[] tmpUv = new Vector2[_defUvs.Length];
 			Vector2 sz = size;
 			if(!scaleAtUv){
 				sz.Scale(_texSizeInv);
 			}
-			for(int ii = 0; ii< defUv.Length; ++ii){
-				defUv[ii] = Vector2.Scale(defUv[ii],sz) + _uvPos;
+			for(int ii = 0; ii< _defUvs.Length; ++ii){
+				tmpUv[ii] = Vector2.Scale(_defUvs[ii],sz) + _uvPos;
 			}
-			_mesh.uv = defUv;
+			_mesh.uv = tmpUv;
 		}
 		return _mesh;
 	}
