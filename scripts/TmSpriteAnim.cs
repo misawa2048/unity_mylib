@@ -38,7 +38,6 @@ public class TmSpriteAnim : MonoBehaviour {
 	public bool reverse = false;
 	public float fps = 20.0f;
 	private Vector2 _defSize;
-	private Vector2[] _defFrames;
 	private SpriteAnimation _currentAnm;
 	private float _animPtr;
 	private AnimAttribute _frameAttr;
@@ -47,12 +46,11 @@ public class TmSpriteAnim : MonoBehaviour {
 	private AnimAttribute _animAttrOld;
 	private Vector2 _uvOfs;
 	private Vector2 _uvPos;
-	private Vector3[] _defVerts;
 	private Vector2 _texSizeInv;
-	private Mesh _mesh = null;
 	private Vector2[] _defUvs = null;
 	private Material _tgetMat;
 	private bool _isEndOfFrame;
+	public bool setOutMaterial(Material _mat){ outMatreial = _mat; return true; }
 	public bool isEndFrame{ get{ return (_isEndOfFrame); } }
 	public void setUvOfs(Vector2 _uv){ _uvOfs = _uv; }
 	public int frameFlag { get{ return (_frameAttr!=null ? _frameAttr.flag : 0); } }
@@ -60,6 +58,14 @@ public class TmSpriteAnim : MonoBehaviour {
 	public int frameFragTrigger { get{ return ((_frameAttrOld != _frameAttr) ? frameFlag : 0); } }
 	public int animFragTrigger { get{ return ((_animAttrOld != _animAttr) ? animFlag : 0); } }
 
+	public Mesh getDefaultMesh(){
+		Mesh ret = null;
+		MeshFilter meshFilter = GetComponent<MeshFilter>();
+		if((meshFilter!=null)&&(meshFilter.mesh!=null)){
+			ret = meshFilter.mesh;
+		}
+		return ret;
+	}
 	
 	void Awake(){
 		_tgetMat = outMatreial!=null ? outMatreial : renderer.sharedMaterial;
@@ -68,34 +74,23 @@ public class TmSpriteAnim : MonoBehaviour {
 		if(!scaleAtUv){
 			_defSize.Scale(_texSizeInv);
 		}
-		_mesh = null;
+		Mesh nowMesh = getDefaultMesh();
 		if(frames.Length>0){
-			MeshFilter meshFilter = GetComponent<MeshFilter>();
-			if(meshFilter==null){
-				meshFilter = gameObject.AddComponent<MeshFilter>();
-			}
-			_mesh = meshFilter.mesh;
-			if(_mesh==null){
-				_mesh = new Mesh();
-				meshFilter.mesh = _mesh;
-				initMesh4(_mesh);
-			}
-			_defVerts = new Vector3[_mesh.vertexCount];
-			_defUvs = new Vector2[_mesh.vertexCount];
-			for(int ii = 0; ii < _mesh.vertexCount; ++ii){
-				_defVerts[ii] = new Vector3(_mesh.vertices[ii].x,_mesh.vertices[ii].y,_mesh.vertices[ii].z);
-				_defUvs[ii] = new Vector2(_mesh.uv[ii].x,_mesh.uv[ii].y);
-			}			
-			_defFrames = new Vector2[frames.Length];
-			for(int ii = 0; ii < frames.Length; ++ii){
-				_defFrames[ii] = frames[ii];
-				if(setOnGrid){
-					_defFrames[ii] = Vector3.Scale(_defFrames[ii],size ); 
+			if(nowMesh==null){
+				MeshFilter meshFilter = GetComponent<MeshFilter>();
+				if(meshFilter==null){
+					meshFilter = gameObject.AddComponent<MeshFilter>();
 				}
-				if(!scaleAtUv){
-					_defFrames[ii].Scale(_texSizeInv);
+				nowMesh = initMesh4(new Mesh());
+				meshFilter.mesh = meshFilter.sharedMesh = nowMesh;
+			}
+			{
+				MeshFilter meshFilter = GetComponent<MeshFilter>();
+				Mesh sharedMesh = meshFilter.sharedMesh;
+				_defUvs = new Vector2[sharedMesh.vertexCount];
+				for(int ii = 0; ii < sharedMesh.vertexCount; ++ii){
+					_defUvs[ii] = new Vector2(sharedMesh.uv[ii].x,sharedMesh.uv[ii].y);
 				}
-				_defFrames[ii].y = 1.0f-_defFrames[ii].y-_defSize.y;
 			}
 		}
 		_frameAttr = _frameAttrOld = null;
@@ -180,34 +175,34 @@ public class TmSpriteAnim : MonoBehaviour {
 		return ret;
 	}
 	
-	public bool setOutMaterial(Material _mat){
-		outMatreial = _mat;
-		return true;
-	}
 	public Mesh setMeshColor(Color _col){
-		if(_mesh!=null){
-			Color[] cols = new Color[_mesh.vertexCount];
-			for(int ii = 0; ii < _mesh.vertexCount; ++ii){
+		Mesh nowMesh = getDefaultMesh();
+		if(nowMesh!=null){
+			Color[] cols = new Color[nowMesh.vertexCount];
+			for(int ii = 0; ii < nowMesh.vertexCount; ++ii){
 				cols[ii] = _col;
 			}
-			_mesh.colors = cols;
+			nowMesh.colors = cols;
 		}
-		return _mesh;
+		return nowMesh;
 	}
 	public Mesh setMeshScale(Vector3 _scale){
-		Vector3[] scaleVecs = new Vector3[_mesh.vertexCount];
-		for(int ii = 0; ii < _mesh.vertexCount; ++ii){
-			scaleVecs[ii] = Vector3.Scale(_defVerts[ii], _scale);
+		Mesh nowMesh = getDefaultMesh();
+		if(nowMesh!=null){
+			Vector3[] scaleVecs = new Vector3[nowMesh.vertexCount];
+			for(int ii = 0; ii < nowMesh.vertexCount; ++ii){
+				scaleVecs[ii] = Vector3.Scale(getDefVertex(ii), _scale);
+			}
+			nowMesh.vertices = scaleVecs;
 		}
-		_mesh.vertices = scaleVecs;
-		return _mesh;
+		return nowMesh;
 	}
 	
 	private void updateAnim(){
 		int animFrame = Mathf.FloorToInt(_animPtr);
 		if((_currentAnm!=null)&&(animFrame < _currentAnm.frames.Length)){
 			int viewFrame = _currentAnm.frames[animFrame];
-			_uvPos = _uvOfs+_defFrames[viewFrame];
+			_uvPos = _uvOfs+getDefFrame(viewFrame);
 			if(outMatreial!=null){
 				outMatreial.SetTextureOffset("_MainTex",_uvPos);
 			}else{
@@ -232,7 +227,9 @@ public class TmSpriteAnim : MonoBehaviour {
 		}
 	}
 	private Mesh setMeshUv(){
-		if(_mesh!=null){
+		Mesh nowMesh = getDefaultMesh();
+		if(nowMesh!=null){
+//			Vector2[] defUvs = GetComponent<MeshFilter>().sharedMesh.uv;
 			Vector2[] tmpUv = new Vector2[_defUvs.Length];
 			Vector2 sz = size;
 			if(!scaleAtUv){
@@ -241,9 +238,26 @@ public class TmSpriteAnim : MonoBehaviour {
 			for(int ii = 0; ii< _defUvs.Length; ++ii){
 				tmpUv[ii] = Vector2.Scale(_defUvs[ii],sz) + _uvPos;
 			}
-			_mesh.uv = tmpUv;
+			nowMesh.uv = tmpUv;
 		}
-		return _mesh;
+		return nowMesh;
+	}
+
+	private Vector2 getDefFrame(int _frameId){
+		Vector2 defFrame = frames[_frameId];
+		if(setOnGrid){
+			defFrame = Vector3.Scale(defFrame,size ); 
+		}
+		if(!scaleAtUv){
+			Material tgetMat = outMatreial!=null ? outMatreial : renderer.sharedMaterial;
+			Vector2 texSizeInv = new  Vector2(1.0f/(float)(tgetMat.mainTexture.width),1.0f/(float)(tgetMat.mainTexture.height));
+			defFrame.Scale(texSizeInv);
+		}
+		defFrame.y = 1.0f-defFrame.y-_defSize.y;
+		return defFrame;
+	}
+	private Vector3 getDefVertex(int _vtxId){
+		return(GetComponent<MeshFilter>().sharedMesh.vertices[_vtxId]);
 	}
 	
 	private Mesh initMesh4(Mesh _mesh){
