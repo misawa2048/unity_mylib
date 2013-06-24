@@ -2,11 +2,14 @@ using UnityEngine;
 using System.Collections;
 
 public class TmSystem : MonoBehaviour {
-	public const float VERSION = 0.1f;
+	public const float VERSION = 0.2f;
 //	private static string PREFAB_NAME = ""; // new 
 	private static string PREFAB_NAME = "sysPrefab"; // Instantiate 
 	public const string NAME = "_sys";
 	public const string TAG_NAME = "tagSystem";
+	public TmMouseWrapper mw = new TmMouseWrapper();
+	public TmTouchWrapper tw = new TmTouchWrapper();
+	
 	public enum MODE{
 		INIT  = 0,
 		TITLE = 1,
@@ -49,6 +52,7 @@ public class TmSystem : MonoBehaviour {
 					sysObj.name = NAME;
 					m_Instance = sysObj.GetComponent<TmSystem>();
 				}
+				DontDestroyOnLoad(sysObj);
 			}
 			return m_Instance;
 		}
@@ -72,6 +76,8 @@ public class TmSystem : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+		mw.update();
+		tw.update();
 	}
 
 	//---------------------------------------------------------
