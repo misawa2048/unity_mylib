@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 public class TmMouseWrapper{
-	public const float VERSION = 2.1f;
+	public const float VERSION = 2.2f;
 	public enum STATE{
 		NONE=0,
 		DOWN,
@@ -76,8 +76,8 @@ public class TmMouseWrapper{
 	public float setGestureMinRate(float rate){float old = mGestureMinRate; mGestureMinRate = rate; return old; }
 	public int setHitLayerMask(int mask){int old = mMouseHitLayerMask; mMouseHitLayerMask = mask; return old; }
 	public int setDraggableLayerMask(int mask){int old = mDraggableLayerMask; mDraggableLayerMask = mask; return old; }
-	public bool isOnMouseTarget(GameObject obj){ return ((mIsMouseHit)&&(mMouseHit.collider.gameObject==obj)); }
-	public bool isOnDragTarget(){ return ((mIsMouseHit)&&(mMouseHit.collider.gameObject==mTarget)); }
+	public bool isHover(GameObject obj){ return ((mIsMouseHit)&&(mMouseHit.collider!=null)&&(mMouseHit.collider.gameObject==obj)); }
+	public bool isOnDragTarget(){ return isHover(mTarget); }
 	public bool isOnDragTarget(GameObject obj){ return (isOnDragTarget())&&(mTarget==obj); }
 
 	public void start (){

@@ -3,8 +3,7 @@ using System.Collections;
 
 public class TmSystem : MonoBehaviour {
 	public const float VERSION = 0.2f;
-//	private static string PREFAB_NAME = ""; // new 
-	private static string PREFAB_NAME = "sysPrefab"; // Instantiate 
+	private const string PREFAB_NAME = "sysPrefab"; // Instantiate 
 	public const string NAME = "_sys";
 	public const string TAG_NAME = "tagSystem";
 	public TmMouseWrapper mw = new TmMouseWrapper();
@@ -43,14 +42,15 @@ public class TmSystem : MonoBehaviour {
 		get{
 			if(m_Instance==null){
 				GameObject sysObj;
-				if(PREFAB_NAME==""){ // new 
+				UnityEngine.Object resObj = Resources.Load(PREFAB_NAME);
+				if(resObj!=null){
+					sysObj = GameObject.Instantiate(resObj) as GameObject;
+					sysObj.name = NAME;
+					m_Instance = sysObj.GetComponent<TmSystem>();
+				}else{ // Instantiate 
 					sysObj = new GameObject(NAME);
 					sysObj.tag = TAG_NAME;
 					m_Instance = sysObj.AddComponent<TmSystem>();
-				}else{ // Instantiate 
-					sysObj = GameObject.Instantiate( Resources.Load(PREFAB_NAME) ) as GameObject;
-					sysObj.name = NAME;
-					m_Instance = sysObj.GetComponent<TmSystem>();
 				}
 				DontDestroyOnLoad(sysObj);
 			}
@@ -111,7 +111,7 @@ public class TmSystem : MonoBehaviour {
 	//---------------------------------------------------------
 	public bool soundCall(SOUND_CH _ch, int _sysClipId, float _volRate=1.0f, bool _isOneShot=false){
 		bool ret = false;
-		if(sysSeList.clipList.Length > _sysClipId){
+		if( (sysSeList!=null) && (sysSeList.clipList.Length > _sysClipId) ){
 			ret = soundCall(_ch, sysSeList.clipList[_sysClipId], _volRate, _isOneShot);
 		}
 		return ret;
