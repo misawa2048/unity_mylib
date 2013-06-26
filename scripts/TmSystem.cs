@@ -76,6 +76,7 @@ public class TmSystem : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+		if(Input.GetKeyDown(KeyCode.Escape)){ Application.Quit(); }
 		mw.update();
 		tw.update();
 	}

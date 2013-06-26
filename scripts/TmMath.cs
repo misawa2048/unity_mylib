@@ -4,7 +4,7 @@ public class TmMath {
 	//-----------------------------------------------------------------------------
 	//! 点にもっとも近い直線上の点(isSegmentがtrueで線分判定)
 	//-----------------------------------------------------------------------------
-	Vector2 nearestPointOnLine(Vector2 p1, Vector2 p2, Vector2 p, bool isSegment=true){
+	static public Vector2 nearestPointOnLine(Vector2 p1, Vector2 p2, Vector2 p, bool isSegment=true){
 	    Vector2 d = p2 - p1;
 	    if (d.sqrMagnitude == 0)    return p1;
 	    float t = (d.x * (p - p1).x + d.y * (p - p1).y) / d.sqrMagnitude;
@@ -19,7 +19,7 @@ public class TmMath {
 	//-----------------------------------------------------------------------------
 	//! 直線と点の距離(isSegmentがtrueで線分判定)
 	//-----------------------------------------------------------------------------
-	float lineToPointDistance(Vector2 p1, Vector2 p2, Vector2 p, bool isSegment=true){
+	static public float lineToPointDistance(Vector2 p1, Vector2 p2, Vector2 p, bool isSegment=true){
 		return ( p - nearestPointOnLine(p1,p2,p,isSegment) ).magnitude;
 	}
 	
@@ -38,7 +38,7 @@ public class TmMath {
 	//-----------------------------------------------------------------------------
 	//! 直線と直線の交点(isSegmentがtrueで線分判定):nullなら交差しない
 	//-----------------------------------------------------------------------------
-	bool intersection(out Vector2 ret, Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, bool isSegment=true){
+	static public bool intersection(out Vector2 ret, Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, bool isSegment=true){
 		bool result = false;
 		ret = Vector2.zero;
 		Vector2 ac = (p3 - p1);
