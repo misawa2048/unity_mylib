@@ -48,6 +48,7 @@ public class TmSpriteAnim : MonoBehaviour {
 	private Vector2 _uvPos;
 	private Vector2 _texSizeInv;
 	private Vector2[] _defUvs = null;
+	private Vector3[] _defVtxs = null;
 	private Material _tgetMat;
 	private bool _isEndOfFrame;
 	public bool setOutMaterial(Material _mat){ outMatreial = _mat; return true; }
@@ -58,7 +59,7 @@ public class TmSpriteAnim : MonoBehaviour {
 	public int frameFragTrigger { get{ return ((_frameAttrOld != _frameAttr) ? frameFlag : 0); } }
 	public int animFragTrigger { get{ return ((_animAttrOld != _animAttr) ? animFlag : 0); } }
 
-	public Mesh getDefaultMesh(){
+	public Mesh getMesh(){
 		Mesh ret = null;
 		MeshFilter meshFilter = GetComponent<MeshFilter>();
 		if((meshFilter!=null)&&(meshFilter.mesh!=null)){
@@ -74,7 +75,7 @@ public class TmSpriteAnim : MonoBehaviour {
 		if(!scaleAtUv){
 			_defSize.Scale(_texSizeInv);
 		}
-		Mesh nowMesh = getDefaultMesh();
+		Mesh nowMesh = getMesh();
 		if(frames.Length>0){
 			if(nowMesh==null){
 				MeshFilter meshFilter = GetComponent<MeshFilter>();
@@ -85,11 +86,12 @@ public class TmSpriteAnim : MonoBehaviour {
 				meshFilter.mesh = meshFilter.sharedMesh = nowMesh;
 			}
 			{
-				MeshFilter meshFilter = GetComponent<MeshFilter>();
-				Mesh sharedMesh = meshFilter.sharedMesh;
+				Mesh sharedMesh = GetComponent<MeshFilter>().sharedMesh;
 				_defUvs = new Vector2[sharedMesh.vertexCount];
+				_defVtxs = new Vector3[sharedMesh.vertexCount];
 				for(int ii = 0; ii < sharedMesh.vertexCount; ++ii){
 					_defUvs[ii] = new Vector2(sharedMesh.uv[ii].x,sharedMesh.uv[ii].y);
+					_defVtxs[ii] = new Vector3(sharedMesh.vertices[ii].x,sharedMesh.vertices[ii].y,sharedMesh.vertices[ii].z);
 				}
 			}
 		}
@@ -176,7 +178,7 @@ public class TmSpriteAnim : MonoBehaviour {
 	}
 	
 	public Mesh setMeshColor(Color _col){
-		Mesh nowMesh = getDefaultMesh();
+		Mesh nowMesh = getMesh();
 		if(nowMesh!=null){
 			Color[] cols = new Color[nowMesh.vertexCount];
 			for(int ii = 0; ii < nowMesh.vertexCount; ++ii){
@@ -187,13 +189,15 @@ public class TmSpriteAnim : MonoBehaviour {
 		return nowMesh;
 	}
 	public Mesh setMeshScale(Vector3 _scale){
-		Mesh nowMesh = getDefaultMesh();
+		Mesh nowMesh = getMesh();
 		if(nowMesh!=null){
 			Vector3[] scaleVecs = new Vector3[nowMesh.vertexCount];
 			for(int ii = 0; ii < nowMesh.vertexCount; ++ii){
 				scaleVecs[ii] = Vector3.Scale(getDefVertex(ii), _scale);
 			}
 			nowMesh.vertices = scaleVecs;
+			nowMesh.RecalculateBounds ();
+			nowMesh.Optimize();
 		}
 		return nowMesh;
 	}
@@ -227,7 +231,7 @@ public class TmSpriteAnim : MonoBehaviour {
 		}
 	}
 	private Mesh setMeshUv(){
-		Mesh nowMesh = getDefaultMesh();
+		Mesh nowMesh = getMesh();
 		if(nowMesh!=null){
 //			Vector2[] defUvs = GetComponent<MeshFilter>().sharedMesh.uv;
 			Vector2[] tmpUv = new Vector2[_defUvs.Length];
@@ -257,7 +261,8 @@ public class TmSpriteAnim : MonoBehaviour {
 		return defFrame;
 	}
 	private Vector3 getDefVertex(int _vtxId){
-		return(GetComponent<MeshFilter>().sharedMesh.vertices[_vtxId]);
+//		return(GetComponent<MeshFilter>().sharedMesh.vertices[_vtxId]);
+		return _defVtxs[_vtxId];
 	}
 	
 	private Mesh initMesh4(Mesh _mesh){
@@ -286,6 +291,8 @@ public class TmSpriteAnim : MonoBehaviour {
 			new Vector3 (0.0f, 0.0f, 1.0f),
 			new Vector3 (0.0f, 0.0f, 1.0f)
 		};
+		_mesh.RecalculateNormals ();
+		_mesh.RecalculateBounds ();
 		_mesh.Optimize();
 		return _mesh;
 	}
