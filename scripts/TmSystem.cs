@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 public class TmSystem : MonoBehaviour {
-	public const float VERSION = 0.2f;
+	public const float VERSION = 0.3f;
 	private const string PREFAB_NAME = "sysPrefab"; // Instantiate 
 	public const string NAME = "_sys";
 	public const string TAG_NAME = "tagSystem";
@@ -61,14 +61,20 @@ public class TmSystem : MonoBehaviour {
 	private AudioSource[] sysAudioSource = new AudioSource[3];
 
 	void Awake () {
-		for(int ii = 0; ii < SOUND_CH_NUM; ++ii){
-			sysAudioSource[ii] = gameObject.AddComponent<AudioSource>();
-			sysAudioSource[ii].volume = 1.0f;
-			sysAudioSource[ii].loop = (ii==(int)SOUND_CH.BGM);
-			sysAudioSource[ii].playOnAwake = false;
+		if(m_Instance==null){
+			m_Instance = this;
+			for(int ii = 0; ii < SOUND_CH_NUM; ++ii){
+				sysAudioSource[ii] = gameObject.AddComponent<AudioSource>();
+				sysAudioSource[ii].volume = 1.0f;
+				sysAudioSource[ii].loop = (ii==(int)SOUND_CH.BGM);
+				sysAudioSource[ii].playOnAwake = false;
+			}
+			bool ret = loadSysData();
+			if(!ret) Debug.Log("NoSaveData");
+		}else{
+			Debug.Log("Too many TmSystem.");
+			Destroy(this.gameObject);
 		}
-		bool ret = loadSysData();
-		if(!ret) Debug.Log("NoSaveData");
 	}
 	// Use this for initialization
 	void Start () {

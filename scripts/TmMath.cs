@@ -24,9 +24,9 @@ public class TmMath {
 	}
 	
 	//-----------------------------------------------------------------------------
-	//! 線分の交差チェック   交差したらtrue
+	//! 線分の交差チェック : 交差したらtrue
 	//-----------------------------------------------------------------------------
-	bool crossCheck(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4)	{
+  static bool crossCheck(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4) {
 		if(((p1.x-p2.x)*(p3.y-p1.y)+(p1.y-p2.y)*(p1.x-p3.x))*((p1.x-p2.x)*(p4.y-p1.y)+(p1.y-p2.y)*(p1.x-p4.x))<0){
 			if(((p3.x-p4.x)*(p1.y-p3.y)+(p3.y-p4.y)*(p3.x-p1.x))*((p3.x-p4.x)*(p2.y-p3.y)+(p3.y-p4.y)*(p3.x-p2.x))<0){
 				return(true);
@@ -36,7 +36,7 @@ public class TmMath {
 	}
 
 	//-----------------------------------------------------------------------------
-	//! 直線と直線の交点(isSegmentがtrueで線分判定):nullなら交差しない
+	//! 直線と直線の交点(isSegmentがtrueで線分判定) : falseなら交差しない 
 	//-----------------------------------------------------------------------------
 	static public bool intersection(out Vector2 ret, Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, bool isSegment=true){
 		bool result = false;
