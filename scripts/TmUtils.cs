@@ -28,4 +28,48 @@ public class TmUtils {
 	public static float LeapBreak(float _oldRate, float _breakRate, float _deltaTime){
 		return(Mathf.Clamp01(_oldRate) * Mathf.Pow(_breakRate , _deltaTime));
 	}
+	
+	// ----------------
+	// Graphic関係
+	// ----------------
+	public static Mesh CreateGridXY(int _width, int _height){
+		Vector3[] vertices = new Vector3[(_width+1)*(_height+1)*2];
+		int[] triangles = new int[(((_width+1)*(_height+1)*2)/3+1)*3];
+		Vector2[] uv = new Vector2[(_width+1)*(_height+1)*2];
+		Color[] colors = new Color[(_width+1)*(_height+1)*2];
+		Vector3[] normals = new Vector3[(_width+1)*(_height+1)*2];
+
+		int cnt = 0;
+		for(int ix = 0; ix <= _width; ++ix){
+			vertices[cnt*2+0] = new Vector3(((float)ix/(float)_width - 0.5f),-0.5f,0.0f);
+			vertices[cnt*2+1] = new Vector3(((float)ix/(float)_width - 0.5f), 0.5f,0.0f);
+			triangles[cnt*2+0] = cnt*2+0;
+			triangles[cnt*2+1] = cnt*2+1;
+			uv[cnt*2+0] = new Vector3(((float)ix/(float)_width),0.0f,0.0f);
+			uv[cnt*2+1] = new Vector3(((float)ix/(float)_width),1.0f,0.0f);
+			colors[cnt*2+0] = colors[cnt*2+1] = new Color(0.5f,0.5f,0.5f,1.0f);
+			cnt++;
+		}
+		for(int iy = 0; iy <= _height; ++iy){
+			vertices[cnt*2+0] = new Vector3(-0.5f,((float)iy/(float)_height - 0.5f),0.0f);
+			vertices[cnt*2+1] = new Vector3( 0.5f,((float)iy/(float)_height - 0.5f),0.0f);
+			triangles[cnt*2+0] = cnt*2+0;
+			triangles[cnt*2+1] = cnt*2+1;
+			uv[cnt*2+0] = new Vector3(0.0f,((float)iy/(float)_height),0.0f);
+			uv[cnt*2+1] = new Vector3(1.0f,((float)iy/(float)_height),0.0f);
+			colors[cnt*2+0] = colors[cnt*2+1] = new Color(0.5f,0.5f,0.5f,1.0f);
+			cnt++;
+		}
+		Mesh mesh = new Mesh();
+		mesh.vertices = vertices;
+		mesh.triangles = triangles;
+		mesh.uv = uv;
+		mesh.colors = colors;
+		mesh.normals = normals;
+		mesh.RecalculateNormals ();
+		mesh.RecalculateBounds ();
+		mesh.Optimize();
+		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Lines,0);
+		return mesh;
+	}
 }
