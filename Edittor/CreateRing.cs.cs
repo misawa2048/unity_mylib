@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 using System.Collections;
@@ -9,7 +10,7 @@ public class CreateRing : MonoBehaviour
 	static void Create ()
 	{
 		const int DEG_NUM=256;
-		const int UV_DEG_NUM = 1; //DEG_NUM;
+//		const int UV_DEG_NUM = 1; //DEG_NUM;
 		GameObject newGameobject = new GameObject ("ring"+DEG_NUM.ToString());
 		
 		MeshRenderer meshRenderer = newGameobject.AddComponent<MeshRenderer> ();
@@ -40,8 +41,8 @@ public class CreateRing : MonoBehaviour
 		}
 		
 		for(int ii=0; ii< DEG_NUM; ++ii){
-			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)UV_DEG_NUM))*0.5f;
-			float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)UV_DEG_NUM))*0.5f;
+//			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)UV_DEG_NUM))*0.5f;
+//			float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)UV_DEG_NUM))*0.5f;
 //			uvs[ii+1]= new Vector2(fx+0.5f,fy+0.5f);
 			uvs[ii+1] = new Vector2(ii%1==0?0.0f:1.0f , 1.0f);
 		}
@@ -67,3 +68,4 @@ public class CreateRing : MonoBehaviour
 		AssetDatabase.SaveAssets ();
 	}
 }
+#endif

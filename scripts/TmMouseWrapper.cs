@@ -66,6 +66,7 @@ public class TmMouseWrapper{
 	public Vector3 dragPosOld{ get { return mDragPosOld; } }
 	public Vector3 dragSpeed{ get { return mDragSpeed; } }
 	public Vector3 dragScrSpeed{ get { return mDragScrSpeed; } }
+	public GameObject hitTarget { get { return ((mIsMouseHit)&&(mMouseHit.collider!=null)) ? mMouseHit.collider.gameObject : null; } }
 	public GameObject dragTarget { get { return mTarget; } }
 	public GameObject dragTargetOld { get { return mTargetOld; } }
 	public GameObject sweepTarget { get { return mSweepTarget; } }
@@ -76,7 +77,7 @@ public class TmMouseWrapper{
 	public float setGestureMinRate(float rate){float old = mGestureMinRate; mGestureMinRate = rate; return old; }
 	public int setHitLayerMask(int mask){int old = mMouseHitLayerMask; mMouseHitLayerMask = mask; return old; }
 	public int setDraggableLayerMask(int mask){int old = mDraggableLayerMask; mDraggableLayerMask = mask; return old; }
-	public bool isHover(GameObject obj){ return ((mIsMouseHit)&&(mMouseHit.collider!=null)&&(mMouseHit.collider.gameObject==obj)); }
+	public bool isHover(GameObject obj){ return ((obj!=null)&&(hitTarget==obj)); }
 	public bool isOnDragTarget(){ return isHover(mTarget); }
 	public bool isOnDragTarget(GameObject obj){ return (isOnDragTarget())&&(mTarget==obj); }
 

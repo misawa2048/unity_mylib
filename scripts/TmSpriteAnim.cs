@@ -46,7 +46,7 @@ public class TmSpriteAnim : MonoBehaviour {
 	private AnimAttribute _animAttrOld;
 	private Vector2 _uvOfs;
 	private Vector2 _uvPos;
-	private Vector2 _texSizeInv;
+	private Vector2 _texSizeInv = Vector2.one;
 	private Vector2[] _defUvs = null;
 	private Vector3[] _defVtxs = null;
 	private Material _tgetMat;
@@ -69,8 +69,10 @@ public class TmSpriteAnim : MonoBehaviour {
 	}
 	
 	void Awake(){
-		_tgetMat = outMatreial!=null ? outMatreial : renderer.sharedMaterial;
-		_texSizeInv = new  Vector2(1.0f/(float)(_tgetMat.mainTexture.width),1.0f/(float)(_tgetMat.mainTexture.height));
+		_tgetMat = outMatreial!=null ? outMatreial : renderer!=null ? renderer.sharedMaterial : null;
+		if((_tgetMat != null)&&(_tgetMat.mainTexture!=null)){
+			_texSizeInv = new  Vector2(1.0f/(float)(_tgetMat.mainTexture.width),1.0f/(float)(_tgetMat.mainTexture.height));
+		}
 		_defSize = size;
 		if(!scaleAtUv){
 			_defSize.Scale(_texSizeInv);

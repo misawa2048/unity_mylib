@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 using System.Collections;
@@ -58,4 +59,4 @@ public class CreatePanel : MonoBehaviour
 		AssetDatabase.SaveAssets ();
 	}
 }
-
+#endif
