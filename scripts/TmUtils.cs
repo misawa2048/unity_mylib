@@ -72,4 +72,15 @@ public class TmUtils {
 		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Lines,0);
 		return mesh;
 	}
+	
+	public static Mesh SetMeshColor(Mesh _nowMesh, Color _col){
+		if(_nowMesh!=null){
+			Color[] cols = new Color[_nowMesh.vertexCount];
+			for(int ii = 0; ii < _nowMesh.vertexCount; ++ii){
+				cols[ii] = _col;
+			}
+			_nowMesh.colors = cols;
+		}
+		return _nowMesh;
+	}
 }
