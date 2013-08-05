@@ -74,14 +74,14 @@ public class TmUtils {
 	}
 	
 	public static Mesh CreateLineCircle(int _vertNum){
-		Vector3[] vertices = new Vector3[(_vertNum+1)];
-		int[] triangles = new int[(((_vertNum+1))/3+1)*3];
-		Vector2[] uv = new Vector2[(_vertNum+1)];
-		Color[] colors = new Color[(_vertNum+1)];
-		Vector3[] normals = new Vector3[(_vertNum+1)];
+		Vector3[] vertices = new Vector3[(_vertNum)];
+		int[] triangles = new int[(((_vertNum))/3+1)*3];
+		Vector2[] uv = new Vector2[(_vertNum)];
+		Color[] colors = new Color[(_vertNum)];
+		Vector3[] normals = new Vector3[(_vertNum)];
 
 		int cnt = 0;
-		for(int ii = 0; ii <= _vertNum; ++ii){
+		for(int ii = 0; ii < _vertNum; ++ii){
 			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)_vertNum))*0.5f;
 			float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)_vertNum))*0.5f;
 			vertices[cnt] = new Vector3(fx,fy,0.0f);
