@@ -5,9 +5,10 @@ Shader "Custom/SelfIluminOverlay" {
 		_Tile ("Tiling and Offset", Vector) = (1,1,0,0)
 	}
 	SubShader {
-	  Tags {  "RenderType" = "Background" "Queue" = "Overlay" }
+	  Tags {  "RenderType" = "Overlay" "Queue" = "Overlay" }
 		LOD 200
 		ZWrite  Off
+		ZTest  Always
 //		Cull Off
 		Lighting Off
 		

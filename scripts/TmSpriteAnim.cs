@@ -37,27 +37,29 @@ public class TmSpriteAnim : MonoBehaviour {
 	public bool setOnGrid = true;
 	public bool reverse = false;
 	public float fps = 20.0f;
-	private Vector2 _defSize;
-	private SpriteAnimation _currentAnm;
-	private float _animPtr;
-	private AnimAttribute _frameAttr;
-	private AnimAttribute _animAttr;
-	private AnimAttribute _frameAttrOld;
-	private AnimAttribute _animAttrOld;
-	private Vector2 _uvOfs;
-	private Vector2 _uvPos;
-	private Vector2 _texSizeInv = Vector2.one;
-	private Vector2[] _defUvs = null;
-	private Vector3[] _defVtxs = null;
-	private Material _tgetMat;
-	private bool _isEndOfFrame;
+	private bool mEnabled;
+	private Vector2 mDefSize;
+	private SpriteAnimation mCurrentAnm;
+	private float mAnimPtr;
+	private AnimAttribute mFrameAttr;
+	private AnimAttribute mAnimAttr;
+	private AnimAttribute mFrameAttrOld;
+	private AnimAttribute mAnimAttrOld;
+	private Vector2 mUvOfs;
+	private Vector2 mUvPos;
+	private Vector2 mTexSizeInv = Vector2.one;
+	private Vector2[] mDefUvs = null;
+	private Vector3[] mDefVtcs = null;
+	private Material mTgetMat;
+	private bool mIsEndOfFrame;
+	public bool isPlay { get{ return mEnabled; } }
 	public bool setOutMaterial(Material _mat){ outMatreial = _mat; return true; }
-	public bool isEndFrame{ get{ return (_isEndOfFrame); } }
-	public void setUvOfs(Vector2 _uv){ _uvOfs = _uv; }
-	public int frameFlag { get{ return (_frameAttr!=null ? _frameAttr.flag : 0); } }
-	public int animFlag { get{ return (_animAttr!=null ? _animAttr.flag : 0); } }
-	public int frameFragTrigger { get{ return ((_frameAttrOld != _frameAttr) ? frameFlag : 0); } }
-	public int animFragTrigger { get{ return ((_animAttrOld != _animAttr) ? animFlag : 0); } }
+	public bool isEndFrame{ get{ return (mIsEndOfFrame); } }
+	public void setUvOfs(Vector2 _uv){ mUvOfs = _uv; }
+	public int frameFlag { get{ return (mFrameAttr!=null ? mFrameAttr.flag : 0); } }
+	public int animFlag { get{ return (mAnimAttr!=null ? mAnimAttr.flag : 0); } }
+	public int frameFragTrigger { get{ return ((mFrameAttrOld != mFrameAttr) ? frameFlag : 0); } }
+	public int animFragTrigger { get{ return ((mAnimAttrOld != mAnimAttr) ? animFlag : 0); } }
 
 	public Mesh getMesh(){
 		Mesh ret = null;
@@ -69,13 +71,16 @@ public class TmSpriteAnim : MonoBehaviour {
 	}
 	
 	void Awake(){
-		_tgetMat = outMatreial!=null ? outMatreial : renderer!=null ? renderer.sharedMaterial : null;
-		if((_tgetMat != null)&&(_tgetMat.mainTexture!=null)){
-			_texSizeInv = new  Vector2(1.0f/(float)(_tgetMat.mainTexture.width),1.0f/(float)(_tgetMat.mainTexture.height));
+		if(!this.enabled) return;
+		
+		mEnabled = true;
+		mTgetMat = outMatreial!=null ? outMatreial : renderer!=null ? renderer.sharedMaterial : null;
+		if((mTgetMat != null)&&(mTgetMat.mainTexture!=null)){
+			mTexSizeInv = new  Vector2(1.0f/(float)(mTgetMat.mainTexture.width),1.0f/(float)(mTgetMat.mainTexture.height));
 		}
-		_defSize = size;
+		mDefSize = size;
 		if(!scaleAtUv){
-			_defSize.Scale(_texSizeInv);
+			mDefSize.Scale(mTexSizeInv);
 		}
 		Mesh nowMesh = getMesh();
 		if(frames.Length>0){
@@ -89,25 +94,25 @@ public class TmSpriteAnim : MonoBehaviour {
 			}
 			{
 				Mesh sharedMesh = GetComponent<MeshFilter>().sharedMesh;
-				_defUvs = new Vector2[sharedMesh.vertexCount];
-				_defVtxs = new Vector3[sharedMesh.vertexCount];
+				mDefUvs = new Vector2[sharedMesh.vertexCount];
+				mDefVtcs = new Vector3[sharedMesh.vertexCount];
 				for(int ii = 0; ii < sharedMesh.vertexCount; ++ii){
-					_defUvs[ii] = new Vector2(sharedMesh.uv[ii].x,sharedMesh.uv[ii].y);
-					_defVtxs[ii] = new Vector3(sharedMesh.vertices[ii].x,sharedMesh.vertices[ii].y,sharedMesh.vertices[ii].z);
+					mDefUvs[ii] = new Vector2(sharedMesh.uv[ii].x,sharedMesh.uv[ii].y);
+					mDefVtcs[ii] = new Vector3(sharedMesh.vertices[ii].x,sharedMesh.vertices[ii].y,sharedMesh.vertices[ii].z);
 				}
 			}
 		}
-		_frameAttr = _frameAttrOld = null;
-		_animAttr = _animAttrOld = null;
-		_currentAnm = null;
-		_animPtr = 0.0f;
-		_uvOfs = offset;
-		_uvOfs.y *= -1.0f;
+		mFrameAttr = mFrameAttrOld = null;
+		mAnimAttr = mAnimAttrOld = null;
+		mCurrentAnm = null;
+		mAnimPtr = 0.0f;
+		mUvOfs = offset;
+		mUvOfs.y *= -1.0f;
 		if(setOnGrid){
-			_uvOfs = Vector3.Scale(_uvOfs,size ); 
+			mUvOfs = Vector3.Scale(mUvOfs,size ); 
 		}
 		if(!scaleAtUv){
-			_uvOfs.Scale(_texSizeInv);
+			mUvOfs.Scale(mTexSizeInv);
 		}
 		if(outMatreial!=null){
 			Vector2 sz = size;
@@ -128,42 +133,46 @@ public class TmSpriteAnim : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		_frameAttrOld = _frameAttr;
-		_animAttrOld = _animAttr;
-		if((_currentAnm==null)||(_currentAnm.frames.Length<=1)) return;
+		mFrameAttrOld = mFrameAttr;
+		mAnimAttrOld = mAnimAttr;
+		if((mCurrentAnm==null)||(mCurrentAnm.frames.Length<=1)) return;
+		if(!mEnabled) return;
 		
+		float oldPtr = mAnimPtr;
 		float animSpeed = Time.deltaTime*(fps<0.1f?0.1f:fps) * (!reverse?1.0f:-1.0f);
-		float oldPtr = _animPtr;
-		_animPtr += animSpeed;
+		mAnimPtr += animSpeed;
 		if(!reverse){
-			_isEndOfFrame = ((_animPtr+animSpeed) > (float)_currentAnm.frames.Length);
+			mIsEndOfFrame = ((mAnimPtr+animSpeed) > (float)mCurrentAnm.frames.Length);
 		}else{
-			_isEndOfFrame = ((_animPtr+animSpeed) < 0.0f);
+			mIsEndOfFrame = ((mAnimPtr+animSpeed) < 0.0f);
 		}
-		if(_currentAnm.loop){
-			_animPtr = (_animPtr)%(float)_currentAnm.frames.Length;
-			if(_animPtr<0.0f){
-				_animPtr += (float)_currentAnm.frames.Length;
+		if(mCurrentAnm.loop){
+			mAnimPtr = (mAnimPtr)%(float)mCurrentAnm.frames.Length;
+			if(mAnimPtr<0.0f){
+				mAnimPtr += (float)mCurrentAnm.frames.Length;
 			}
 		}else{
 			if(!reverse){
-				_animPtr = Mathf.Min(_animPtr,(float)_currentAnm.frames.Length-ANIM_TIME_MIN);
+				mAnimPtr = Mathf.Min(mAnimPtr,(float)mCurrentAnm.frames.Length-ANIM_TIME_MIN);
 			}else{
-				_animPtr = Mathf.Max(0.0f,_animPtr);
+				mAnimPtr = Mathf.Max(0.0f,mAnimPtr);
 			}
 		}
-		if(Mathf.FloorToInt(oldPtr) != Mathf.FloorToInt(_animPtr)){
+		if(Mathf.FloorToInt(oldPtr) != Mathf.FloorToInt(mAnimPtr)){
 			updateAnim();
 		}
+		updateMesh();
 	}
 
 	public bool PlayAnimation(int _id){
 		bool ret = false;
 		if(_id < animations.Length){
-			_currentAnm = animations[_id];
-			_animPtr = 0.0f;
-			_isEndOfFrame = false;
+			mEnabled = true;
+			mCurrentAnm = animations[_id];
+			mAnimPtr = 0.0f;
+			mIsEndOfFrame = false;
 			updateAnim();
+			updateMesh();
 			ret = true;
 		}
 		return ret;
@@ -178,8 +187,11 @@ public class TmSpriteAnim : MonoBehaviour {
 		}
 		return ret;
 	}
+	public void StopAnimation(){
+		mEnabled = false;
+	}
 	
-	public Mesh setMeshColor(Color _col){
+	public Mesh SetMeshColor(Color _col){
 		Mesh nowMesh = getMesh();
 		if(nowMesh!=null){
 			Color[] cols = new Color[nowMesh.vertexCount];
@@ -190,7 +202,8 @@ public class TmSpriteAnim : MonoBehaviour {
 		}
 		return nowMesh;
 	}
-	public Mesh setMeshScale(Vector3 _scale){
+
+	public Mesh SetMeshScale(Vector3 _scale){
 		Mesh nowMesh = getMesh();
 		if(nowMesh!=null){
 			Vector3[] scaleVecs = new Vector3[nowMesh.vertexCount];
@@ -204,51 +217,62 @@ public class TmSpriteAnim : MonoBehaviour {
 		return nowMesh;
 	}
 	
+	public Mesh SetMeshUV(Vector2 _uvPos, Vector2 _size, bool _scaleAtUv=true){
+		return setMeshUV(_uvPos, _size, _scaleAtUv);
+	}
+	
 	private void updateAnim(){
-		int animFrame = Mathf.FloorToInt(_animPtr);
-		if((_currentAnm!=null)&&(animFrame < _currentAnm.frames.Length)){
-			int viewFrame = _currentAnm.frames[animFrame];
-			_uvPos = _uvOfs+getDefFrame(viewFrame);
-			if(outMatreial!=null){
-				outMatreial.SetTextureOffset("_MainTex",_uvPos);
-			}else{
-				setMeshUv();
-//				setMeshColor(Color.red);
-			}
+		int animFrame = Mathf.FloorToInt(mAnimPtr);
+		if((mCurrentAnm!=null)&&(animFrame < mCurrentAnm.frames.Length)){
+			int viewFrame = mCurrentAnm.frames[animFrame];
+			mUvPos = mUvOfs+getDefFrame(viewFrame);
+			
 			// attribute取得
-			_frameAttr = null;
+			mFrameAttr = null;
 			for( int ii = 0; ii < frameAttrs.Length; ++ii){
 				if(frameAttrs[ii].frame==viewFrame){
-					_frameAttr = frameAttrs[ii];
+					mFrameAttr = frameAttrs[ii];
 					break;
 				}
 			}
-			_animAttr = null;
-			for( int ii = 0; ii < _currentAnm.attrs.Length; ++ii){
-				if(_currentAnm.attrs[ii].frame==animFrame){
-					_animAttr = _currentAnm.attrs[ii];
+			mAnimAttr = null;
+			for( int ii = 0; ii < mCurrentAnm.attrs.Length; ++ii){
+				if(mCurrentAnm.attrs[ii].frame==animFrame){
+					mAnimAttr = mCurrentAnm.attrs[ii];
 					break;
 				}
 			}
 		}
 	}
+
+	private void updateMesh(){
+		if(outMatreial!=null){
+			outMatreial.SetTextureOffset("_MainTex",mUvPos);
+		}else{
+			setMeshUv();
+		}
+	}
+	
 	private Mesh setMeshUv(){
+		return setMeshUV(mUvPos,size,scaleAtUv);
+	}
+	private Mesh setMeshUV(Vector2 _uvPos, Vector2 _size, bool _scaleAtUv){
 		Mesh nowMesh = getMesh();
 		if(nowMesh!=null){
-//			Vector2[] defUvs = GetComponent<MeshFilter>().sharedMesh.uv;
-			Vector2[] tmpUv = new Vector2[_defUvs.Length];
-			Vector2 sz = size;
-			if(!scaleAtUv){
-				sz.Scale(_texSizeInv);
+			Vector2[] tmpUv = new Vector2[mDefUvs.Length];
+			if(!_scaleAtUv){
+				_size.Scale(mTexSizeInv);
 			}
-			for(int ii = 0; ii< _defUvs.Length; ++ii){
-				tmpUv[ii] = Vector2.Scale(_defUvs[ii],sz) + _uvPos;
+			for(int ii = 0; ii< mDefUvs.Length; ++ii){
+				tmpUv[ii] = Vector2.Scale(mDefUvs[ii],_size) + _uvPos;
 			}
 			nowMesh.uv = tmpUv;
+			nowMesh.Optimize();
 		}
 		return nowMesh;
 	}
 
+	
 	private Vector2 getDefFrame(int _frameId){
 		Vector2 defFrame = frames[_frameId];
 		if(setOnGrid){
@@ -259,12 +283,12 @@ public class TmSpriteAnim : MonoBehaviour {
 			Vector2 texSizeInv = new  Vector2(1.0f/(float)(tgetMat.mainTexture.width),1.0f/(float)(tgetMat.mainTexture.height));
 			defFrame.Scale(texSizeInv);
 		}
-		defFrame.y = 1.0f-defFrame.y-_defSize.y;
+		defFrame.y = 1.0f-defFrame.y-mDefSize.y;
 		return defFrame;
 	}
 	private Vector3 getDefVertex(int _vtxId){
 //		return(GetComponent<MeshFilter>().sharedMesh.vertices[_vtxId]);
-		return _defVtxs[_vtxId];
+		return mDefVtcs[_vtxId];
 	}
 	
 	private Mesh initMesh4(Mesh _mesh){

@@ -6,12 +6,14 @@ using System.Collections;
 public class CreateRing : MonoBehaviour
 {
 
-	[MenuItem ("GameObject/Create Other/Other/ring")]
+	[MenuItem ("GameObject/Create Other/Other/Ring")]
 	static void Create ()
 	{
 		const int DEG_NUM=256;
+		const float MAX_RAD = 1.0f;
+		const float MIN_RAD = 0.5f;
 //		const int UV_DEG_NUM = 1; //DEG_NUM;
-		GameObject newGameobject = new GameObject ("ring"+DEG_NUM.ToString());
+		GameObject newGameobject = new GameObject ("Ring"+DEG_NUM.ToString()+"XY");
 		
 		MeshRenderer meshRenderer = newGameobject.AddComponent<MeshRenderer> ();
 		meshRenderer.material = new Material (Shader.Find ("Diffuse"));
@@ -24,46 +26,41 @@ public class CreateRing : MonoBehaviour
 		Mesh mesh = meshFilter.sharedMesh;
 		mesh.name = "Ring"+DEG_NUM.ToString()+"XY";
 		
-		Vector3[] verts = new Vector3[DEG_NUM+1];
-		Vector2[] uvs = new Vector2[DEG_NUM+1];
-		Vector3[] norms = new Vector3[DEG_NUM+1];
-		Color[] cols = new Color[DEG_NUM+1];
-		verts[0]= new Vector3(0.0f,0.0f,0.0f);
-		uvs[0]= new Vector2(0.5f,0.0f);
-		norms[0]= new Vector3(0.0f,0.0f,1.0f);
-		cols[0] = new Color(1.0f,1.0f,1.0f,1.0f);
-		for(int ii=0; ii< DEG_NUM; ++ii){
-			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)DEG_NUM))*0.5f;
-			float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)DEG_NUM))*0.5f;
-			verts[ii+1]= new Vector3(fx,fy,0.0f);
-			norms[ii+1]= new Vector3(0.0f,0.0f,1.0f);
-			cols[ii+1] = new Color(1.0f,1.0f,1.0f,1.0f);
-		}
-		
-		for(int ii=0; ii< DEG_NUM; ++ii){
-//			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)UV_DEG_NUM))*0.5f;
-//			float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)UV_DEG_NUM))*0.5f;
-//			uvs[ii+1]= new Vector2(fx+0.5f,fy+0.5f);
-			uvs[ii+1] = new Vector2(ii%1==0?0.0f:1.0f , 1.0f);
-		}
+		Vector3[] vertices = new Vector3[(DEG_NUM+1)*2];
+		int[] triangles = new int[(DEG_NUM+1)*6];
+		Vector2[] uv = new Vector2[(DEG_NUM+1)*2];
+		Color[] colors = new Color[(DEG_NUM+1)*2];
+		Vector3[] normals = new Vector3[(DEG_NUM+1)*2];
 
-		int[] tris = new int[DEG_NUM*3];
-		for(int ii=0; ii< DEG_NUM; ++ii){
-			tris[ii*3+0] = 0;
-			tris[ii*3+1] = (ii<(DEG_NUM-1)) ? (ii+2) : 1;
-			tris[ii*3+2] = ii+1;
+		int cnt = 0;
+		for(int ii = 0; ii <= DEG_NUM; ++ii){
+			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)DEG_NUM));
+			float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)DEG_NUM));
+			vertices[cnt*2+0] = new Vector3(fx*MAX_RAD*0.5f,fy*MAX_RAD*0.5f,0.0f);
+			vertices[cnt*2+1] = new Vector3(fx*MIN_RAD*0.5f,fy*MIN_RAD*0.5f,0.0f);
+			triangles[cnt*6+0] = cnt*2+0;
+			triangles[cnt*6+1] = cnt*2+1;
+			triangles[cnt*6+2] = (ii<(DEG_NUM)) ? (cnt*2+2) : 0;
+			triangles[cnt*6+3] = cnt*2+0;
+			triangles[cnt*6+4] = (ii>0) ? (cnt*2-1) : 0;
+			triangles[cnt*6+5] = cnt*2+1;
+//			uv[cnt*2+0] = new Vector2(vertices[cnt*2+0].x+0.5f,vertices[cnt*2+0].y+0.5f);
+//			uv[cnt*2+1] = new Vector2(vertices[cnt*2+1].x+0.5f,vertices[cnt*2+1].y+0.5f);
+			uv[cnt*2+0] = new Vector2((float)ii/(float)DEG_NUM,0.0f);
+			uv[cnt*2+1] = new Vector2((float)ii/(float)DEG_NUM,1.0f);
+			colors[cnt*2+0] = colors[cnt*2+1] = new Color(0.5f,0.5f,0.5f,1.0f);
+			cnt++;
 		}
-		
-		mesh.vertices = verts;
-		mesh.triangles = tris;
-		mesh.uv = uvs;
-		mesh.normals = norms;
-		mesh.colors = cols;
-		
-		mesh.RecalculateNormals ();	// 法線の再計算
-		mesh.RecalculateBounds ();	// バウンディングボリュームの再計算
-		mesh.Optimize ();
-		
+		mesh.vertices = vertices;
+		mesh.triangles = triangles;
+		mesh.uv = uv;
+		mesh.colors = colors;
+		mesh.normals = normals;
+		mesh.RecalculateNormals ();
+		mesh.RecalculateBounds ();
+		mesh.Optimize();
+		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
+
 		AssetDatabase.CreateAsset (mesh, "Assets/" + mesh.name + ".asset");
 		AssetDatabase.SaveAssets ();
 	}
