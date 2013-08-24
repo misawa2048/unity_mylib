@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 public class TmMouseWrapper{
-	public const float VERSION = 2.2f;
+	public const float VERSION = 3.0f;
 	public enum STATE{
 		NONE=0,
 		DOWN,
@@ -16,6 +16,7 @@ public class TmMouseWrapper{
 		CONST_Y,
 		CONST_Z,
 		CONST_CAMERA_NORMAL,
+		CONST_CAMERA_DIST,
 	}
 	public enum GESTURE_DIR{
 		NONE=0,
@@ -25,7 +26,8 @@ public class TmMouseWrapper{
 		RIGHT
 	}
 	
-	public TmMouseWrapper(){ start();	}
+	public TmMouseWrapper(){ awake();	}
+	private bool       mStarted=false;
 	private bool       mIsDrag;
 	private STATE      mMouseState;
 	private STATE      mButtonState;
@@ -36,23 +38,19 @@ public class TmMouseWrapper{
 	private Vector3    mDragSttScrPos;
 	private Vector3    mDragPos;
 	private Vector3    mDragPosOld;
-	private Vector3    mDragSpd;
 	private Vector3    mDragObjOfs;
 	private Vector3    mDragSpeed; // average per sec
-	private Vector3    mDragScrSpeed; // average per sec
-	private float      mDragTime; // total sec from On to Up
-	private float      mDragScrTime; // total sec from On to Up
-	private float      mDragSweepRate=0.00001f; // per sec
-	private float      mDragSweepMin=0.01f;
 	private GameObject mTarget;
 	private GameObject mTargetOld;
-	private GameObject mSweepTarget;
 	private int        mMouseHitLayerMask=-1;
 	private int        mDraggableLayerMask=-1;
 	private float      mRayDist = 50.0f;
 	private float      mGestureMinRate = 0.1f;
 	private GESTURE_DIR mMouseGestureDir = GESTURE_DIR.NONE;
 	private DRAG_MODE   mDragMode = DRAG_MODE.NONE;
+	private float      mDefPlaneDist = 10.0f;
+	private Plane      mMousePlane;
+	private Plane      mDragPlane;
 	public STATE mouseState{ get{ return mMouseState; } }
 	public STATE buttonState{ get{ return mButtonState; } }
 	public GESTURE_DIR mouseGestureDir { get { return mMouseGestureDir; } }
@@ -65,35 +63,37 @@ public class TmMouseWrapper{
 	public Vector3 dragPos{ get { return mDragPos; } }
 	public Vector3 dragPosOld{ get { return mDragPosOld; } }
 	public Vector3 dragSpeed{ get { return mDragSpeed; } }
-	public Vector3 dragScrSpeed{ get { return mDragScrSpeed; } }
+	public Vector3 dragScrSpeed{ get { return dragScrVec; } }
 	public GameObject hitTarget { get { return ((mIsMouseHit)&&(mMouseHit.collider!=null)) ? mMouseHit.collider.gameObject : null; } }
 	public GameObject dragTarget { get { return mTarget; } }
 	public GameObject dragTargetOld { get { return mTargetOld; } }
-	public GameObject sweepTarget { get { return mSweepTarget; } }
 	
 	public DRAG_MODE setDragMode(DRAG_MODE mode){DRAG_MODE old = mDragMode; mDragMode = mode; return old; }
-	public float setDragSweepRate(float rate){float old = mDragSweepRate; mDragSweepRate = Mathf.Clamp01(rate); return old; }
 	public float setRayDist(float dist){float old = mRayDist; mRayDist = dist; return old; }
 	public float setGestureMinRate(float rate){float old = mGestureMinRate; mGestureMinRate = rate; return old; }
 	public int setHitLayerMask(int mask){int old = mMouseHitLayerMask; mMouseHitLayerMask = mask; return old; }
 	public int setDraggableLayerMask(int mask){int old = mDraggableLayerMask; mDraggableLayerMask = mask; return old; }
-	public bool isHover(GameObject obj){ return ((obj!=null)&&(hitTarget==obj)); }
+	public bool isHover(GameObject obj){ return ((mIsMouseHit)&&(mMouseHit.collider!=null)&&(mMouseHit.collider.gameObject==obj)); }
 	public bool isOnDragTarget(){ return isHover(mTarget); }
 	public bool isOnDragTarget(GameObject obj){ return (isOnDragTarget())&&(mTarget==obj); }
 
-	public void start (){
+	private void awake (){
 		mIsDrag = false;
 		mButtonState = STATE.NONE;
 		mTarget = null;
 		mTargetOld = null;
-		mSweepTarget = null;
-		mDragSpd = Vector3.zero;
+		mDragSpeed = Vector3.zero;
+	}
+	private void start(){
+		mStarted = true;
+		mMousePlane = calcPlane();
 	}
 	public void update (){
+		if(!mStarted){ start(); }
 		mDragPosOld = mDragPos;
 		mMouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
 		mIsMouseHit = Physics.Raycast(mMouseRay,out mMouseHit,mRayDist,mMouseHitLayerMask);
-//			if( mIsMouseHit && (mMouseHit.collider.gameObject!=mHitBodyPrefab)){ mIsMouseHit = false; }
+//		if( mIsMouseHit && (mMouseHit.collider.gameObject!=mHitBodyPrefab)){ mIsMouseHit = false; }
 
 		if(mIsMouseHit && Input.GetMouseButtonDown(0)) { mIsDrag =true;  mMouseState = STATE.DOWN; mTarget = mMouseHit.collider.gameObject; }
 		else if(mIsDrag && Input.GetMouseButtonUp(0))  { mIsDrag =false; mMouseState = STATE.UP;   mTarget = null; }
@@ -106,34 +106,33 @@ public class TmMouseWrapper{
 		else if(Input.GetMouseButton(0)) { mButtonState = STATE.ON; }
 		else{ mButtonState = STATE.NONE; }
 		
-//		if(mIsMouseHit){ mDragPos = mMouseHit.point; }
-//		else{ mDragPos = mMouseRay.origin + mMouseRay.direction * mRayDist; }
-		mDragPos = calcDragPos();
-
-		if((mIsMouseHit)&&((mMouseState == STATE.NONE)||(mMouseState == STATE.DOWN))) {
-			mDragSttPos = mDragPos;
-			mDragPosOld = mDragPos;
-			mTargetOld = mTarget;
-			mDragTime = 0.0f;
-			mDragSpeed = Vector3.zero;
-		}else if((mMouseState == STATE.DRAG)||(mMouseState == STATE.UP)) {
-			mDragTime += Time.deltaTime;
-			mDragSpeed = (mDragPos - mDragSttPos)/mDragTime;
-		}
+		mMousePlane = calcPlane();
 		
 		if((mButtonState == STATE.NONE)||(mButtonState == STATE.DOWN)) {
+			mDragPlane = mMousePlane;
 			mDragSttScrPos = Input.mousePosition;
-			mDragObjOfs = getDragObjOfs();
-			mDragScrTime = 0.0f;
-			mDragScrSpeed = Vector3.zero;
-		}else if((mButtonState == STATE.ON)||(mButtonState == STATE.UP)){
-			mDragScrTime += Time.deltaTime;
-			mDragScrSpeed = (Input.mousePosition - mDragSttScrPos)/mDragScrTime;
+			if(mIsMouseHit){
+				mDragSttPos = mMouseHit.point;
+			}else{
+				mDragSttPos = mMouseRay.origin+mMouseRay.direction*mDefPlaneDist;
+			}
 		}
+
+		float tmpDist;
+		mDragSpeed = mDragPos;
+		if(mDragPlane.Raycast(mouseRay, out tmpDist)){
+			mDragPos = mouseRay.GetPoint(tmpDist);
+		}
+		mDragSpeed = mDragPos - mDragSpeed;
+
+		if((mIsMouseHit)&&((mMouseState == STATE.NONE)||(mMouseState == STATE.DOWN))) {
+			mTargetOld = mTarget;
+			mDragSpeed = Vector3.zero;
+		}
+		
 		
 		mMouseGestureDir = getGestureDir(mGestureMinRate);
 		dragTargetByMode();
-		sweepTargetByMode();
 		
 		debugDraw();
 	}
@@ -150,57 +149,52 @@ public class TmMouseWrapper{
 		}
 		return retDir;
 	}
-	private Vector3 calcDragPos(){
-		Vector3 dragPos;
-		if(mIsMouseHit){
-			dragPos = mMouseHit.point;
-		}else{
-			dragPos = mDragPos;
-			if(mDragMode == DRAG_MODE.CONST_Z){
-				dragPos = mouseRay.GetPoint((dragPos - Camera.main.transform.position).magnitude);
-				dragPos.z = mDragPos.z;
+	private Plane calcPlane(){
+		if(mDragMode == DRAG_MODE.CONST_CAMERA_DIST){
+			float dist;
+			if(mIsMouseHit){
+				dist = (mMouseHit.point-Camera.main.transform.position).magnitude;
+			}else{
+				dist = mDefPlaneDist;
 			}
+			return (new Plane(mMouseRay.direction,dist));
+		}else{
+			Vector3 inPos;
+			if(mIsMouseHit){
+				inPos = mMouseHit.point;
+			}else{
+				inPos = mMouseRay.origin+mMouseRay.direction*mDefPlaneDist;
+			}
+			return (new Plane(-Camera.main.transform.forward,inPos));
 		}
-		return dragPos;
 	}
+	
 	private void dragTargetByMode(){
 		if(mDragMode == DRAG_MODE.NONE)     return;
 		if((mTarget==null)||(((1<<mTarget.layer)&mDraggableLayerMask)==0))    return;
-
-		if(mMouseState == STATE.DRAG){
-			Vector3 dragPos = mTarget.transform.position - mDragObjOfs;
-			dragPos = mouseRay.GetPoint((dragPos - Camera.main.transform.position).magnitude);
-			dragPos += mDragObjOfs;
-			if(mDragMode == DRAG_MODE.CONST_Z){
-				dragPos.z = mTarget.transform.position.z;
+		
+		Vector3 dragPos = Vector3.zero;
+		if((mMouseState == STATE.DOWN)||(mMouseState == STATE.DRAG)){
+			if(mDragMode == DRAG_MODE.CONST_CAMERA_DIST){
+				dragPos = mouseRay.GetPoint(mDragPlane.distance);
+			}else{
+				float tmpDist;
+				if(mDragPlane.Raycast(mouseRay, out tmpDist)){
+					dragPos = mouseRay.GetPoint(tmpDist);
+				}
 			}
+			if(mMouseState == STATE.DOWN){
+				if( isMouseHit && (mTarget!=null) ){
+					mDragObjOfs = mTarget.transform.position - dragPos;
+				}
+			}
+			dragPos += mDragObjOfs;
+			if(mDragMode == DRAG_MODE.CONST_X){	dragPos.x = mTarget.transform.position.x; }
+			else if(mDragMode == DRAG_MODE.CONST_Y){	dragPos.y = mTarget.transform.position.y; }
+			else if(mDragMode == DRAG_MODE.CONST_Z){	dragPos.z = mTarget.transform.position.z; }
+		
 			mTarget.transform.position = dragPos;
 		}
-	}
-	private bool sweepTargetByMode(){
-		if(mDragMode == DRAG_MODE.NONE)     return false;
-		if((mSweepTarget==null)||(((1<<mSweepTarget.layer)&mDraggableLayerMask)==0))    return false;
-		
-		if((mMouseState != STATE.NONE)||(mMouseState == STATE.UP)){
-			mDragSpd = (mDragSpd * 3.0f + mDragPos - mDragPosOld)*0.25f;
-			if(mTarget!=null){ mSweepTarget = mTarget; }
-		}
-		if((mMouseState == STATE.NONE)||(mMouseState == STATE.UP)){
-			mDragSpd *= Mathf.Pow(mDragSweepRate , Time.deltaTime);
-			if(mDragMode == DRAG_MODE.CONST_Z){
-				mDragSpd.z = 0.0f;
-			}
-			if(mDragSpd.magnitude < mDragSweepMin){ mSweepTarget = null; mDragSpd = Vector3.zero; }
-			else{ mSweepTarget.transform.position += mDragSpd; }
-		}
-		return true;
-	}
-	private Vector3 getDragObjOfs(){
-		Vector3 ret = Vector3.zero;
-		if( isMouseHit && (mTarget!=null) ){
-			ret = mTarget.transform.position - mMouseHit.point;
-		}
-		return ret;
 	}
 	
 	private void debugDraw(){
@@ -208,5 +202,11 @@ public class TmMouseWrapper{
 		if(mMouseState != STATE.DRAG){ col = mIsMouseHit ? Color.cyan : Color.gray; }
 		else{ col = mIsMouseHit ? ((mMouseHit.collider.gameObject==mTarget) ? Color.yellow : Color.white) : Color.red; }
 		Debug.DrawRay(mMouseRay.origin,mMouseRay.direction*mRayDist, col);
+		debugDrawGizmo(mDragPos,col);
+	}
+	private void debugDrawGizmo(Vector3 _pos, Color _col, float _scl=1.0f){
+		Debug.DrawLine(_pos-Vector3.forward*_scl,_pos+Vector3.forward*_scl,_col);
+		Debug.DrawLine(_pos-Vector3.right*_scl,_pos+Vector3.right*_scl,_col);
+		Debug.DrawLine(_pos-Vector3.up*_scl,_pos+Vector3.up,_col*_scl);
 	}
 }
