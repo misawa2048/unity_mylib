@@ -53,6 +53,8 @@ public class TmMouseWrapper{
 	private Plane      mDragPlane;
 	public STATE mouseState{ get{ return mMouseState; } }
 	public STATE buttonState{ get{ return mButtonState; } }
+	public bool isMouseState(STATE _state){ return (_state==mMouseState); }
+	public bool isButtonState(STATE _state){ return (_state==mButtonState); }
 	public GESTURE_DIR mouseGestureDir { get { return mMouseGestureDir; } }
 	public bool isMouseHit{ get{ return mIsMouseHit; } }
 	public RaycastHit mouseHit{ get{ return mMouseHit; } }
