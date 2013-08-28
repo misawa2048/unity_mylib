@@ -79,7 +79,8 @@ public class TmMouseWrapper{
 	public float setGestureMinRate(float rate){float old = mGestureMinRate; mGestureMinRate = rate; return old; }
 	public int setHitLayerMask(int mask){int old = mMouseHitLayerMask; mMouseHitLayerMask = mask; return old; }
 	public int setDraggableLayerMask(int mask){int old = mDraggableLayerMask; mDraggableLayerMask = mask; return old; }
-	public bool isHover(GameObject obj){ return ((mIsMouseHit)&&(mMouseHit.collider!=null)&&(mMouseHit.collider.gameObject==obj)); }
+	public bool isHover(GameObject obj){ return ((obj!=null)&&(mTarget==obj)); }
+	public bool isEnter(GameObject obj){ return ((obj!=null)&&(mTarget==obj)&&(mTarget!=mTargetOld)); }
 	public bool isOnDragTarget(){ return isHover(mDragTarget); }
 	public bool isOnDragTarget(GameObject obj){ return (isOnDragTarget())&&(mDragTarget==obj); }
 

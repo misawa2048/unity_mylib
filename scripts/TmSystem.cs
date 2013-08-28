@@ -80,12 +80,6 @@ public class TmSystem : MonoBehaviour {
 	}
 	// Use this for initialization
 	void Start () {
-#if (UNITY_ANDROID && !UNITY_EDITOR)
-		if(AD_KEY!=""){
-			AdController.Install();
-			AdController.SetAndLoadAd(AD_KEY,true);
-		}
-#endif
 	}
 	
 	// Update is called once per frame
