@@ -6,10 +6,19 @@ using System.Collections;
 //  _key.setRecState(REC/STOP/PLAY);
 
 public class TmKeyRec{
-	public const float VERSION = 0.02f;
+	public const float VERSION = 0.03f;
 	private const int DEF_REC_BUFF_SIZE = 65535;
+	public DEBUG_MODE debugMode = DEBUG_MODE.NONE;
 	
 	//++++++++++++++++++++++++++++++++++++++++++
+	public enum DEBUG_MODE{
+		NONE             = 0,
+		DISP_PAD         = 1,
+		DISP_ANALOG      = 2,
+		DISP_PAD_ANALOG  = 3,
+		ALL              = -1
+	};
+	
 	public enum REC_STATE{
 		STOP,
 		REC,
@@ -36,6 +45,7 @@ public class TmKeyRec{
 		public const int PAUSE   = (1<<14);
 		public const int DEBUG   = (1<<15);
 		
+		private GameObject _debugDispObj;
 		private int _data;
 		private int _old;
 		private int _trg;
@@ -53,7 +63,6 @@ public class TmKeyRec{
 		
 		public void updateInfo(int _setData=int.MaxValue){
 			_old = _data;
-			_trg = _data & (_data^_old);
 			if(_setData!=int.MaxValue){
 				_data = _setData;
 			}else{
@@ -68,7 +77,7 @@ public class TmKeyRec{
 				if(Input.GetKey(KeyCode.UpArrow))    _data |= UP;
 				if(Input.GetKey(KeyCode.DownArrow))  _data |= DOWN;
 				if(Input.GetKey(KeyCode.LeftArrow))  _data |= LEFT;
-				if(Input.GetKey(KeyCode.RightArrow)) _data |= UP;
+				if(Input.GetKey(KeyCode.RightArrow)) _data |= RIGHT;
 				
 				if(Input.GetKey(KeyCode.Space)) _data |= TRIG_A;
 				if(Input.GetKey(KeyCode.X))     _data |= TRIG_B;
@@ -80,8 +89,20 @@ public class TmKeyRec{
 				if(Input.GetKey(KeyCode.Pause)) _data |= PAUSE;
 				if(Input.GetKey(KeyCode.Break)) _data |= DEBUG;
 			}
+			_trg = _data & (_data^_old);
+		}
+		
+		public void debugDisp(){
+			if(_debugDispObj==null){
+				_debugDispObj = new GameObject("_debugPAD_KEY");
+				_debugDispObj.AddComponent<GUIText>();
+				_debugDispObj.transform.position = Vector3.up;
+				_debugDispObj.guiText.fontSize = 12;
+			}
+			_debugDispObj.guiText.text = System.Convert.ToString(_data, 02).PadLeft(32, '0');
 		}
 	}
+	
 	//++++++++++++++++++++++++++++++++++++++++++
 	public class ANALOG{
 		public class RATE{
@@ -152,7 +173,6 @@ public class TmKeyRec{
 					angle = Mathf.Atan2((pos.x-center.x)/Screen.width,(pos.y-center.y)/Screen.height)/Mathf.PI;
 				}
 			}
-			debugDisp();
 		}
 		
 		public void debugDisp(){
@@ -258,16 +278,25 @@ public class TmKeyRec{
 	
 	public int fixedUpdate(int _padData=int.MaxValue, float _angL=float.MaxValue, float _angR=float.MaxValue){
 		int ret = -1;
-		if(_recState==REC_STATE.REC){
-			_info.updateInfo(_padData, _angL, _angR);
-			ret = recOne(_info);
-		}
-		else if(_recState==REC_STATE.PLAY){
+		if(_recState==REC_STATE.PLAY){
 			KeyInfo outInfo;
 			ret = playOne(out outInfo);
 			if(ret >=0){
 				_info = outInfo;
 			}
+		}else{
+			_info.updateInfo(_padData, _angL, _angR);
+			if(_recState==REC_STATE.REC){
+				ret = recOne(_info);
+			}
+		}
+		
+		if(((int)debugMode & (int)DEBUG_MODE.DISP_PAD)!=0){
+			_info.pad.debugDisp();
+		}
+		if(((int)debugMode & (int)DEBUG_MODE.DISP_ANALOG)!=0){
+			_info.anL.debugDisp();
+			_info.anR.debugDisp();
 		}
 		return ret;
 	}
