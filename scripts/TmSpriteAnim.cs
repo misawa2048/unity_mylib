@@ -14,11 +14,10 @@ public class SpriteAnimation{
 	public AnimAttribute[] attrs;
 	public bool loop;
 	
-	public SpriteAnimation(string animationName, int first, int last, bool loopPlayback){
-		name = animationName;
-		frames = new int[(last-first<1?1:last-first)];
-		for(int ii=0; ii<frames.Length;++ii){ frames[ii]=ii+first; }
-		loop = loopPlayback;
+	public SpriteAnimation(string _name, int[] _frames, bool _loop){
+		name = _name;
+		frames = _frames;
+		loop = _loop;
 	}
 }
 
@@ -220,7 +219,7 @@ public class TmSpriteAnim : MonoBehaviour {
 		return setMeshUV(_uvPos, _size, _scaleAtUv);
 	}
 	public Mesh SetMeshUVByFrame(int _frame){
-		if(frames.Length < _frame) return null;
+		if(frames.Length < _frame) return getMesh();
 		mUvPos = mUvOfs+getDefFrame(_frame);
 		return setMeshUV(mUvPos, mDefSize, scaleAtUv);
 	}
@@ -233,6 +232,14 @@ public class TmSpriteAnim : MonoBehaviour {
 		return frames;
 	}
 	
+	public SpriteAnimation[] AddAnimation(string _name, int[] _frames, bool _loop){
+		SpriteAnimation[] ret = new SpriteAnimation[animations.Length+1];
+		animations.CopyTo(ret,0);
+		ret[animations.Length] = new SpriteAnimation(_name, _frames, _loop);
+		animations = ret;
+		return ret;
+	}
+		
 	private void updateAnim(){
 		int animFrame = Mathf.FloorToInt(mAnimPtr);
 		if((mCurrentAnm!=null)&&(animFrame < mCurrentAnm.frames.Length)){
@@ -248,10 +255,12 @@ public class TmSpriteAnim : MonoBehaviour {
 				}
 			}
 			mAnimAttr = null;
-			for( int ii = 0; ii < mCurrentAnm.attrs.Length; ++ii){
-				if(mCurrentAnm.attrs[ii].frame==animFrame){
-					mAnimAttr = mCurrentAnm.attrs[ii];
-					break;
+			if(mCurrentAnm.attrs != null){
+				for( int ii = 0; ii < mCurrentAnm.attrs.Length; ++ii){
+					if(mCurrentAnm.attrs[ii].frame==animFrame){
+						mAnimAttr = mCurrentAnm.attrs[ii];
+						break;
+					}
 				}
 			}
 		}
@@ -310,7 +319,6 @@ public class TmSpriteAnim : MonoBehaviour {
 			new Vector3 (0.5f, -0.5f, 0.0f),
 			new Vector3 (-0.5f, -0.5f, 0.0f)
 		};
-		_mesh.triangles = new int[]{ 0, 1, 2, 2, 3, 0 };
 		_mesh.uv = new Vector2[]{
 			new Vector2 (0.0f, 1.0f),
 			new Vector2 (1.0f, 1.0f),
@@ -329,10 +337,10 @@ public class TmSpriteAnim : MonoBehaviour {
 			new Vector3 (0.0f, 0.0f, 1.0f),
 			new Vector3 (0.0f, 0.0f, 1.0f)
 		};
+		_mesh.SetTriangles(new int[]{ 0, 1, 2, 2, 3, 0 },0);
 		_mesh.RecalculateNormals ();
 		_mesh.RecalculateBounds ();
 		_mesh.Optimize();
 		return _mesh;
 	}
-
 }
