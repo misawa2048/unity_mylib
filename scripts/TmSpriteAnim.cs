@@ -8,6 +8,7 @@ public class AnimAttribute{
 }
 [System.Serializable]
 public class SpriteAnimation{
+	public const float VERSION = 2.0f;
 	public string name;
 	public int[] frames;
 	public AnimAttribute[] attrs;
@@ -26,7 +27,7 @@ public class SpriteAnimation{
 // 使いまわすことでDrawCallBatcingを適用させる 
 public class TmSpriteAnim : MonoBehaviour {
 	private const float ANIM_TIME_MIN = 0.0001f;
-	public Material outMatreial;
+	private Material outMatreial=null;
 	public Vector2 size;
 	public Vector2 offset;
 	public Vector2[] frames;
@@ -83,23 +84,21 @@ public class TmSpriteAnim : MonoBehaviour {
 			mDefSize.Scale(mTexSizeInv);
 		}
 		Mesh nowMesh = getMesh();
-		if(frames.Length>0){
-			if(nowMesh==null){
-				MeshFilter meshFilter = GetComponent<MeshFilter>();
-				if(meshFilter==null){
-					meshFilter = gameObject.AddComponent<MeshFilter>();
-				}
-				nowMesh = initMesh4(new Mesh());
-				meshFilter.mesh = meshFilter.sharedMesh = nowMesh;
+		if(nowMesh==null){
+			MeshFilter meshFilter = GetComponent<MeshFilter>();
+			if(meshFilter==null){
+				meshFilter = gameObject.AddComponent<MeshFilter>();
 			}
-			{
-				Mesh sharedMesh = GetComponent<MeshFilter>().sharedMesh;
-				mDefUvs = new Vector2[sharedMesh.vertexCount];
-				mDefVtcs = new Vector3[sharedMesh.vertexCount];
-				for(int ii = 0; ii < sharedMesh.vertexCount; ++ii){
-					mDefUvs[ii] = new Vector2(sharedMesh.uv[ii].x,sharedMesh.uv[ii].y);
-					mDefVtcs[ii] = new Vector3(sharedMesh.vertices[ii].x,sharedMesh.vertices[ii].y,sharedMesh.vertices[ii].z);
-				}
+			nowMesh = initMesh4(new Mesh());
+			meshFilter.mesh = meshFilter.sharedMesh = nowMesh;
+		}
+		{
+			Mesh sharedMesh = GetComponent<MeshFilter>().sharedMesh;
+			mDefUvs = new Vector2[sharedMesh.vertexCount];
+			mDefVtcs = new Vector3[sharedMesh.vertexCount];
+			for(int ii = 0; ii < sharedMesh.vertexCount; ++ii){
+				mDefUvs[ii] = new Vector2(sharedMesh.uv[ii].x,sharedMesh.uv[ii].y);
+				mDefVtcs[ii] = new Vector3(sharedMesh.vertices[ii].x,sharedMesh.vertices[ii].y,sharedMesh.vertices[ii].z);
 			}
 		}
 		mFrameAttr = mFrameAttrOld = null;
@@ -109,13 +108,13 @@ public class TmSpriteAnim : MonoBehaviour {
 		mUvOfs = offset;
 		mUvOfs.y *= -1.0f;
 		if(setOnGrid){
-			mUvOfs = Vector3.Scale(mUvOfs,size ); 
+			mUvOfs = Vector3.Scale(mUvOfs,mDefSize ); 
 		}
 		if(!scaleAtUv){
 			mUvOfs.Scale(mTexSizeInv);
 		}
 		if(outMatreial!=null){
-			Vector2 sz = size;
+			Vector2 sz = mDefSize;
 			if(!scaleAtUv){
 				sz.x /= (float)(outMatreial.GetTexture("_MainTex").width);
 				sz.y /= (float)(outMatreial.GetTexture("_MainTex").height);
@@ -220,6 +219,19 @@ public class TmSpriteAnim : MonoBehaviour {
 	public Mesh SetMeshUV(Vector2 _uvPos, Vector2 _size, bool _scaleAtUv=true){
 		return setMeshUV(_uvPos, _size, _scaleAtUv);
 	}
+	public Mesh SetMeshUVByFrame(int _frame){
+		if(frames.Length < _frame) return null;
+		mUvPos = mUvOfs+getDefFrame(_frame);
+		return setMeshUV(mUvPos, mDefSize, scaleAtUv);
+	}
+	
+	public Vector2[] AddFrame(Vector2 _vec){
+		Vector2[] ret = new Vector2[frames.Length+1];
+		frames.CopyTo(ret,0);
+		ret[frames.Length]=_vec;
+		frames = ret;
+		return frames;
+	}
 	
 	private void updateAnim(){
 		int animFrame = Mathf.FloorToInt(mAnimPtr);
@@ -254,7 +266,7 @@ public class TmSpriteAnim : MonoBehaviour {
 	}
 	
 	private Mesh setMeshUv(){
-		return setMeshUV(mUvPos,size,scaleAtUv);
+		return setMeshUV(mUvPos,mDefSize,scaleAtUv);
 	}
 	private Mesh setMeshUV(Vector2 _uvPos, Vector2 _size, bool _scaleAtUv){
 		Mesh nowMesh = getMesh();
@@ -276,7 +288,7 @@ public class TmSpriteAnim : MonoBehaviour {
 	private Vector2 getDefFrame(int _frameId){
 		Vector2 defFrame = frames[_frameId];
 		if(setOnGrid){
-			defFrame = Vector3.Scale(defFrame,size ); 
+			defFrame = Vector3.Scale(defFrame,mDefSize ); 
 		}
 		if(!scaleAtUv){
 			Material tgetMat = outMatreial!=null ? outMatreial : renderer.sharedMaterial;
