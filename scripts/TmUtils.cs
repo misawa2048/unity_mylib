@@ -152,4 +152,35 @@ public class TmUtils {
 		}
 		return _nowMesh;
 	}
+
+	// ----------------
+	// GUI関係 
+	// ----------------
+	public static Vector3 GetPosOnGUI(Vector3 _basePos, Vector2 _scaleRate, Vector2 _screenPosRate, TextAnchor _ancor){
+		Vector3 retPos;
+		Plane plane = new Plane(Camera.main.transform.forward,_basePos);
+		float dist = plane.GetDistanceToPoint(Camera.main.transform.position);
+		Vector3 scrPos = new Vector3(_screenPosRate.x,_screenPosRate.y,-dist);
+		scrPos.x *= (float)Screen.width;
+		scrPos.y *= (float)Screen.height;
+		retPos = Camera.main.ScreenToWorldPoint(scrPos);
+		
+		Vector2 d=Vector2.zero;
+		switch(_ancor){
+			case TextAnchor.UpperLeft:    d.x =  0.5f;  d.y = -0.5f;  break;
+			case TextAnchor.UpperCenter:  d.x =  0.0f;  d.y = -0.5f;  break;
+			case TextAnchor.UpperRight:   d.x = -0.5f;  d.y = -0.5f;  break;
+			case TextAnchor.MiddleLeft:   d.x =  0.5f;  d.y =  0.0f;  break;
+			case TextAnchor.MiddleCenter: d.x =  0.0f;  d.y =  0.0f;  break;
+			case TextAnchor.MiddleRight:  d.x = -0.5f;  d.y =  0.0f;  break;
+			case TextAnchor.LowerLeft:    d.x =  0.5f;  d.y =  0.5f;  break;
+			case TextAnchor.LowerCenter:  d.x =  0.0f;  d.y =  0.5f;  break;
+			case TextAnchor.LowerRight:   d.x = -0.5f;  d.y =  0.5f;  break;
+		}
+		d = Vector3.Scale(d,_scaleRate);
+		retPos += Camera.main.transform.right * d.x;
+		retPos += Camera.main.transform.up * d.y;
+
+		return retPos;
+	}
 }
