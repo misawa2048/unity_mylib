@@ -156,7 +156,8 @@ public class TmUtils {
 	// ----------------
 	// GUI関係 
 	// ----------------
-	public static Vector3 GetPosOnGUI(Vector3 _basePos, Vector2 _scaleRate, Vector2 _screenPosRate, TextAnchor _ancor){
+	// 現在の_basePosの距離を基準として、画面左下から_scaleRateの位置になるようなworld座標を取得 
+	public static Vector3 GetPosOnGUI(Vector3 _basePos, Vector2 _scaleRate, Vector2 _screenPosRate, TextAnchor _ancor = TextAnchor.MiddleCenter){
 		Vector3 retPos;
 		Plane plane = new Plane(Camera.main.transform.forward,_basePos);
 		float dist = plane.GetDistanceToPoint(Camera.main.transform.position);
@@ -166,7 +167,7 @@ public class TmUtils {
 		retPos = Camera.main.ScreenToWorldPoint(scrPos);
 		
 		Vector2 d=Vector2.zero;
-		switch(_ancor){
+		switch(_ancor){ // 中心原点からの相対 
 			case TextAnchor.UpperLeft:    d.x =  0.5f;  d.y = -0.5f;  break;
 			case TextAnchor.UpperCenter:  d.x =  0.0f;  d.y = -0.5f;  break;
 			case TextAnchor.UpperRight:   d.x = -0.5f;  d.y = -0.5f;  break;
@@ -182,5 +183,67 @@ public class TmUtils {
 		retPos += Camera.main.transform.up * d.y;
 
 		return retPos;
+	}
+
+	// ワールド系の(_worldRect,_dist)を左下(0,0)-(1,1)のRectにして返す 
+	public static Rect WorldToViewportRect(Rect _worldSizeRect, float _dist){
+		Rect retRect;
+		float worldZ = _dist + Camera.main.transform.position.z;
+		Vector3 worldCenter = new Vector3(_worldSizeRect.center.x,_worldSizeRect.center.y,worldZ);
+		Vector3 worldBottomLeft = new Vector3(_worldSizeRect.xMin,_worldSizeRect.yMin,worldZ);
+		Vector3 viewportCenter = Camera.main.WorldToViewportPoint(worldCenter);
+		Vector3 viewportBottomLeft = Camera.main.WorldToViewportPoint(worldBottomLeft);
+		Vector3 lengthVec = (viewportCenter - viewportBottomLeft) * 2.0f;
+		retRect = new Rect(viewportBottomLeft.x,viewportBottomLeft.y,lengthVec.x,lengthVec.y);
+		return retRect;
+	}
+	public static Rect WorldToScreenRect(Rect _worldSizeRect, float _dist){
+		Rect retRect = WorldToViewportRect(_worldSizeRect,_dist);
+		retRect.x *= Screen.width;
+		retRect.width *= Screen.width;
+		retRect.y *= Screen.height;
+		retRect.height *= Screen.height;
+		return retRect;
+	}
+	
+	// (0,0)-(1,1)のRectをワールド系のRectにして返す 
+	public static Rect ViewportToWorldRect(Rect _vierportRect, float _dist){
+		Vector3 bottomLeftVec = new Vector3(_vierportRect.xMin,_vierportRect.yMin,_dist);
+		bottomLeftVec = Camera.main.ViewportToWorldPoint(bottomLeftVec);
+		Vector3 upperRightVec = new Vector3(_vierportRect.xMax,_vierportRect.yMax,_dist);
+		upperRightVec = Camera.main.ViewportToWorldPoint(upperRightVec);
+		Vector3 worldSizeVec = (upperRightVec - bottomLeftVec);
+		Rect retRect = new Rect(bottomLeftVec.x,bottomLeftVec.y,worldSizeVec.x,worldSizeVec.y);
+		return retRect;
+	}
+	public static Rect ScreenToWorldRect(Rect _worldRect, float _dist){
+		Rect retRect = new Rect(_worldRect);
+		retRect.x /= Screen.width;
+		retRect.width /= Screen.width;
+		retRect.y /= Screen.height;
+		retRect.height /= Screen.height;
+		return ViewportToWorldRect(retRect,_dist);
+	}
+	
+	// 現在のRectを含む最小のべき乗Rectを取得(左下原点) 
+	public static Rect PowerOfTwoRect(Rect _srcRect, TextAnchor _ancor = TextAnchor.LowerLeft){
+		Rect retRect = new Rect(_srcRect);
+		retRect.width = (int)Mathf.Pow(2.0f,(Mathf.Floor(Mathf.Log((float)(_srcRect.width-1), 2.0f)) + 1.0f));
+		retRect.height = (int)Mathf.Pow(2.0f,(Mathf.Floor(Mathf.Log((float)(_srcRect.height-1), 2.0f)) + 1.0f));
+		Vector2 d = new Vector2(retRect.width - _srcRect.width,retRect.height - _srcRect.height);
+		switch(_ancor){ // 左下原点からの相対 
+			case TextAnchor.UpperLeft:    d.x *= 0.0f;  d.y *= 1.0f;  break;
+			case TextAnchor.UpperCenter:  d.x *= 0.5f;  d.y *= 1.0f;  break;
+			case TextAnchor.UpperRight:   d.x *= 1.0f;  d.y *= 1.0f;  break;
+			case TextAnchor.MiddleLeft:   d.x *= 0.0f;  d.y *= 0.5f;  break;
+			case TextAnchor.MiddleCenter: d.x *= 0.5f;  d.y *= 0.5f;  break;
+			case TextAnchor.MiddleRight:  d.x *= 1.0f;  d.y *= 0.5f;  break;
+			case TextAnchor.LowerLeft:    d.x *= 0.0f;  d.y *= 0.0f;  break;
+			case TextAnchor.LowerCenter:  d.x *= 0.5f;  d.y *= 0.0f;  break;
+			case TextAnchor.LowerRight:   d.x *= 1.0f;  d.y *= 0.0f;  break;
+		}
+		retRect.x = (int)(retRect.x+d.x);
+		retRect.y = (int)(retRect.y+d.y);
+		return retRect;
 	}
 }
