@@ -281,7 +281,7 @@ public class TmKeyRec{
 		if(mRecState==REC_STATE.PLAY){
 			KeyInfo outInfo;
 			ret = playOne(out outInfo);
-			if(mKey >=0){
+			if(ret >=0){
 				mInfo = outInfo;
 			}
 		}else{
