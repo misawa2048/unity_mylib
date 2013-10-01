@@ -1,12 +1,16 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.IO;
+using System.IO.Compression;
+using System.Runtime.Serialization.Formatters.Binary;
 
+//  - How to use -
 //  private TmKeyRec _key = new TmKeyRec();
 //  FixedUpdate(){ _key.fixedUpdate(); }
 //  _key.setRecState(REC/STOP/PLAY);
 
 public class TmKeyRec{
-	public const float VERSION = 0.03f;
+	public const float VERSION = 0.10f;
 	private const int DEF_REC_BUFF_SIZE = 65535;
 	public DEBUG_MODE debugMode = DEBUG_MODE.NONE;
 	
@@ -45,82 +49,96 @@ public class TmKeyRec{
 		public const int PAUSE   = (1<<14);
 		public const int DEBUG   = (1<<15);
 		
-		private GameObject _debugDispObj;
-		private int _data;
-		private int _old;
-		private int _trg;
-		public int data { get { return _data; } }
-		public int data_old { get { return _old; } }
-		public int data_trg { get { return _trg; } }
+		private GameObject mDebugDispObj;
+		private int mData;
+		public int data { get { return mData; } }
 		
 		public PAD_KEY(){ }
 		public PAD_KEY(PAD_KEY _origin){
-			_data = _origin.data;
-			_old = _origin._old;
-			_trg = _origin._trg;
+			mData = _origin.data;
 		}
 		public PAD_KEY clone(){ return new PAD_KEY(this); }
 		
 		public void updateInfo(int _setData=int.MaxValue){
-			_old = _data;
 			if(_setData!=int.MaxValue){
-				_data = _setData;
+				mData = _setData;
 			}else{
-				_data = 0;
-				if(Input.GetMouseButton(0)) _data |= MOUSE_L;
-				if(Input.GetMouseButton(1)) _data |= MOUSE_R;
-				if(Input.GetMouseButton(2)) _data |= MOUSE_M; // TRIG_Dと共用 
+				mData = 0;
+				if(Input.GetMouseButton(0)) mData |= MOUSE_L;
+				if(Input.GetMouseButton(1)) mData |= MOUSE_R;
+				if(Input.GetMouseButton(2)) mData |= MOUSE_M; // TRIG_Dと共用 
 	
-				if(Input.GetAxis("Mouse ScrollWheel") < 0.0f) _data |= WHEEL_U;
-				if(Input.GetAxis("Mouse ScrollWheel") > 0.0f) _data |= WHEEL_D;
+				if(Input.GetAxis("Mouse ScrollWheel") < 0.0f) mData |= WHEEL_U;
+				if(Input.GetAxis("Mouse ScrollWheel") > 0.0f) mData |= WHEEL_D;
 				
-				if(Input.GetKey(KeyCode.UpArrow))    _data |= UP;
-				if(Input.GetKey(KeyCode.DownArrow))  _data |= DOWN;
-				if(Input.GetKey(KeyCode.LeftArrow))  _data |= LEFT;
-				if(Input.GetKey(KeyCode.RightArrow)) _data |= RIGHT;
+				if(Input.GetKey(KeyCode.UpArrow))    mData |= UP;
+				if(Input.GetKey(KeyCode.DownArrow))  mData |= DOWN;
+				if(Input.GetKey(KeyCode.LeftArrow))  mData |= LEFT;
+				if(Input.GetKey(KeyCode.RightArrow)) mData |= RIGHT;
 				
-				if(Input.GetKey(KeyCode.Space)) _data |= TRIG_A;
-				if(Input.GetKey(KeyCode.X))     _data |= TRIG_B;
-				if(Input.GetKey(KeyCode.Z))     _data |= TRIG_C;
-				if(Input.GetKey(KeyCode.C))     _data |= TRIG_D; // MOUSE_Mと共用 
+				if(Input.GetKey(KeyCode.Space)) mData |= TRIG_A;
+				if(Input.GetKey(KeyCode.X))     mData |= TRIG_B;
+				if(Input.GetKey(KeyCode.Z))     mData |= TRIG_C;
+				if(Input.GetKey(KeyCode.C))     mData |= TRIG_D; // MOUSE_Mと共用 
 				
-				if(Input.GetKey(KeyCode.Home))  _data |= START;
-				if(Input.GetKey(KeyCode.End))   _data |= SELECT;
-				if(Input.GetKey(KeyCode.Pause)) _data |= PAUSE;
-				if(Input.GetKey(KeyCode.Break)) _data |= DEBUG;
+				if(Input.GetKey(KeyCode.Home))  mData |= START;
+				if(Input.GetKey(KeyCode.End))   mData |= SELECT;
+				if(Input.GetKey(KeyCode.Pause)) mData |= PAUSE;
+				if(Input.GetKey(KeyCode.Break)) mData |= DEBUG;
 			}
-			_trg = _data & (_data^_old);
 		}
 		
 		public void debugDisp(){
-			if(_debugDispObj==null){
-				_debugDispObj = new GameObject("_debugPAD_KEY");
-				_debugDispObj.AddComponent<GUIText>();
-				_debugDispObj.transform.position = Vector3.up;
-				_debugDispObj.guiText.fontSize = 12;
+			if(mDebugDispObj==null){
+				mDebugDispObj = new GameObject("_debugPAD_KEY");
+				mDebugDispObj.AddComponent<GUIText>();
+				mDebugDispObj.transform.position = Vector3.up;
+				mDebugDispObj.guiText.fontSize = 12;
 			}
-			_debugDispObj.guiText.text = System.Convert.ToString(_data, 02).PadLeft(32, '0');
+			mDebugDispObj.guiText.text = System.Convert.ToString(mData, 02).PadLeft(32, '0');
 		}
 	}
-	
+	//++++++++++++++++++++++++++++++++++++++++++
+#if true
+	public class PAD : PAD_KEY{
+		private int mOld;
+		private int mTrg;
+		public int dataOld { get { return mOld; } }
+		public int dataTrg { get { return mTrg; } }
+
+		public PAD(){ }
+		public PAD(PAD _origin){
+			base.clone();
+			mOld = _origin.mOld;
+			mTrg = _origin.mTrg;
+		}
+		public PAD clone(){ return new PAD(this); }
+
+		public void updateInfo(int _setData=int.MaxValue){
+			mOld = base.data;
+			base.updateInfo(_setData);
+			mTrg = base.data & (base.data^mOld);
+		}
+	}
+#endif	
 	//++++++++++++++++++++++++++++++++++++++++++
 	public class ANALOG{
 		public class RATE{
 			public const int DIV = 4096; // アナログ値分割(0-(DIV-1)) 
-			private int _rate; // 0-(DIV-1) 
+			private int mRate; // 0-(DIV-1) 
 			public int rate{
-				get { return _rate;}
-				set { _rate = (int)Mathf.Clamp(value,0,(DIV-1)); }
+				get { return mRate;}
+				set { mRate = (int)Mathf.Clamp(value,0,(DIV-1)); }
 			}
 			
 			public RATE(){}
 			public RATE(RATE _origin){
-				_rate = _origin._rate;
+				mRate = _origin.mRate;
 			}
 			public RATE clone(){ return new RATE(this); }
 			
 			public float rateF{ // -1.0f - 1.0f
-				get{ return (_rate / (float)(DIV-1))*2.0f-1.0f; }
+				get{ return (mRate / (float)(DIV-1))*2.0f-1.0f; }
 				set{
 					float df = value;
 					if(df>=0.0f){
@@ -135,14 +153,14 @@ public class TmKeyRec{
 						}
 						df *= -1;
 					}
-					_rate = (int)((df+1.0f)*0.5f * (float)(DIV-1));
+					mRate = (int)((df+1.0f)*0.5f * (float)(DIV-1));
 				}
 			}
 		}
 		
-		private Rect _touchRect;
-		public Rect touchRect { get{ return _touchRect; } }
-		private GameObject _debugDispObj;
+		private Rect mTouchRect;
+		public Rect touchRect { get{ return mTouchRect; } }
+		private GameObject mDebugDispObj;
 		public RATE hRate; // 0-(DIV-1) 
 		public RATE vRate; // 0-(DIV-1) 
 		public float angle{
@@ -152,12 +170,12 @@ public class TmKeyRec{
 		
 		public ANALOG():this(new Rect(0.0f,0.0f,1.0f,1.0f)){ }
 		public ANALOG(Rect _rect){
-			_touchRect = new Rect(_rect);
+			mTouchRect = new Rect(_rect);
 			hRate = new RATE();
 			vRate = new RATE();
 		}
 		public ANALOG(ANALOG _origin){
-			_touchRect = new Rect(_origin._touchRect);
+			mTouchRect = new Rect(_origin.mTouchRect);
 			hRate = new RATE(_origin.hRate);
 			vRate = new RATE(_origin.vRate);
 		}
@@ -169,7 +187,7 @@ public class TmKeyRec{
 			}else{
 				if(Input.GetMouseButton(0)){
 					Vector3 pos = Input.mousePosition;
-					Vector3 center = new Vector3(_touchRect.center.x*Screen.width,_touchRect.center.y*Screen.height,pos.z);
+					Vector3 center = new Vector3(mTouchRect.center.x*Screen.width,mTouchRect.center.y*Screen.height,pos.z);
 					angle = Mathf.Atan2((pos.x-center.x)/Screen.width,(pos.y-center.y)/Screen.height)/Mathf.PI;
 				}
 			}
@@ -181,10 +199,10 @@ public class TmKeyRec{
 		}
 		
 		public void drawGismoScreenPointToWorldPosition(Vector3 _point,float _angle,float _scale,float _ofsZ){
-			_point.x = Mathf.Clamp(_point.x,_touchRect.xMin*Screen.width,_touchRect.xMax*Screen.width);
-			_point.y = Mathf.Clamp(_point.y,_touchRect.yMin*Screen.height,_touchRect.yMax*Screen.height);
-			if(_debugDispObj==null){
-				_debugDispObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
+			_point.x = Mathf.Clamp(_point.x,mTouchRect.xMin*Screen.width,mTouchRect.xMax*Screen.width);
+			_point.y = Mathf.Clamp(_point.y,mTouchRect.yMin*Screen.height,mTouchRect.yMax*Screen.height);
+			if(mDebugDispObj==null){
+				mDebugDispObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
 			}
 			Ray ray = Camera.main.ScreenPointToRay(_point);
 			Vector3 p0 = ray.GetPoint(_ofsZ);
@@ -202,124 +220,144 @@ public class TmKeyRec{
 				p3 = ray.GetPoint(enter);
 			}
 			Vector3 p4 = p3 + (p0-p3);
-			_debugDispObj.transform.localScale = new Vector3((p2-p1).magnitude,(p4-p3).magnitude,1.0f);
-			_debugDispObj.transform.position = p0;
+			mDebugDispObj.transform.localScale = new Vector3((p2-p1).magnitude,(p4-p3).magnitude,1.0f);
+			mDebugDispObj.transform.position = p0;
 			Quaternion qua = Quaternion.AngleAxis(-_angle*180.0f,Camera.main.transform.forward);
-			_debugDispObj.transform.rotation = qua * Camera.main.transform.rotation;
+			mDebugDispObj.transform.rotation = qua * Camera.main.transform.rotation;
 		}
 	}
 	//++++++++++++++++++++++++++++++++++++++++++
 	public class KeyInfo{
-		private float _deltaTime;
-		private PAD_KEY _pad;
-		private ANALOG _anL;
-		private ANALOG _anR;
-		private void updateDeltaTime(){ _deltaTime = Time.deltaTime; }
-		public float deltaTime { get{ return _deltaTime; } }
-		public PAD_KEY pad { get{ return _pad; } }
-		public ANALOG anL { get{ return _anL; } }
-		public ANALOG anR { get{ return _anR; } }
+		private float mDeltaTime;
+		private int mCount;
+		private PAD_KEY mPad;
+		private ANALOG mAnL;
+		private ANALOG mAnR;
+		private void updateDeltaTime(){ mDeltaTime = Time.deltaTime; }
+		public float deltaTime { get{ return mDeltaTime; } }
+		public PAD_KEY pad { get{ return mPad; } }
+		public ANALOG anL { get{ return mAnL; } }
+		public ANALOG anR { get{ return mAnR; } }
 		
-		public KeyInfo(KeyInfo _origin):this(_origin._anL.touchRect,_origin._anR.touchRect){
-			_deltaTime = _origin._deltaTime;
-			_pad = _origin._pad.clone();
-			_anL = _origin._anL.clone();
-			_anR = _origin._anR.clone();
+		public KeyInfo(KeyInfo _origin):this(_origin.mAnL.touchRect,_origin.mAnR.touchRect){
+			mDeltaTime = _origin.mDeltaTime;
+			mCount = _origin.mCount;
+			mPad = _origin.mPad.clone();
+			mAnL = _origin.mAnL.clone();
+			mAnR = _origin.mAnR.clone();
 		}
 		public KeyInfo():this(new Rect(0.0f,0.0f,0.5f,0.5f),new Rect(0.5f,0.0f,0.5f,0.5f)){ }
 		public KeyInfo(Rect _lRect, Rect _rRect){
-			_pad = new PAD_KEY();
-			_anL = new ANALOG(_lRect);
-			_anR = new ANALOG(_rRect);
+			mCount = 1;
+			mPad = new PAD_KEY();
+			mAnL = new ANALOG(_lRect);
+			mAnR = new ANALOG(_rRect);
 		}
 		
 		public KeyInfo clone(){ return new KeyInfo(this);	}
 		
 		public void updateInfo(int _padData=int.MaxValue, float _angL=float.MaxValue, float _angR=float.MaxValue){
 			updateDeltaTime();
-			_pad.updateInfo(_padData);
-			_anL.updateInfo(_angL);
-			_anR.updateInfo(_angR);
+			mPad.updateInfo(_padData);
+			mAnL.updateInfo(_angL);
+			mAnR.updateInfo(_angR);
 		}
 	}
 	
 //=========================================
-	private KeyInfo _info;
-	private KeyInfo[] _recInfo;
-	private int _bufPtr;
-	private int _recSize;
-	public int recSize { get{ return _recSize; } }
-	private REC_STATE _recState;
+	private KeyInfo mInfo;
+	private KeyInfo[] mRecInfo;
+	private int mBufPtr;
+	private int mRecSize;
 	
-	public KeyInfo keyInfo { get{ return _info; } }
+	private int mKey;
+	private int mKeyOld;
+	private int mKeyTrg;
+	public int keyOld { get { return mKeyOld; } }
+	public int keyTrg { get { return mKeyTrg; } }
+	
+	public int recSize { get{ return mRecSize; } }
+	private REC_STATE mRecState;
+	
+	public KeyInfo keyInfo { get{ return mInfo; } }
 	public KeyInfo[] recInfo {
 		get{
-			KeyInfo[] ret = new KeyInfo[_bufPtr];
-			_recInfo.CopyTo(ret,0);
+			KeyInfo[] ret = new KeyInfo[mBufPtr];
+			mRecInfo.CopyTo(ret,0);
 			return ret;
 		}
 	}
 	
 	public TmKeyRec():this(new Rect(0.0f,0.0f,0.5f,0.5f),new Rect(0.5f,0.0f,0.5f,0.5f)){ }
 	public TmKeyRec(TmKeyRec _origin){
-		_info = new KeyInfo(_origin.keyInfo);
-		_recInfo = new KeyInfo[DEF_REC_BUFF_SIZE];
-		_origin._recInfo.CopyTo(_recInfo,0);
-		_bufPtr = _origin._bufPtr;
-		_recSize = _origin._recSize;
-		_recState = _origin._recState;
+		mInfo = new KeyInfo(_origin.keyInfo);
+		mRecInfo = new KeyInfo[DEF_REC_BUFF_SIZE];
+		_origin.mRecInfo.CopyTo(mRecInfo,0);
+		mBufPtr = _origin.mBufPtr;
+		mRecSize = _origin.mRecSize;
+		mRecState = _origin.mRecState;
+		mKey = _origin.mKey;
+		mKeyOld = _origin.mKeyOld;
+		mKeyTrg = _origin.mKeyTrg;
 	}
 	public TmKeyRec(Rect _lRect, Rect _rRect){
-		_info = new KeyInfo(_lRect, _rRect);
-		_recInfo = new KeyInfo[DEF_REC_BUFF_SIZE];
-		_bufPtr = _recSize = 0;
+		mInfo = new KeyInfo(_lRect, _rRect);
+		mRecInfo = new KeyInfo[DEF_REC_BUFF_SIZE];
+		mBufPtr = mRecSize = 0;
+		mKey = mKeyOld = mKeyTrg = 0;
 	}
 	public TmKeyRec clone(){ return new TmKeyRec(this);	}
 	
 	public int fixedUpdate(int _padData=int.MaxValue, float _angL=float.MaxValue, float _angR=float.MaxValue){
-		int ret = -1;
-		if(_recState==REC_STATE.PLAY){
+		mKeyOld = mKey;
+		mKey = -1;
+		if(mRecState==REC_STATE.PLAY){
 			KeyInfo outInfo;
-			ret = playOne(out outInfo);
-			if(ret >=0){
-				_info = outInfo;
+			mKey = playOne(out outInfo);
+			if(mKey >=0){
+				mInfo = outInfo;
 			}
 		}else{
-			_info.updateInfo(_padData, _angL, _angR);
-			if(_recState==REC_STATE.REC){
-				ret = recOne(_info);
+			mInfo.updateInfo(_padData, _angL, _angR);
+			if(mRecState==REC_STATE.REC){
+				mKey = recOne(mInfo);
 			}
 		}
+		mKeyTrg = mKey & (mKey^mKeyOld);
 		
 		if(((int)debugMode & (int)DEBUG_MODE.DISP_PAD)!=0){
-			_info.pad.debugDisp();
+			mInfo.pad.debugDisp();
 		}
 		if(((int)debugMode & (int)DEBUG_MODE.DISP_ANALOG)!=0){
-			_info.anL.debugDisp();
-			_info.anR.debugDisp();
+			mInfo.anL.debugDisp();
+			mInfo.anR.debugDisp();
 		}
-		return ret;
+
+		return mKey;
 	}
 	
 	public REC_STATE setRecState(REC_STATE _newState){
-		REC_STATE old = _recState;
-		_recState = _newState;
+		REC_STATE old = mRecState;
+		mRecState = _newState;
 		if(old != _newState){
-			_bufPtr = 0;
+			mBufPtr = 0;
 			if(_newState == REC_STATE.REC){
-				_recSize = 0;
+				mRecSize = 0;
 			}
 		}
 		return old;
 	}
+
+//	public byte[] getCompressedInfo(){ return new byte[0]; }
+//	public KeyInfo decompressInfo(byte[] _compressed){ return mInfo; }
 	
 	private int recOne(KeyInfo _data){
 		int ret = -1;
-		if(_bufPtr < DEF_REC_BUFF_SIZE){
-			_recInfo[_bufPtr] = _data.clone();
-			ret = _bufPtr;
-			_bufPtr++;
-			_recSize = _bufPtr;
+		if(mBufPtr < DEF_REC_BUFF_SIZE){
+			mRecInfo[mBufPtr] = _data.clone();
+			ret = mBufPtr;
+			mBufPtr++;
+			mRecSize = mBufPtr;
 		}else{
 			Debug.Log("TmKeyRec:DEF_REC_BUFF_SIZE over!");	
 		}
@@ -330,14 +368,14 @@ public class TmKeyRec{
 		_outInfo = new KeyInfo();
 		int ret = -1;
 		if(_ptr>=0){
-			_bufPtr = _ptr;
+			mBufPtr = _ptr;
 		}
-		if(_bufPtr < _recSize){
-			_outInfo = _recInfo[_bufPtr];
-			ret = _bufPtr;
-			_bufPtr++;
+		if(mBufPtr < mRecSize){
+			_outInfo = mRecInfo[mBufPtr];
+			ret = mBufPtr;
+			mBufPtr++;
 		}
-// Debug.Log(_bufPtr+"/"+_recSize+"ang="+_outInfo.anL.angle);
+// Debug.Log(mBufPtr+"/"+mRecSize+"ang="+_outInfo.anL.angle);
 		return ret;
 	}
 }
