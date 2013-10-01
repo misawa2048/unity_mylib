@@ -10,7 +10,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 //  _key.setRecState(REC/STOP/PLAY);
 
 public class TmKeyRec{
-	public const float VERSION = 0.10f;
+	public const float VERSION = 0.20f;
 	private const int DEF_REC_BUFF_SIZE = 65535;
 	public DEBUG_MODE debugMode = DEBUG_MODE.NONE;
 	
@@ -52,6 +52,7 @@ public class TmKeyRec{
 		private GameObject mDebugDispObj;
 		private int mData;
 		public int data { get { return mData; } }
+		public bool isSameValue(PAD_KEY _tgt){ return (_tgt.data == mData); }
 		
 		public PAD_KEY(){ }
 		public PAD_KEY(PAD_KEY _origin){
@@ -87,19 +88,9 @@ public class TmKeyRec{
 				if(Input.GetKey(KeyCode.Break)) mData |= DEBUG;
 			}
 		}
-		
-		public void debugDisp(){
-			if(mDebugDispObj==null){
-				mDebugDispObj = new GameObject("_debugPAD_KEY");
-				mDebugDispObj.AddComponent<GUIText>();
-				mDebugDispObj.transform.position = Vector3.up;
-				mDebugDispObj.guiText.fontSize = 12;
-			}
-			mDebugDispObj.guiText.text = System.Convert.ToString(mData, 02).PadLeft(32, '0');
-		}
 	}
 	//++++++++++++++++++++++++++++++++++++++++++
-#if true
+#if false
 	public class PAD : PAD_KEY{
 		private int mOld;
 		private int mTrg;
@@ -114,7 +105,7 @@ public class TmKeyRec{
 		}
 		public PAD clone(){ return new PAD(this); }
 
-		public void updateInfo(int _setData=int.MaxValue){
+		public void updateInfo(int _setData=0){
 			mOld = base.data;
 			base.updateInfo(_setData);
 			mTrg = base.data & (base.data^mOld);
@@ -158,72 +149,30 @@ public class TmKeyRec{
 			}
 		}
 		
-		private Rect mTouchRect;
-		public Rect touchRect { get{ return mTouchRect; } }
-		private GameObject mDebugDispObj;
 		public RATE hRate; // 0-(DIV-1) 
 		public RATE vRate; // 0-(DIV-1) 
+		public bool isSameValue(ANALOG _tgt){ return ((_tgt.hRate.rate == hRate.rate)&&(_tgt.vRate.rate == vRate.rate)); }
 		public float angle{
 			get{ return Mathf.Atan2(hRate.rateF,vRate.rateF)/Mathf.PI; }
 			set{ vRate.rateF = Mathf.Cos(value*Mathf.PI); hRate.rateF = Mathf.Sin(value*Mathf.PI); }
 		}
 		
-		public ANALOG():this(new Rect(0.0f,0.0f,1.0f,1.0f)){ }
-		public ANALOG(Rect _rect){
-			mTouchRect = new Rect(_rect);
+		public ANALOG(){
 			hRate = new RATE();
 			vRate = new RATE();
 		}
 		public ANALOG(ANALOG _origin){
-			mTouchRect = new Rect(_origin.mTouchRect);
 			hRate = new RATE(_origin.hRate);
 			vRate = new RATE(_origin.vRate);
 		}
 		public ANALOG clone(){ return new ANALOG(this); }
 		
-		public void updateInfo(float _setAng=float.MaxValue){
-			if(_setAng!=float.MaxValue){
-				angle = _setAng;
-			}else{
-				if(Input.GetMouseButton(0)){
-					Vector3 pos = Input.mousePosition;
-					Vector3 center = new Vector3(mTouchRect.center.x*Screen.width,mTouchRect.center.y*Screen.height,pos.z);
-					angle = Mathf.Atan2((pos.x-center.x)/Screen.width,(pos.y-center.y)/Screen.height)/Mathf.PI;
-				}
-			}
+		public void updateInfo(float _setAng=0.0f){
+			angle = _setAng;
 		}
-		
-		public void debugDisp(){
-			Vector3 point = Input.mousePosition;
-			drawGismoScreenPointToWorldPosition(point,angle,0.025f,1.0f);
-		}
-		
-		public void drawGismoScreenPointToWorldPosition(Vector3 _point,float _angle,float _scale,float _ofsZ){
-			_point.x = Mathf.Clamp(_point.x,mTouchRect.xMin*Screen.width,mTouchRect.xMax*Screen.width);
-			_point.y = Mathf.Clamp(_point.y,mTouchRect.yMin*Screen.height,mTouchRect.yMax*Screen.height);
-			if(mDebugDispObj==null){
-				mDebugDispObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
-			}
-			Ray ray = Camera.main.ScreenPointToRay(_point);
-			Vector3 p0 = ray.GetPoint(_ofsZ);
-			Plane plane = new Plane(ray.direction,p0);
-			ray = Camera.main.ScreenPointToRay(_point+Vector3.left * _scale * Screen.width);
-			float enter;
-			Vector3 p1 = ray.GetPoint(_ofsZ);
-			if( plane.Raycast(ray, out enter) ){
-				p1 = ray.GetPoint(enter);
-			}
-			Vector3 p2 = p1 + (p0-p1);
-			ray = Camera.main.ScreenPointToRay(_point+Vector3.up * _scale * Screen.height);
-			Vector3 p3 = ray.GetPoint(_ofsZ);
-			if( plane.Raycast(ray, out enter) ){
-				p3 = ray.GetPoint(enter);
-			}
-			Vector3 p4 = p3 + (p0-p3);
-			mDebugDispObj.transform.localScale = new Vector3((p2-p1).magnitude,(p4-p3).magnitude,1.0f);
-			mDebugDispObj.transform.position = p0;
-			Quaternion qua = Quaternion.AngleAxis(-_angle*180.0f,Camera.main.transform.forward);
-			mDebugDispObj.transform.rotation = qua * Camera.main.transform.rotation;
+		public void updateInfo(Vector3 _pos, Rect _rect){
+			Vector3 center = new Vector3(_rect.center.x*Screen.width,_rect.center.y*Screen.height,_pos.z);
+			angle = Mathf.Atan2((_pos.x-center.x)/Screen.width,(_pos.y-center.y)/Screen.height)/Mathf.PI;
 		}
 	}
 	//++++++++++++++++++++++++++++++++++++++++++
@@ -235,33 +184,48 @@ public class TmKeyRec{
 		private ANALOG mAnR;
 		private void updateDeltaTime(){ mDeltaTime = Time.deltaTime; }
 		public float deltaTime { get{ return mDeltaTime; } }
+		public float count { get{ return mCount; } }
 		public PAD_KEY pad { get{ return mPad; } }
 		public ANALOG anL { get{ return mAnL; } }
 		public ANALOG anR { get{ return mAnR; } }
 		
-		public KeyInfo(KeyInfo _origin):this(_origin.mAnL.touchRect,_origin.mAnR.touchRect){
+		public KeyInfo(KeyInfo _origin):this(){
 			mDeltaTime = _origin.mDeltaTime;
 			mCount = _origin.mCount;
 			mPad = _origin.mPad.clone();
 			mAnL = _origin.mAnL.clone();
 			mAnR = _origin.mAnR.clone();
 		}
-		public KeyInfo():this(new Rect(0.0f,0.0f,0.5f,0.5f),new Rect(0.5f,0.0f,0.5f,0.5f)){ }
-		public KeyInfo(Rect _lRect, Rect _rRect){
+		public KeyInfo(){
 			mCount = 1;
 			mPad = new PAD_KEY();
-			mAnL = new ANALOG(_lRect);
-			mAnR = new ANALOG(_rRect);
+			mAnL = new ANALOG();
+			mAnR = new ANALOG();
 		}
 		
 		public KeyInfo clone(){ return new KeyInfo(this);	}
 		
-		public void updateInfo(int _padData=int.MaxValue, float _angL=float.MaxValue, float _angR=float.MaxValue){
+		public void updateInfo(int _padData=0, float _angL=0.0f, float _angR=0.0f){
 			updateDeltaTime();
 			mPad.updateInfo(_padData);
 			mAnL.updateInfo(_angL);
 			mAnR.updateInfo(_angR);
 		}
+		public void updateInfo(int _padData, Rect _rectL, Rect _rectR){
+			updateDeltaTime();
+			mPad.updateInfo(_padData);
+			mAnL.updateInfo(Input.mousePosition,_rectL);
+			mAnR.updateInfo(Input.mousePosition,_rectR);
+		}
+
+		public bool isSameValue(KeyInfo _tgt){ return ((_tgt.pad.isSameValue(mPad))&&(_tgt.anL.isSameValue(mAnL))&&(_tgt.anR.isSameValue(mAnR))); }
+//		public KeyInfo[] compressedInfo(KeyInfo[] _srcArr){
+//			int cnt = 0;
+//			for(int ii = 0; ii < _srcArr.Length; ++ii){
+//				
+//			}
+//		}
+		public bool decompressInfo(byte[] _compressed){ return false; }
 	}
 	
 //=========================================
@@ -269,6 +233,10 @@ public class TmKeyRec{
 	private KeyInfo[] mRecInfo;
 	private int mBufPtr;
 	private int mRecSize;
+	
+	private GameObject mDebugPadDispObj;
+	private GameObject mDebugAnLDispObj;
+	private GameObject mDebugAnRDispObj;
 	
 	private int mKey;
 	private int mKeyOld;
@@ -288,7 +256,12 @@ public class TmKeyRec{
 		}
 	}
 	
-	public TmKeyRec():this(new Rect(0.0f,0.0f,0.5f,0.5f),new Rect(0.5f,0.0f,0.5f,0.5f)){ }
+	public TmKeyRec(){
+		mInfo = new KeyInfo();
+		mRecInfo = new KeyInfo[DEF_REC_BUFF_SIZE];
+		mBufPtr = mRecSize = 0;
+		mKey = mKeyOld = mKeyTrg = 0;
+	}
 	public TmKeyRec(TmKeyRec _origin){
 		mInfo = new KeyInfo(_origin.keyInfo);
 		mRecInfo = new KeyInfo[DEF_REC_BUFF_SIZE];
@@ -300,40 +273,35 @@ public class TmKeyRec{
 		mKeyOld = _origin.mKeyOld;
 		mKeyTrg = _origin.mKeyTrg;
 	}
-	public TmKeyRec(Rect _lRect, Rect _rRect){
-		mInfo = new KeyInfo(_lRect, _rRect);
-		mRecInfo = new KeyInfo[DEF_REC_BUFF_SIZE];
-		mBufPtr = mRecSize = 0;
-		mKey = mKeyOld = mKeyTrg = 0;
-	}
 	public TmKeyRec clone(){ return new TmKeyRec(this);	}
 	
 	public int fixedUpdate(int _padData=int.MaxValue, float _angL=float.MaxValue, float _angR=float.MaxValue){
+		int ret = -1;
 		mKeyOld = mKey;
-		mKey = -1;
 		if(mRecState==REC_STATE.PLAY){
 			KeyInfo outInfo;
-			mKey = playOne(out outInfo);
+			ret = playOne(out outInfo);
 			if(mKey >=0){
 				mInfo = outInfo;
 			}
 		}else{
 			mInfo.updateInfo(_padData, _angL, _angR);
 			if(mRecState==REC_STATE.REC){
-				mKey = recOne(mInfo);
+				ret = recOne(mInfo);
 			}
 		}
+		mKey = mInfo.pad.data;
 		mKeyTrg = mKey & (mKey^mKeyOld);
 		
 		if(((int)debugMode & (int)DEBUG_MODE.DISP_PAD)!=0){
-			mInfo.pad.debugDisp();
+			mDebugPadDispObj = debugPadDisp(mDebugPadDispObj);
 		}
 		if(((int)debugMode & (int)DEBUG_MODE.DISP_ANALOG)!=0){
-			mInfo.anL.debugDisp();
-			mInfo.anR.debugDisp();
+			mDebugAnLDispObj = debugAnalogDisp(mDebugAnLDispObj, mInfo.anL.angle, new Rect(0.0f,0.0f,0.5f,0.5f));
+			mDebugAnRDispObj = debugAnalogDisp(mDebugAnRDispObj, mInfo.anR.angle, new Rect(0.5f,0.0f,0.5f,0.5f));
 		}
 
-		return mKey;
+		return ret;
 	}
 	
 	public REC_STATE setRecState(REC_STATE _newState){
@@ -348,8 +316,8 @@ public class TmKeyRec{
 		return old;
 	}
 
-//	public byte[] getCompressedInfo(){ return new byte[0]; }
-//	public KeyInfo decompressInfo(byte[] _compressed){ return mInfo; }
+//	public KeyInfo[] compressedInfo(){}
+//	public bool decompressInfo(byte[] _compressed){ return false; }
 	
 	private int recOne(KeyInfo _data){
 		int ret = -1;
@@ -377,5 +345,51 @@ public class TmKeyRec{
 		}
 // Debug.Log(mBufPtr+"/"+mRecSize+"ang="+_outInfo.anL.angle);
 		return ret;
+	}
+	
+	//----------------------------------------------------------------------------
+	public GameObject debugPadDisp(GameObject _obj){
+		if(_obj==null){
+			_obj = new GameObject("_debugPAD_KEY");
+			_obj.AddComponent<GUIText>();
+			_obj.transform.position = Vector3.up;
+			_obj.guiText.fontSize = 12;
+		}
+		_obj.guiText.text = System.Convert.ToString(keyTrg, 02).PadLeft(32, '0');
+		return _obj;
+	}
+
+	public GameObject debugAnalogDisp(GameObject _obj,float _angle, Rect _rect){
+		Vector3 point = Input.mousePosition;
+		return drawGismoScreenPointToWorldPosition(_obj,_rect,point,_angle,0.025f,1.0f);
+	}
+	public GameObject drawGismoScreenPointToWorldPosition(GameObject _obj, Rect _rect, Vector3 _point,float _angle,float _scale,float _ofsZ){
+		_point.x = Mathf.Clamp(_point.x,_rect.xMin*Screen.width,_rect.xMax*Screen.width);
+		_point.y = Mathf.Clamp(_point.y,_rect.yMin*Screen.height,_rect.yMax*Screen.height);
+		if(_obj==null){
+			_obj = GameObject.CreatePrimitive(PrimitiveType.Quad);
+			_obj.name = "_debugANALOG";
+		}
+		Ray ray = Camera.main.ScreenPointToRay(_point);
+		Vector3 p0 = ray.GetPoint(_ofsZ);
+		Plane plane = new Plane(ray.direction,p0);
+		ray = Camera.main.ScreenPointToRay(_point+Vector3.left * _scale * Screen.width);
+		float enter;
+		Vector3 p1 = ray.GetPoint(_ofsZ);
+		if( plane.Raycast(ray, out enter) ){
+			p1 = ray.GetPoint(enter);
+		}
+		Vector3 p2 = p1 + (p0-p1);
+		ray = Camera.main.ScreenPointToRay(_point+Vector3.up * _scale * Screen.height);
+		Vector3 p3 = ray.GetPoint(_ofsZ);
+		if( plane.Raycast(ray, out enter) ){
+			p3 = ray.GetPoint(enter);
+		}
+		Vector3 p4 = p3 + (p0-p3);
+		_obj.transform.localScale = new Vector3((p2-p1).magnitude,(p4-p3).magnitude,1.0f);
+		_obj.transform.position = p0;
+		Quaternion qua = Quaternion.AngleAxis(-_angle*180.0f,Camera.main.transform.forward);
+		_obj.transform.rotation = qua * Camera.main.transform.rotation;
+		return _obj;
 	}
 }
