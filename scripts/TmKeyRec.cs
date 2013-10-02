@@ -90,25 +90,27 @@ public class TmKeyRec{
 		}
 	}
 	//++++++++++++++++++++++++++++++++++++++++++
-#if false
-	public class PAD : PAD_KEY{
+#if true
+	public class PAD{
+		private int mKey;
 		private int mOld;
 		private int mTrg;
-		public int dataOld { get { return mOld; } }
-		public int dataTrg { get { return mTrg; } }
+		public int key { get { return mKey; } }
+		public int old { get { return mOld; } }
+		public int trg { get { return mTrg; } }
 
-		public PAD(){ }
+		public PAD(){ mKey = mOld = mTrg = 0; }
 		public PAD(PAD _origin){
-			base.clone();
+			mKey = _origin.mKey;
 			mOld = _origin.mOld;
 			mTrg = _origin.mTrg;
 		}
 		public PAD clone(){ return new PAD(this); }
 
 		public void updateInfo(int _setData=0){
-			mOld = base.data;
-			base.updateInfo(_setData);
-			mTrg = base.data & (base.data^mOld);
+			mOld = mKey;
+			mKey = _setData;
+			mTrg = mKey & (mKey^mOld);
 		}
 	}
 #endif	
@@ -238,14 +240,14 @@ public class TmKeyRec{
 	private GameObject mDebugAnLDispObj;
 	private GameObject mDebugAnRDispObj;
 	
-	private int mKey;
-	private int mKeyOld;
-	private int mKeyTrg;
-	public int keyOld { get { return mKeyOld; } }
-	public int keyTrg { get { return mKeyTrg; } }
+	private PAD mPad;
+	public int padKey { get { return mPad.key; } }
+	public int padOld { get { return mPad.old; } }
+	public int padTrg { get { return mPad.trg; } }
 	
 	public int recSize { get{ return mRecSize; } }
 	private REC_STATE mRecState;
+	public REC_STATE recState { get { return mRecState; } }
 	
 	public KeyInfo keyInfo { get{ return mInfo; } }
 	public KeyInfo[] recInfo {
@@ -260,7 +262,8 @@ public class TmKeyRec{
 		mInfo = new KeyInfo();
 		mRecInfo = new KeyInfo[DEF_REC_BUFF_SIZE];
 		mBufPtr = mRecSize = 0;
-		mKey = mKeyOld = mKeyTrg = 0;
+		mRecState = REC_STATE.STOP;
+		mPad = new PAD();
 	}
 	public TmKeyRec(TmKeyRec _origin){
 		mInfo = new KeyInfo(_origin.keyInfo);
@@ -269,15 +272,12 @@ public class TmKeyRec{
 		mBufPtr = _origin.mBufPtr;
 		mRecSize = _origin.mRecSize;
 		mRecState = _origin.mRecState;
-		mKey = _origin.mKey;
-		mKeyOld = _origin.mKeyOld;
-		mKeyTrg = _origin.mKeyTrg;
+		mPad = new PAD(_origin.mPad);
 	}
 	public TmKeyRec clone(){ return new TmKeyRec(this);	}
 	
 	public int fixedUpdate(int _padData=int.MaxValue, float _angL=float.MaxValue, float _angR=float.MaxValue){
 		int ret = -1;
-		mKeyOld = mKey;
 		if(mRecState==REC_STATE.PLAY){
 			KeyInfo outInfo;
 			ret = playOne(out outInfo);
@@ -290,8 +290,7 @@ public class TmKeyRec{
 				ret = recOne(mInfo);
 			}
 		}
-		mKey = mInfo.pad.data;
-		mKeyTrg = mKey & (mKey^mKeyOld);
+		mPad.updateInfo(mInfo.pad.data);
 
 		debugDisp(mRecState);
 		
@@ -302,7 +301,9 @@ public class TmKeyRec{
 		REC_STATE old = mRecState;
 		mRecState = _newState;
 		if(old != _newState){
-			mBufPtr = 0;
+			if(_newState != REC_STATE.PAUSE){
+				mBufPtr = 0;
+			}
 			if(_newState == REC_STATE.REC){
 				mRecSize = 0;
 			}
@@ -330,7 +331,7 @@ public class TmKeyRec{
 		_outInfo = new KeyInfo();
 		int ret = -1;
 		if(_ptr>=0){
-			mBufPtr = _ptr;
+			mBufPtr = (_ptr < mRecSize) ? _ptr : (mRecSize-1);
 		}
 		if(mBufPtr < mRecSize){
 			_outInfo = mRecInfo[mBufPtr];
@@ -351,7 +352,7 @@ public class TmKeyRec{
 			default:               col = Color.gray;    break;
 		}
 		if(((int)debugMode & (int)DEBUG_MODE.DISP_PAD)!=0){
-			mDebugPadDispObj = debugPadDisp(mDebugPadDispObj, mInfo.pad.data, col);
+			mDebugPadDispObj = debugPadDisp(mDebugPadDispObj, padKey, col);
 		}
 		if(((int)debugMode & (int)DEBUG_MODE.DISP_ANALOG)!=0){
 			mDebugAnLDispObj = debugAnalogDisp(mDebugAnLDispObj, mInfo.anL.angle, col, new Rect(0.0f,0.0f,0.5f,0.5f));
