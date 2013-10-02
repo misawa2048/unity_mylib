@@ -10,10 +10,8 @@ using System.Runtime.Serialization.Formatters.Binary;
 //  _key.setRecState(REC/STOP/PLAY);
 
 public class TmKeyRec{
-	public const float VERSION = 0.20f;
+	public const float VERSION = 0.25f;
 	private const int DEF_REC_BUFF_SIZE = 65535;
-	public DEBUG_MODE debugMode = DEBUG_MODE.NONE;
-	
 	//++++++++++++++++++++++++++++++++++++++++++
 	public enum DEBUG_MODE{
 		NONE             = 0,
@@ -28,6 +26,11 @@ public class TmKeyRec{
 		REC,
 		PLAY,
 		PAUSE
+	};
+	
+	public enum BUFF_TYPE{
+		NORMAL,
+		RING
 	};
 	
 	public class PAD_KEY{
@@ -48,6 +51,7 @@ public class TmKeyRec{
 		public const int SELECT  = (1<<13);
 		public const int PAUSE   = (1<<14);
 		public const int DEBUG   = (1<<15);
+		public const int KEY_NUM_MAX = 16;
 		
 		private GameObject mDebugDispObj;
 		private int mData;
@@ -92,18 +96,28 @@ public class TmKeyRec{
 	//++++++++++++++++++++++++++++++++++++++++++
 #if true
 	public class PAD{
+		public const float DEF_REP_STT_TIME = 1.0f;
+		public const float DEF_REP_CONT_TIME = 0.1f;
 		private int mKey;
 		private int mOld;
 		private int mTrg;
+		private int mRel;
+		private int mRpt;
+		private float[]	mRepTimer;
+		private bool[] mIsRep;
 		public int key { get { return mKey; } }
 		public int old { get { return mOld; } }
 		public int trg { get { return mTrg; } }
+		public int rel { get { return mRel; } }
+		public int rpt { get { return mRpt; } }
 
-		public PAD(){ mKey = mOld = mTrg = 0; }
+		public PAD():this(null){}
 		public PAD(PAD _origin){
-			mKey = _origin.mKey;
-			mOld = _origin.mOld;
-			mTrg = _origin.mTrg;
+			mKey = (_origin!=null) ? _origin.mKey : 0;
+			mOld = (_origin!=null) ? _origin.mOld : 0;
+			mTrg = (_origin!=null) ? _origin.mTrg : 0;
+			mRepTimer =  (_origin!=null) ? (float[])_origin.mRepTimer.Clone() : new float[PAD_KEY.KEY_NUM_MAX];
+			mIsRep =  (_origin!=null) ? (bool[])_origin.mIsRep.Clone() : new bool[PAD_KEY.KEY_NUM_MAX];
 		}
 		public PAD clone(){ return new PAD(this); }
 
@@ -111,6 +125,25 @@ public class TmKeyRec{
 			mOld = mKey;
 			mKey = _setData;
 			mTrg = mKey & (mKey^mOld);
+			mRel = ~mKey & mOld;
+
+			// リピート情報の更新 
+			mRpt = mTrg;
+			for(int ii =0; ii<PAD_KEY.KEY_NUM_MAX; ++ii){
+				if( (mOld & (1<<ii)) != 0 ){
+					float repTime = (mIsRep[ii]) ? DEF_REP_CONT_TIME : DEF_REP_STT_TIME;
+					mRepTimer[ii] += Time.deltaTime;
+					if(mRepTimer[ii] >= repTime){
+						mIsRep[ii] = true;
+						mRepTimer[ii]-=repTime;
+						mRpt |= (1<<ii);
+					}
+				}else{
+					mIsRep[ii] = false;
+					mRepTimer[ii]=0.0f;
+				}
+			}
+			
 		}
 	}
 #endif	
@@ -231,23 +264,98 @@ public class TmKeyRec{
 	}
 	
 //=========================================
+	public class KeyInfoDebug{
+		public DEBUG_MODE debugMode = DEBUG_MODE.NONE;
+		private GameObject mPadDispObj;
+		private GameObject mAnLDispObj;
+		private GameObject mAnRDispObj;
+		
+		public void disp(REC_STATE _recState, int _padKey, float _angL, Rect _rectL, float _angR, Rect _rectR){
+			Color col;
+			switch(_recState){
+				case REC_STATE.PAUSE : col = Color.white;   break;
+				case REC_STATE.PLAY:   col = Color.green;   break;
+				case REC_STATE.REC:    col = Color.red;     break;
+				default:               col = Color.gray;    break;
+			}
+			if(((int)debugMode & (int)DEBUG_MODE.DISP_PAD)!=0){
+				mPadDispObj = padDisp(mPadDispObj, _padKey, col);
+			}
+			if(((int)debugMode & (int)DEBUG_MODE.DISP_ANALOG)!=0){
+				mAnLDispObj = analogDisp(mAnLDispObj, _angL, col, _rectL);
+				mAnRDispObj = analogDisp(mAnRDispObj, _angR, col, _rectR);
+			}
+		}
+		
+		private GameObject padDisp(GameObject _obj, int _pad, Color _col){
+			if(_obj==null){
+				_obj = new GameObject("_debugPAD_KEY");
+				_obj.AddComponent<GUIText>();
+				_obj.transform.position = Vector3.up;
+				_obj.guiText.fontSize = 10;
+			}
+			_obj.guiText.color = _col;
+			_obj.guiText.text = System.Convert.ToString(_pad, 02).PadLeft(32, '0');
+			return _obj;
+		}
+	
+		private GameObject analogDisp(GameObject _obj,float _angle, Color _col, Rect _rect){
+			Vector3 point = Input.mousePosition;
+			return drawGismoScreenPointToWorldPosition(_obj,_angle,_col,_rect,point,0.025f,1.0f);
+		}
+		private GameObject drawGismoScreenPointToWorldPosition(GameObject _obj,float _angle, Color _col, Rect _rect, Vector3 _point,float _scale,float _ofsZ){
+			_point.x = Mathf.Clamp(_point.x,_rect.xMin*Screen.width,_rect.xMax*Screen.width);
+			_point.y = Mathf.Clamp(_point.y,_rect.yMin*Screen.height,_rect.yMax*Screen.height);
+			if(_obj==null){
+				_obj = GameObject.CreatePrimitive(PrimitiveType.Quad);
+				_obj.name = "_debugANALOG";
+			}
+			Ray ray = Camera.main.ScreenPointToRay(_point);
+			Vector3 p0 = ray.GetPoint(_ofsZ);
+			Plane plane = new Plane(ray.direction,p0);
+			ray = Camera.main.ScreenPointToRay(_point+Vector3.left * _scale * Screen.width);
+			float enter;
+			Vector3 p1 = ray.GetPoint(_ofsZ);
+			if( plane.Raycast(ray, out enter) ){
+				p1 = ray.GetPoint(enter);
+			}
+			Vector3 p2 = p1 + (p0-p1);
+			ray = Camera.main.ScreenPointToRay(_point+Vector3.up * _scale * Screen.height);
+			Vector3 p3 = ray.GetPoint(_ofsZ);
+			if( plane.Raycast(ray, out enter) ){
+				p3 = ray.GetPoint(enter);
+			}
+			Vector3 p4 = p3 + (p0-p3);
+			_obj.transform.localScale = new Vector3((p2-p1).magnitude,(p4-p3).magnitude,1.0f);
+			_obj.transform.position = p0;
+			Quaternion qua = Quaternion.AngleAxis(-_angle*180.0f,Camera.main.transform.forward);
+			_obj.transform.rotation = qua * Camera.main.transform.rotation;
+			_obj.renderer.material.color = _col;
+			return _obj;
+		}
+	}
+	
+//=========================================
 	private KeyInfo mInfo;
 	private KeyInfo[] mRecInfo;
 	private int mBufPtr;
 	private int mRecSize;
 	
-	private GameObject mDebugPadDispObj;
-	private GameObject mDebugAnLDispObj;
-	private GameObject mDebugAnRDispObj;
+	private KeyInfoDebug mDebug;
+	public DEBUG_MODE debugMode { set { mDebug.debugMode = value; } get { return mDebug.debugMode; } }
 	
 	private PAD mPad;
 	public int padKey { get { return mPad.key; } }
 	public int padOld { get { return mPad.old; } }
 	public int padTrg { get { return mPad.trg; } }
+	public int padRel { get { return mPad.rel; } }
+	public int padRpt { get { return mPad.rpt; } }
 	
 	public int recSize { get{ return mRecSize; } }
 	private REC_STATE mRecState;
+	private BUFF_TYPE mBuffType;
 	public REC_STATE recState { get { return mRecState; } }
+	private BUFF_TYPE buffType { get { return mBuffType; } }
 	
 	public KeyInfo keyInfo { get{ return mInfo; } }
 	public KeyInfo[] recInfo {
@@ -263,7 +371,9 @@ public class TmKeyRec{
 		mRecInfo = new KeyInfo[DEF_REC_BUFF_SIZE];
 		mBufPtr = mRecSize = 0;
 		mRecState = REC_STATE.STOP;
+		mBuffType = BUFF_TYPE.NORMAL;
 		mPad = new PAD();
+		mDebug = new KeyInfoDebug();
 	}
 	public TmKeyRec(TmKeyRec _origin){
 		mInfo = new KeyInfo(_origin.keyInfo);
@@ -272,7 +382,9 @@ public class TmKeyRec{
 		mBufPtr = _origin.mBufPtr;
 		mRecSize = _origin.mRecSize;
 		mRecState = _origin.mRecState;
+		mBuffType = BUFF_TYPE.NORMAL;
 		mPad = new PAD(_origin.mPad);
+		mDebug = new KeyInfoDebug();
 	}
 	public TmKeyRec clone(){ return new TmKeyRec(this);	}
 	
@@ -292,8 +404,8 @@ public class TmKeyRec{
 		}
 		mPad.updateInfo(mInfo.pad.data);
 
-		debugDisp(mRecState);
-		
+		//debugDisp(mRecState);
+		mDebug.disp(mRecState,padKey,mInfo.anL.angle,new Rect(0.0f,0.0f,0.5f,0.5f),mInfo.anR.angle,new Rect(0.5f,0.0f,0.5f,0.5f));
 		return ret;
 	}
 	
@@ -340,70 +452,5 @@ public class TmKeyRec{
 		}
 // Debug.Log(mBufPtr+"/"+mRecSize+"ang="+_outInfo.anL.angle);
 		return ret;
-	}
-	
-	//----------------------------------------------------------------------------
-	public void debugDisp(REC_STATE _recState){
-		Color col;
-		switch(_recState){
-			case REC_STATE.PAUSE : col = Color.white;   break;
-			case REC_STATE.PLAY:   col = Color.green;   break;
-			case REC_STATE.REC:    col = Color.red;     break;
-			default:               col = Color.gray;    break;
-		}
-		if(((int)debugMode & (int)DEBUG_MODE.DISP_PAD)!=0){
-			mDebugPadDispObj = debugPadDisp(mDebugPadDispObj, padKey, col);
-		}
-		if(((int)debugMode & (int)DEBUG_MODE.DISP_ANALOG)!=0){
-			mDebugAnLDispObj = debugAnalogDisp(mDebugAnLDispObj, mInfo.anL.angle, col, new Rect(0.0f,0.0f,0.5f,0.5f));
-			mDebugAnRDispObj = debugAnalogDisp(mDebugAnRDispObj, mInfo.anR.angle, col, new Rect(0.5f,0.0f,0.5f,0.5f));
-		}
-	}
-	
-	private GameObject debugPadDisp(GameObject _obj, int _pad, Color _col){
-		if(_obj==null){
-			_obj = new GameObject("_debugPAD_KEY");
-			_obj.AddComponent<GUIText>();
-			_obj.transform.position = Vector3.up;
-			_obj.guiText.fontSize = 10;
-		}
-		_obj.guiText.color = _col;
-		_obj.guiText.text = System.Convert.ToString(_pad, 02).PadLeft(32, '0');
-		return _obj;
-	}
-
-	private GameObject debugAnalogDisp(GameObject _obj,float _angle, Color _col, Rect _rect){
-		Vector3 point = Input.mousePosition;
-		return drawGismoScreenPointToWorldPosition(_obj,_angle,_col,_rect,point,0.025f,1.0f);
-	}
-	private GameObject drawGismoScreenPointToWorldPosition(GameObject _obj,float _angle, Color _col, Rect _rect, Vector3 _point,float _scale,float _ofsZ){
-		_point.x = Mathf.Clamp(_point.x,_rect.xMin*Screen.width,_rect.xMax*Screen.width);
-		_point.y = Mathf.Clamp(_point.y,_rect.yMin*Screen.height,_rect.yMax*Screen.height);
-		if(_obj==null){
-			_obj = GameObject.CreatePrimitive(PrimitiveType.Quad);
-			_obj.name = "_debugANALOG";
-		}
-		Ray ray = Camera.main.ScreenPointToRay(_point);
-		Vector3 p0 = ray.GetPoint(_ofsZ);
-		Plane plane = new Plane(ray.direction,p0);
-		ray = Camera.main.ScreenPointToRay(_point+Vector3.left * _scale * Screen.width);
-		float enter;
-		Vector3 p1 = ray.GetPoint(_ofsZ);
-		if( plane.Raycast(ray, out enter) ){
-			p1 = ray.GetPoint(enter);
-		}
-		Vector3 p2 = p1 + (p0-p1);
-		ray = Camera.main.ScreenPointToRay(_point+Vector3.up * _scale * Screen.height);
-		Vector3 p3 = ray.GetPoint(_ofsZ);
-		if( plane.Raycast(ray, out enter) ){
-			p3 = ray.GetPoint(enter);
-		}
-		Vector3 p4 = p3 + (p0-p3);
-		_obj.transform.localScale = new Vector3((p2-p1).magnitude,(p4-p3).magnitude,1.0f);
-		_obj.transform.position = p0;
-		Quaternion qua = Quaternion.AngleAxis(-_angle*180.0f,Camera.main.transform.forward);
-		_obj.transform.rotation = qua * Camera.main.transform.rotation;
-		_obj.renderer.material.color = _col;
-		return _obj;
 	}
 }
