@@ -292,15 +292,9 @@ public class TmKeyRec{
 		}
 		mKey = mInfo.pad.data;
 		mKeyTrg = mKey & (mKey^mKeyOld);
-		
-		if(((int)debugMode & (int)DEBUG_MODE.DISP_PAD)!=0){
-			mDebugPadDispObj = debugPadDisp(mDebugPadDispObj);
-		}
-		if(((int)debugMode & (int)DEBUG_MODE.DISP_ANALOG)!=0){
-			mDebugAnLDispObj = debugAnalogDisp(mDebugAnLDispObj, mInfo.anL.angle, new Rect(0.0f,0.0f,0.5f,0.5f));
-			mDebugAnRDispObj = debugAnalogDisp(mDebugAnRDispObj, mInfo.anR.angle, new Rect(0.5f,0.0f,0.5f,0.5f));
-		}
 
+		debugDisp(mRecState);
+		
 		return ret;
 	}
 	
@@ -348,22 +342,40 @@ public class TmKeyRec{
 	}
 	
 	//----------------------------------------------------------------------------
-	public GameObject debugPadDisp(GameObject _obj){
+	public void debugDisp(REC_STATE _recState){
+		Color col;
+		switch(_recState){
+			case REC_STATE.PAUSE : col = Color.white;   break;
+			case REC_STATE.PLAY:   col = Color.green;   break;
+			case REC_STATE.REC:    col = Color.red;     break;
+			default:               col = Color.gray;    break;
+		}
+		if(((int)debugMode & (int)DEBUG_MODE.DISP_PAD)!=0){
+			mDebugPadDispObj = debugPadDisp(mDebugPadDispObj, mInfo.pad.data, col);
+		}
+		if(((int)debugMode & (int)DEBUG_MODE.DISP_ANALOG)!=0){
+			mDebugAnLDispObj = debugAnalogDisp(mDebugAnLDispObj, mInfo.anL.angle, col, new Rect(0.0f,0.0f,0.5f,0.5f));
+			mDebugAnRDispObj = debugAnalogDisp(mDebugAnRDispObj, mInfo.anR.angle, col, new Rect(0.5f,0.0f,0.5f,0.5f));
+		}
+	}
+	
+	private GameObject debugPadDisp(GameObject _obj, int _pad, Color _col){
 		if(_obj==null){
 			_obj = new GameObject("_debugPAD_KEY");
 			_obj.AddComponent<GUIText>();
 			_obj.transform.position = Vector3.up;
-			_obj.guiText.fontSize = 12;
+			_obj.guiText.fontSize = 10;
 		}
-		_obj.guiText.text = System.Convert.ToString(keyTrg, 02).PadLeft(32, '0');
+		_obj.guiText.color = _col;
+		_obj.guiText.text = System.Convert.ToString(_pad, 02).PadLeft(32, '0');
 		return _obj;
 	}
 
-	public GameObject debugAnalogDisp(GameObject _obj,float _angle, Rect _rect){
+	private GameObject debugAnalogDisp(GameObject _obj,float _angle, Color _col, Rect _rect){
 		Vector3 point = Input.mousePosition;
-		return drawGismoScreenPointToWorldPosition(_obj,_rect,point,_angle,0.025f,1.0f);
+		return drawGismoScreenPointToWorldPosition(_obj,_angle,_col,_rect,point,0.025f,1.0f);
 	}
-	public GameObject drawGismoScreenPointToWorldPosition(GameObject _obj, Rect _rect, Vector3 _point,float _angle,float _scale,float _ofsZ){
+	private GameObject drawGismoScreenPointToWorldPosition(GameObject _obj,float _angle, Color _col, Rect _rect, Vector3 _point,float _scale,float _ofsZ){
 		_point.x = Mathf.Clamp(_point.x,_rect.xMin*Screen.width,_rect.xMax*Screen.width);
 		_point.y = Mathf.Clamp(_point.y,_rect.yMin*Screen.height,_rect.yMax*Screen.height);
 		if(_obj==null){
@@ -390,6 +402,7 @@ public class TmKeyRec{
 		_obj.transform.position = p0;
 		Quaternion qua = Quaternion.AngleAxis(-_angle*180.0f,Camera.main.transform.forward);
 		_obj.transform.rotation = qua * Camera.main.transform.rotation;
+		_obj.renderer.material.color = _col;
 		return _obj;
 	}
 }
