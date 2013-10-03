@@ -37,17 +37,17 @@ public class TmKeyRec{
 	public class PAD_KEY{
 		public const int MOUSE_L = (1<<0);
 		public const int MOUSE_R = (1<<1);
-		public const int MOUSE_M = TRIG_D; // TRIG_Dと共用 
-		public const int WHEEL_U = (1<<2);
-		public const int WHEEL_D = (1<<3);
-		public const int UP      = (1<<4);
-		public const int DOWN    = (1<<5);
-		public const int LEFT    = (1<<6);
-		public const int RIGHT   = (1<<7);
-		public const int TRIG_A  = (1<<8);
-		public const int TRIG_B  = (1<<9);
-		public const int TRIG_C  = (1<<10);
-		public const int TRIG_D  = (1<<11); // MOUSE_Mと共用 
+		public const int MOUSE_M = (1<<2); // TRIG_Dと共用 
+		public const int WHEEL_U = (1<<3);
+		public const int WHEEL_D = (1<<4);
+		public const int UP      = (1<<5);
+		public const int DOWN    = (1<<6);
+		public const int LEFT    = (1<<7);
+		public const int RIGHT   = (1<<8);
+		public const int TRIG_A  = (1<<9);
+		public const int TRIG_B  = (1<<10);
+		public const int TRIG_C  = (1<<11);
+		public const int TRIG_D  = MOUSE_M; // MOUSE_Mと共用 
 		public const int START   = (1<<12);
 		public const int SELECT  = (1<<13);
 		public const int PAUSE   = (1<<14);
@@ -422,13 +422,33 @@ public class TmKeyRec{
 			if(mRecInfo.Length==0){
 				mRecInfo = new KeyInfo[mBuffSize];
 			}
-			if(_newState == REC_STATE.REC){
+			if(_newState == REC_STATE.STOP){
+				if(mBuffType == BUFF_TYPE.NORMAL){
+					mBuffPtr = -1;
+					mRecSize = 0;
+					mRecCtr = 0;
+					mPlayCtr = 0;
+				}else if(mBuffType == BUFF_TYPE.RING){
+					if(mRecSize == (mBuffPtr+1)){ // before buffer loop 
+						mBuffPtr = -1;
+					}
+					mPlayCtr = 0;
+				}
+			}else if(_newState == REC_STATE.REC){
 				mBuffPtr = -1;
 				mRecSize = 0;
 				mRecCtr = 0;
-			}else if(_newState == REC_STATE.PLAY){
-				mBuffPtr = -1;
 				mPlayCtr = 0;
+			}else if(_newState == REC_STATE.PLAY){
+				if(mBuffType == BUFF_TYPE.NORMAL){
+					mBuffPtr = -1;
+					mPlayCtr = 0;
+				}else if(mBuffType == BUFF_TYPE.RING){
+					if(mRecSize == (mBuffPtr+1)){ // before buffer loop 
+						mBuffPtr = -1;
+					}
+					mPlayCtr = 0;
+				}
 			}
 		}
 		return old;
@@ -475,14 +495,11 @@ public class TmKeyRec{
 				mRecInfo[mBuffPtr] = _data.clone();
 				mRecSize = (mBuffPtr+1);
 			}else{
-				Debug.Log("TmKeyRec:DEF_REC_BUFF_SIZE over!");	
+				Debug.Log("TmKeyRec: BuffSize over!");	
 			}
 		}else if(mBuffType == BUFF_TYPE.RING){
 			mRecCtr++;
-			mBuffPtr++;
-			if(mBuffPtr>=mBuffSize){
-				mBuffPtr = 0;
-			}
+			mBuffPtr = (mBuffPtr < (mBuffSize-1)) ? (mBuffPtr+1) : 0;
 			ret = mRecCtr;
 			mRecInfo[mBuffPtr] = _data.clone();
 			mRecSize = (mRecCtr < mBuffSize) ? mRecCtr : mBuffSize;
@@ -497,14 +514,25 @@ public class TmKeyRec{
 		int ret = -1;
 		if(mBuffType == BUFF_TYPE.NORMAL){
 			if(_ptr>=0){
-				mBuffPtr = (_ptr < mRecSize) ? _ptr : (mRecSize-1);
+				mBuffPtr = ((_ptr < mRecSize) ? _ptr : (mRecSize-1))-1; // ++される前の位置 
 			}
-			if(mBuffPtr < mRecSize){
+			if(mRecSize > (mPlayCtr+1)){
+				mPlayCtr++;
+				mBuffPtr++;
 				_outInfo = mRecInfo[mBuffPtr];
 				ret = mBuffPtr;
-				mBuffPtr++;
 			}
 		}else if(mBuffType == BUFF_TYPE.RING){
+			if(_ptr>=0){
+				mBuffPtr = ((_ptr < mRecSize) ? _ptr : (mRecSize-1))-1; // ++される前の位置 
+			}
+			if(mRecSize > (mPlayCtr+1)){
+				mPlayCtr++;
+				mBuffPtr = (mBuffPtr < (mBuffSize-1)) ? (mBuffPtr+1) : 0;
+				_outInfo = mRecInfo[mBuffPtr];
+				ret = mBuffPtr;
+			}else{
+			}
 		}
 		return ret;
 	}
