@@ -3,6 +3,7 @@ using System.Collections;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.Serialization.Formatters.Binary;
+using System;
 
 //  - How to use -
 //  private TmKeyRec _key = new TmKeyRec();
@@ -360,14 +361,16 @@ public class TmKeyRec{
 	private BUFF_TYPE buffType { get { return mBuffType; } }
 	
 	public KeyInfo keyInfo { get{ return mInfo; } }
-	public KeyInfo[] recInfo { get{	return (KeyInfo[])mRecInfo.Clone(); } }
+	public KeyInfo[] recInfoRaw { get{	return (KeyInfo[])mRecInfo.Clone(); } }
+	public KeyInfo[] recInfo { get{	return getSortedRecInfo(); } }
 	
 	public TmKeyRec():this(DEF_REC_BUFF_SIZE,BUFF_TYPE.NORMAL){}
 	public TmKeyRec(int _buffSize, BUFF_TYPE _buffType){
 		mBuffSize = _buffSize;
 		mInfo = new KeyInfo();
 		mRecInfo = new KeyInfo[0];
-		mBuffPtr = mRecSize = mRecCtr = mPlayCtr = 0;
+		mBuffPtr = -1;
+		mRecSize = mRecCtr = mPlayCtr = 0;
 		mRecState = REC_STATE.STOP;
 		mBuffType = _buffType;
 		mPad = new PAD();
@@ -388,6 +391,7 @@ public class TmKeyRec{
 	}
 	public TmKeyRec clone(){ return new TmKeyRec(this);	}
 	
+	//---------------
 	//! 返り値は記録/再生回数(終端で再生不可なら-1) 
 	public int fixedUpdate(int _padData=int.MaxValue, float _angL=float.MaxValue, float _angR=float.MaxValue){
 		int ret = -1;
@@ -410,6 +414,7 @@ public class TmKeyRec{
 		return ret;
 	}
 	
+	//---------------
 	public REC_STATE setRecState(REC_STATE _newState){
 		REC_STATE old = mRecState;
 		mRecState = _newState;
@@ -418,46 +423,74 @@ public class TmKeyRec{
 				mRecInfo = new KeyInfo[mBuffSize];
 			}
 			if(_newState == REC_STATE.REC){
-				mBuffPtr = 0;
+				mBuffPtr = -1;
 				mRecSize = 0;
 				mRecCtr = 0;
 			}else if(_newState == REC_STATE.PLAY){
-				mBuffPtr = 0;
+				mBuffPtr = -1;
 				mPlayCtr = 0;
 			}
 		}
 		return old;
 	}
 
-//	public KeyInfo[] compressedInfo(){}
+	//---------------
+	private KeyInfo[] getSortedRecInfo(){
+		KeyInfo[] retInfo;
+		if(mRecSize<=0){
+			retInfo	= new KeyInfo[0];
+		}else{
+			if(mBuffType == BUFF_TYPE.NORMAL){
+				retInfo = new KeyInfo[mRecCtr];
+				Array.Copy(mRecInfo,0,retInfo,0,mRecCtr);
+			}else if(mBuffType == BUFF_TYPE.RING){
+				retInfo = new KeyInfo[mRecSize];
+				if(mRecSize == (mBuffPtr+1)){ // before buffer loop 
+					Array.Copy(mRecInfo,0,retInfo,0,mRecSize);
+				}else{
+					int lastPtr = ((mBuffPtr+1)>=mBuffSize) ? 0 : (mBuffPtr+1);
+					Array.Copy(mRecInfo,lastPtr,retInfo,0,(mRecSize-lastPtr));
+					Array.Copy(mRecInfo,0,retInfo,(mRecSize-lastPtr),lastPtr);
+				}
+			}else{
+				retInfo	= new KeyInfo[0];
+			}
+			Array.Reverse(retInfo);
+		}
+		return retInfo;
+	}
+	
+	//	public KeyInfo[] compressedInfo(){}
 //	public bool decompressInfo(byte[] _compressed){ return false; }
 	
+	//---------------
 	//! 返り値はrec回数（失敗で-1） 
 	private int recOne(KeyInfo _data){
 		int ret = -1;
 		if(mBuffType == BUFF_TYPE.NORMAL){
-			if(mBuffPtr < mBuffSize){
+			if(mRecCtr < mBuffSize){
 				mRecCtr++;
+				mBuffPtr++;
 				ret = mRecCtr;
 				mRecInfo[mBuffPtr] = _data.clone();
-				mBuffPtr++;
-				mRecSize = mBuffPtr;
+				mRecSize = (mBuffPtr+1);
 			}else{
 				Debug.Log("TmKeyRec:DEF_REC_BUFF_SIZE over!");	
 			}
 		}else if(mBuffType == BUFF_TYPE.RING){
 			mRecCtr++;
-			ret = mRecCtr;
-			mRecInfo[mBuffPtr] = _data.clone();
 			mBuffPtr++;
 			if(mBuffPtr>=mBuffSize){
 				mBuffPtr = 0;
 			}
+			ret = mRecCtr;
+			mRecInfo[mBuffPtr] = _data.clone();
 			mRecSize = (mRecCtr < mBuffSize) ? mRecCtr : mBuffSize;
 		}
 		return ret;
 	}
 	
+	//---------------
 	//! 返り値は再生回数(終端で再生不可なら-1) 
 	private int playOne(out KeyInfo _outInfo, int _ptr=-1){
 		_outInfo = new KeyInfo();
