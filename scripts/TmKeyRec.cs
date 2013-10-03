@@ -224,18 +224,19 @@ public class TmKeyRec{
 		public ANALOG anL { get{ return mAnL; } }
 		public ANALOG anR { get{ return mAnR; } }
 		
-		public KeyInfo(KeyInfo _origin):this(){
+		public KeyInfo(){
+			mDeltaTime = 0.0f;
+			mCount = 1;
+			mPad = new PAD_KEY();
+			mAnL = new ANALOG();
+			mAnR = new ANALOG();
+		}
+		public KeyInfo(KeyInfo _origin){
 			mDeltaTime = _origin.mDeltaTime;
 			mCount = _origin.mCount;
 			mPad = _origin.mPad.clone();
 			mAnL = _origin.mAnL.clone();
 			mAnR = _origin.mAnR.clone();
-		}
-		public KeyInfo(){
-			mCount = 1;
-			mPad = new PAD_KEY();
-			mAnL = new ANALOG();
-			mAnR = new ANALOG();
 		}
 		
 		public KeyInfo clone(){ return new KeyInfo(this);	}
@@ -338,7 +339,9 @@ public class TmKeyRec{
 //=========================================
 	private KeyInfo mInfo;
 	private KeyInfo[] mRecInfo;
-	private int mBufPtr;
+	private int mBuffSize;
+	private int mBuffSttPtr;
+	private int mBuffPtr;
 	private int mRecSize;
 	
 	private KeyInfoDebug mDebug;
@@ -358,31 +361,29 @@ public class TmKeyRec{
 	private BUFF_TYPE buffType { get { return mBuffType; } }
 	
 	public KeyInfo keyInfo { get{ return mInfo; } }
-	public KeyInfo[] recInfo {
-		get{
-			KeyInfo[] ret = new KeyInfo[mBufPtr];
-			mRecInfo.CopyTo(ret,0);
-			return ret;
-		}
-	}
+	public KeyInfo[] recInfo { get{	return (KeyInfo[])mRecInfo.Clone(); } }
 	
-	public TmKeyRec(){
+	public TmKeyRec():this(DEF_REC_BUFF_SIZE,BUFF_TYPE.NORMAL){}
+	public TmKeyRec(int _buffSize, BUFF_TYPE _buffType){
+		mBuffSttPtr = 0;
+		mBuffSize = _buffSize;
 		mInfo = new KeyInfo();
-		mRecInfo = new KeyInfo[DEF_REC_BUFF_SIZE];
-		mBufPtr = mRecSize = 0;
+		mRecInfo = null;
+		mBuffPtr = mRecSize = 0;
 		mRecState = REC_STATE.STOP;
-		mBuffType = BUFF_TYPE.NORMAL;
+		mBuffType = _buffType;
 		mPad = new PAD();
 		mDebug = new KeyInfoDebug();
 	}
 	public TmKeyRec(TmKeyRec _origin){
+		mBuffSttPtr = _origin.mBuffSttPtr;
+		mBuffSize = _origin.mBuffSize;
 		mInfo = new KeyInfo(_origin.keyInfo);
-		mRecInfo = new KeyInfo[DEF_REC_BUFF_SIZE];
-		_origin.mRecInfo.CopyTo(mRecInfo,0);
-		mBufPtr = _origin.mBufPtr;
+		mRecInfo = (KeyInfo[])_origin.mRecInfo.Clone();
+		mBuffPtr = _origin.mBuffPtr;
 		mRecSize = _origin.mRecSize;
 		mRecState = _origin.mRecState;
-		mBuffType = BUFF_TYPE.NORMAL;
+		mBuffType = _origin.mBuffType;
 		mPad = new PAD(_origin.mPad);
 		mDebug = new KeyInfoDebug();
 	}
@@ -413,8 +414,11 @@ public class TmKeyRec{
 		REC_STATE old = mRecState;
 		mRecState = _newState;
 		if(old != _newState){
+			if(mRecInfo==null){
+				mRecInfo = new KeyInfo[mBuffSize];
+			}
 			if(_newState != REC_STATE.PAUSE){
-				mBufPtr = 0;
+				mBuffPtr = 0;
 			}
 			if(_newState == REC_STATE.REC){
 				mRecSize = 0;
@@ -428,11 +432,11 @@ public class TmKeyRec{
 	
 	private int recOne(KeyInfo _data){
 		int ret = -1;
-		if(mBufPtr < DEF_REC_BUFF_SIZE){
-			mRecInfo[mBufPtr] = _data.clone();
-			ret = mBufPtr;
-			mBufPtr++;
-			mRecSize = mBufPtr;
+		if(mBuffPtr < mBuffSize){
+			mRecInfo[mBuffPtr] = _data.clone();
+			ret = mBuffPtr;
+			mBuffPtr++;
+			mRecSize = mBuffPtr;
 		}else{
 			Debug.Log("TmKeyRec:DEF_REC_BUFF_SIZE over!");	
 		}
@@ -443,14 +447,14 @@ public class TmKeyRec{
 		_outInfo = new KeyInfo();
 		int ret = -1;
 		if(_ptr>=0){
-			mBufPtr = (_ptr < mRecSize) ? _ptr : (mRecSize-1);
+			mBuffPtr = (_ptr < mRecSize) ? _ptr : (mRecSize-1);
 		}
-		if(mBufPtr < mRecSize){
-			_outInfo = mRecInfo[mBufPtr];
-			ret = mBufPtr;
-			mBufPtr++;
+		if(mBuffPtr < mRecSize){
+			_outInfo = mRecInfo[mBuffPtr];
+			ret = mBuffPtr;
+			mBuffPtr++;
 		}
-// Debug.Log(mBufPtr+"/"+mRecSize+"ang="+_outInfo.anL.angle);
+// Debug.Log(mBuffPtr+"/"+mRecSize+"ang="+_outInfo.anL.angle);
 		return ret;
 	}
 }
