@@ -11,7 +11,7 @@ using System;
 //  _key.setRecState(REC/STOP/PLAY);
 
 public class TmKeyRec{
-	public const float VERSION = 0.31f;
+	public const float VERSION = 0.40f;
 	private const int DEF_REC_BUFF_SIZE = 65535;
 	//++++++++++++++++++++++++++++++++++++++++++
 	public enum DEBUG_MODE{
@@ -22,7 +22,7 @@ public class TmKeyRec{
 		ALL              = -1
 	};
 	
-	public enum REC_STATE{
+	public enum STATE{
 		STOP,
 		REC,
 		PLAY,
@@ -272,12 +272,12 @@ public class TmKeyRec{
 		private GameObject mAnLDispObj;
 		private GameObject mAnRDispObj;
 		
-		public void disp(REC_STATE _recState, int _padKey, float _angL, Rect _rectL, float _angR, Rect _rectR){
+		public void disp(STATE _recState, int _padKey, float _angL, Rect _rectL, float _angR, Rect _rectR){
 			Color col;
 			switch(_recState){
-				case REC_STATE.PAUSE : col = Color.white;   break;
-				case REC_STATE.PLAY:   col = Color.green;   break;
-				case REC_STATE.REC:    col = Color.red;     break;
+				case STATE.PAUSE : col = Color.white;   break;
+				case STATE.PLAY:   col = Color.green;   break;
+				case STATE.REC:    col = Color.red;     break;
 				default:               col = Color.gray;    break;
 			}
 			if(((int)debugMode & (int)DEBUG_MODE.DISP_PAD)!=0){
@@ -343,7 +343,7 @@ public class TmKeyRec{
 	private int mBuffSize;
 	private int mBuffPtr;
 	private int mRecSize;
-	private int mRecCtr;
+	private int mRecCtr; // for ringBuff
 	private int mPlayCtr;
 	
 	private KeyInfoDebug mDebug;
@@ -355,9 +355,9 @@ public class TmKeyRec{
 	public int buffSize { get{ return mBuffSize; } }
 	public int buffPtr { get{ return mBuffPtr; } }
 	public int recSize { get{ return mRecSize; } }
-	private REC_STATE mRecState;
+	private STATE mState;
 	private BUFF_TYPE mBuffType;
-	public REC_STATE recState { get { return mRecState; } }
+	public STATE state { get { return mState; } }
 	private BUFF_TYPE buffType { get { return mBuffType; } }
 	
 	public KeyInfo keyInfo { get{ return mInfo; } }
@@ -371,7 +371,7 @@ public class TmKeyRec{
 		mRecInfo = new KeyInfo[0];
 		mBuffPtr = -1;
 		mRecSize = mRecCtr = mPlayCtr = 0;
-		mRecState = REC_STATE.STOP;
+		mState = STATE.STOP;
 		mBuffType = _buffType;
 		mPad = new PAD();
 		mDebug = new KeyInfoDebug();
@@ -384,7 +384,7 @@ public class TmKeyRec{
 		mRecSize = _origin.mRecSize;
 		mRecCtr = _origin.mRecCtr;
 		mPlayCtr = _origin.mPlayCtr;
-		mRecState = _origin.mRecState;
+		mState = _origin.mState;
 		mBuffType = _origin.mBuffType;
 		mPad = new PAD(_origin.mPad);
 		mDebug = new KeyInfoDebug();
@@ -395,7 +395,7 @@ public class TmKeyRec{
 	//! 返り値は記録/再生回数(終端で再生不可なら-1) 
 	public int fixedUpdate(int _padData=int.MaxValue, float _angL=float.MaxValue, float _angR=float.MaxValue){
 		int ret = -1;
-		if(mRecState==REC_STATE.PLAY){
+		if(mState==STATE.PLAY){
 			KeyInfo outInfo;
 			ret = playOne(out outInfo);
 			if(ret >=0){
@@ -403,43 +403,41 @@ public class TmKeyRec{
 			}
 		}else{
 			mInfo.updateInfo(_padData, _angL, _angR);
-			if(mRecState==REC_STATE.REC){
+			if(mState==STATE.REC){
 				ret = recOne(mInfo);
 			}
 		}
 		mPad.updateInfo(mInfo.pad.data);
 
-		//debugDisp(mRecState);
-		mDebug.disp(mRecState,pad.key,mInfo.anL.angle,new Rect(0.0f,0.0f,0.5f,0.5f),mInfo.anR.angle,new Rect(0.5f,0.0f,0.5f,0.5f));
+		//debugDisp(mState);
+		mDebug.disp(mState,pad.key,mInfo.anL.angle,new Rect(0.0f,0.0f,0.5f,0.5f),mInfo.anR.angle,new Rect(0.5f,0.0f,0.5f,0.5f));
 		return ret;
 	}
 	
 	//---------------
-	public REC_STATE setRecState(REC_STATE _newState){
-		REC_STATE old = mRecState;
-		mRecState = _newState;
+	public STATE resetState(){ return setState(setState(STATE.STOP)); }
+	public STATE setState(STATE _newState){
+		STATE old = mState;
 		if(old != _newState){
+			mState = _newState;
 			if(mRecInfo.Length==0){
 				mRecInfo = new KeyInfo[mBuffSize];
 			}
-			if(_newState == REC_STATE.STOP){
+			if(_newState == STATE.STOP){
 				if(mBuffType == BUFF_TYPE.NORMAL){
 					mBuffPtr = -1;
 					mRecSize = 0;
 					mRecCtr = 0;
 					mPlayCtr = 0;
 				}else if(mBuffType == BUFF_TYPE.RING){
-					if(mRecSize == (mBuffPtr+1)){ // before buffer loop 
-						mBuffPtr = -1;
-					}
+					mBuffPtr = (mRecCtr % mRecSize)-1;
 					mPlayCtr = 0;
 				}
-			}else if(_newState == REC_STATE.REC){
+			}else if(_newState == STATE.REC){
 				mBuffPtr = -1;
 				mRecSize = 0;
 				mRecCtr = 0;
-				mPlayCtr = 0;
-			}else if(_newState == REC_STATE.PLAY){
+			}else if(_newState == STATE.PLAY){
 				if(mBuffType == BUFF_TYPE.NORMAL){
 					mBuffPtr = -1;
 					mPlayCtr = 0;
@@ -516,21 +514,23 @@ public class TmKeyRec{
 			if(_ptr>=0){
 				mBuffPtr = ((_ptr < mRecSize) ? _ptr : (mRecSize-1))-1; // ++される前の位置 
 			}
-			if(mRecSize > (mPlayCtr+1)){
+			if(mRecSize > mPlayCtr){
 				mPlayCtr++;
 				mBuffPtr++;
 				_outInfo = mRecInfo[mBuffPtr];
-				ret = mBuffPtr;
+				ret = mPlayCtr;
 			}
 		}else if(mBuffType == BUFF_TYPE.RING){
 			if(_ptr>=0){
 				mBuffPtr = ((_ptr < mRecSize) ? _ptr : (mRecSize-1))-1; // ++される前の位置 
+				mPlayCtr = (mBuffPtr % mRecSize)-mBuffPtr;
 			}
-			if(mRecSize > (mPlayCtr+1)){
+			if(mRecSize > mPlayCtr){
 				mPlayCtr++;
 				mBuffPtr = (mBuffPtr < (mBuffSize-1)) ? (mBuffPtr+1) : 0;
 				_outInfo = mRecInfo[mBuffPtr];
-				ret = mBuffPtr;
+				ret = mPlayCtr;
+
 			}else{
 			}
 		}
