@@ -11,7 +11,7 @@ using System;
 //  _key.setRecState(REC/STOP/PLAY);
 
 public class TmKeyRec{
-	public const float VERSION = 0.30f;
+	public const float VERSION = 0.31f;
 	private const int DEF_REC_BUFF_SIZE = 65535;
 	//++++++++++++++++++++++++++++++++++++++++++
 	public enum DEBUG_MODE{
