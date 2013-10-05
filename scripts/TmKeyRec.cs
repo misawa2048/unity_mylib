@@ -11,7 +11,7 @@ using System;
 //  _key.setRecState(REC/STOP/PLAY);
 
 public class TmKeyRec{
-	public const float VERSION = 0.40f;
+	public const float VERSION = 0.32f;
 	private const int DEF_REC_BUFF_SIZE = 65535;
 	//++++++++++++++++++++++++++++++++++++++++++
 	public enum DEBUG_MODE{
@@ -368,7 +368,7 @@ public class TmKeyRec{
 	public TmKeyRec(int _buffSize, BUFF_TYPE _buffType){
 		mBuffSize = _buffSize;
 		mInfo = new KeyInfo();
-		mRecInfo = new KeyInfo[0];
+		mRecInfo = new KeyInfo[mBuffSize];
 		mBuffPtr = -1;
 		mRecSize = mRecCtr = mPlayCtr = 0;
 		mState = STATE.STOP;
@@ -426,8 +426,6 @@ public class TmKeyRec{
 			if(_newState == STATE.STOP){
 				if(mBuffType == BUFF_TYPE.NORMAL){
 					mBuffPtr = -1;
-					mRecSize = 0;
-					mRecCtr = 0;
 					mPlayCtr = 0;
 				}else if(mBuffType == BUFF_TYPE.RING){
 					mBuffPtr = (mRecCtr % mRecSize)-1;
