@@ -242,14 +242,14 @@ public class TmKeyRec{
 		
 		public KeyInfo clone(){ return new KeyInfo(this);	}
 		
-		public void updateInfo(int _padData=0, float _angL=0.0f, float _angR=0.0f){
-			updateDeltaTime(Time.deltaTime);
+		public void updateInfo(float _deltaTime, int _padData=0, float _angL=0.0f, float _angR=0.0f){
+			updateDeltaTime(_deltaTime);
 			mPad.updateInfo(_padData);
 			mAnL.updateInfo(_angL);
 			mAnR.updateInfo(_angR);
 		}
-		public void updateInfo(int _padData, Rect _rectL, Rect _rectR){
-			updateDeltaTime(Time.deltaTime);
+		public void updateInfo(float _deltaTime, int _padData, Rect _rectL, Rect _rectR){
+			updateDeltaTime(_deltaTime);
 			mPad.updateInfo(_padData);
 			mAnL.updateInfo(Input.mousePosition,_rectL);
 			mAnR.updateInfo(Input.mousePosition,_rectR);
@@ -404,7 +404,7 @@ public class TmKeyRec{
 				mInfo = outInfo;
 			}
 		}else{
-			mInfo.updateInfo(_padData, _angL, _angR);
+			mInfo.updateInfo(_deltaTime, _padData, _angL, _angR);
 			if(mState==STATE.REC){
 				ret = recOne(mInfo);
 			}
