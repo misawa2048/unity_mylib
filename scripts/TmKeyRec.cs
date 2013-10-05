@@ -11,7 +11,7 @@ using System;
 //  _key.setRecState(REC/STOP/PLAY);
 
 public class TmKeyRec{
-	public const float VERSION = 0.43f;
+	public const float VERSION = 0.45f;
 	private const int DEF_REC_BUFF_SIZE = 65535;
 	//++++++++++++++++++++++++++++++++++++++++++
 	public enum DEBUG_MODE{
@@ -122,7 +122,7 @@ public class TmKeyRec{
 		}
 		public PAD clone(){ return new PAD(this); }
 
-		public void updateInfo(int _setData=0){
+		public void updateInfo(float _deltaTime, int _setData){
 			mOld = mKey;
 			mKey = _setData;
 			mTrg = mKey & (mKey^mOld);
@@ -133,7 +133,7 @@ public class TmKeyRec{
 			for(int ii =0; ii<PAD_KEY.KEY_NUM_MAX; ++ii){
 				if( (mOld & (1<<ii)) != 0 ){
 					float repTime = (mIsRep[ii]) ? DEF_REP_CONT_TIME : DEF_REP_STT_TIME;
-					mRepTimer[ii] += Time.deltaTime;
+					mRepTimer[ii] += _deltaTime;
 					if(mRepTimer[ii] >= repTime){
 						mIsRep[ii] = true;
 						mRepTimer[ii]-=repTime;
@@ -218,7 +218,7 @@ public class TmKeyRec{
 		private PAD_KEY mPad;
 		private ANALOG mAnL;
 		private ANALOG mAnR;
-		private void updateDeltaTime(){ mDeltaTime = Time.deltaTime; }
+		private void updateDeltaTime(float _deltaTime){ mDeltaTime = _deltaTime; }
 		public float deltaTime { get{ return mDeltaTime; } }
 		public float count { get{ return mCount; } }
 		public PAD_KEY pad { get{ return mPad; } }
@@ -243,13 +243,13 @@ public class TmKeyRec{
 		public KeyInfo clone(){ return new KeyInfo(this);	}
 		
 		public void updateInfo(int _padData=0, float _angL=0.0f, float _angR=0.0f){
-			updateDeltaTime();
+			updateDeltaTime(Time.deltaTime);
 			mPad.updateInfo(_padData);
 			mAnL.updateInfo(_angL);
 			mAnR.updateInfo(_angR);
 		}
 		public void updateInfo(int _padData, Rect _rectL, Rect _rectR){
-			updateDeltaTime();
+			updateDeltaTime(Time.deltaTime);
 			mPad.updateInfo(_padData);
 			mAnL.updateInfo(Input.mousePosition,_rectL);
 			mAnR.updateInfo(Input.mousePosition,_rectR);
@@ -395,7 +395,7 @@ public class TmKeyRec{
 	
 	//---------------
 	//! 返り値は記録/再生回数(終端で再生不可なら-1) 
-	public int fixedUpdate(int _padData=int.MaxValue, float _angL=float.MaxValue, float _angR=float.MaxValue){
+	public int fixedUpdate(float _deltaTime, int _padData=int.MaxValue, float _angL=float.MaxValue, float _angR=float.MaxValue){
 		int ret = -1;
 		if(mState==STATE.PLAY){
 			KeyInfo outInfo;
@@ -409,7 +409,7 @@ public class TmKeyRec{
 				ret = recOne(mInfo);
 			}
 		}
-		mPad.updateInfo(mInfo.pad.data);
+		mPad.updateInfo(_deltaTime, mInfo.pad.data);
 
 		//debugDisp(mState);
 		mDebug.disp(mState,pad.key,mInfo.anL.angle,new Rect(0.0f,0.0f,0.5f,0.5f),mInfo.anR.angle,new Rect(0.5f,0.0f,0.5f,0.5f));
