@@ -7,11 +7,11 @@ using System;
 
 //  - How to use -
 //  private TmKeyRec _key = new TmKeyRec();
-//  FixedUpdate(){ _key.fixedUpdate(); }
-//  _key.setRecState(REC/STOP/PLAY);
+//  Update()/FixedUpdate(){ _key.update(); }
+//  _key.setRecState(REC/STOP/PAUSE/PLAY);
 
 public class TmKeyRec{
-	public const float VERSION = 0.45f;
+	public const float VERSION = 0.50f;
 	private const int DEF_REC_BUFF_SIZE = 65535;
 	//++++++++++++++++++++++++++++++++++++++++++
 	public enum DEBUG_MODE{
@@ -104,6 +104,8 @@ public class TmKeyRec{
 		private int mTrg;
 		private int mRel;
 		private int mRpt;
+		private float mRepSttTime;
+		private float mRepContTime;
 		private float[]	mRepTimer;
 		private bool[] mIsRep;
 		public int key { get { return mKey; } }
@@ -114,6 +116,8 @@ public class TmKeyRec{
 
 		public PAD():this(null){}
 		public PAD(PAD _origin){
+			mRepSttTime = (_origin!=null) ? _origin.mRepSttTime : DEF_REP_STT_TIME;
+			mRepContTime = (_origin!=null) ? _origin.mRepContTime : DEF_REP_CONT_TIME;
 			mKey = (_origin!=null) ? _origin.mKey : 0;
 			mOld = (_origin!=null) ? _origin.mOld : 0;
 			mTrg = (_origin!=null) ? _origin.mTrg : 0;
@@ -121,7 +125,12 @@ public class TmKeyRec{
 			mIsRep =  (_origin!=null) ? (bool[])_origin.mIsRep.Clone() : new bool[PAD_KEY.KEY_NUM_MAX];
 		}
 		public PAD clone(){ return new PAD(this); }
-
+		
+		public void setRepeatTime(float _repSttTime=DEF_REP_STT_TIME, float _RepContTime=DEF_REP_CONT_TIME){
+			mRepSttTime = _repSttTime;
+			mRepContTime = _RepContTime;
+		}
+		
 		public void updateInfo(float _deltaTime, int _setData){
 			mOld = mKey;
 			mKey = _setData;
@@ -132,7 +141,7 @@ public class TmKeyRec{
 			mRpt = mTrg;
 			for(int ii =0; ii<PAD_KEY.KEY_NUM_MAX; ++ii){
 				if( (mOld & (1<<ii)) != 0 ){
-					float repTime = (mIsRep[ii]) ? DEF_REP_CONT_TIME : DEF_REP_STT_TIME;
+					float repTime = (mIsRep[ii]) ? mRepContTime : mRepSttTime;
 					mRepTimer[ii] += _deltaTime;
 					if(mRepTimer[ii] >= repTime){
 						mIsRep[ii] = true;
@@ -144,28 +153,27 @@ public class TmKeyRec{
 					mRepTimer[ii]=0.0f;
 				}
 			}
-			
 		}
 	}
 #endif	
 	//++++++++++++++++++++++++++++++++++++++++++
 	public class ANALOG{
 		public class RATE{
-			public const int DIV = 4096; // アナログ値分割(0-(DIV-1)) 
+			public const int DEF_DIV = 4096; // アナログ値分割(0-(DEF_DIV-1)) 
 			private int mRate; // 0-(DIV-1) 
 			public int rate{
 				get { return mRate;}
-				set { mRate = (int)Mathf.Clamp(value,0,(DIV-1)); }
+				set { mRate = (int)Mathf.Clamp(value,0,(DEF_DIV-1)); }
 			}
 			
-			public RATE(){}
+			public RATE():this(null){}
 			public RATE(RATE _origin){
-				mRate = _origin.mRate;
+				mRate = (_origin!=null) ? _origin.mRate : 0;
 			}
 			public RATE clone(){ return new RATE(this); }
 			
 			public float rateF{ // -1.0f - 1.0f
-				get{ return (mRate / (float)(DIV-1))*2.0f-1.0f; }
+				get{ return (mRate / (float)(DEF_DIV-1))*2.0f-1.0f; }
 				set{
 					float df = value;
 					if(df>=0.0f){
@@ -180,7 +188,7 @@ public class TmKeyRec{
 						}
 						df *= -1;
 					}
-					mRate = (int)((df+1.0f)*0.5f * (float)(DIV-1));
+					mRate = (int)((df+1.0f)*0.5f * (float)(DEF_DIV-1));
 				}
 			}
 		}
@@ -395,7 +403,7 @@ public class TmKeyRec{
 	
 	//---------------
 	//! 返り値は記録/再生回数(終端で再生不可なら-1) 
-	public int fixedUpdate(float _deltaTime, int _padData=int.MaxValue, float _angL=float.MaxValue, float _angR=float.MaxValue){
+	public int update(float _deltaTime, int _padData=int.MaxValue, float _angL=float.MaxValue, float _angR=float.MaxValue){
 		int ret = -1;
 		if(mState==STATE.PLAY){
 			KeyInfo outInfo;
