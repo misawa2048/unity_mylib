@@ -11,7 +11,7 @@ using System;
 //  _key.setRecState(REC/STOP/PAUSE/PLAY);
 
 public class TmKeyRec{
-	public const float VERSION = 0.50f;
+	public const float VERSION = 0.60f;
 	private const int DEF_REC_BUFF_SIZE = 65535;
 	//++++++++++++++++++++++++++++++++++++++++++
 	public enum DEBUG_MODE{
@@ -214,6 +214,11 @@ public class TmKeyRec{
 		public void updateInfo(float _setAng=0.0f){
 			angle = _setAng;
 		}
+		public void updateInfo(float _vRateF, float _hRateF){
+			vRate.rateF = _vRateF;
+			hRate.rateF = _hRateF;
+		}
+		
 		public void updateInfo(Vector3 _pos, Rect _rect){
 			Vector3 center = new Vector3(_rect.center.x*Screen.width,_rect.center.y*Screen.height,_pos.z);
 			angle = Mathf.Atan2((_pos.x-center.x)/Screen.width,(_pos.y-center.y)/Screen.height)/Mathf.PI;
@@ -250,6 +255,12 @@ public class TmKeyRec{
 		
 		public KeyInfo clone(){ return new KeyInfo(this);	}
 		
+		public void updateInfo(float _deltaTime, int _padData, float _aLvRateF, float _aLhRateF, float _aRvRateF, float _aRhRateF){
+			updateDeltaTime(_deltaTime);
+			mPad.updateInfo(_padData);
+			mAnL.updateInfo(_aLvRateF,_aLhRateF);
+			mAnR.updateInfo(_aRvRateF,_aRhRateF);
+		}
 		public void updateInfo(float _deltaTime, int _padData=0, float _angL=0.0f, float _angR=0.0f){
 			updateDeltaTime(_deltaTime);
 			mPad.updateInfo(_padData);
@@ -402,8 +413,8 @@ public class TmKeyRec{
 	public TmKeyRec clone(){ return new TmKeyRec(this);	}
 	
 	//---------------
-	//! 返り値は記録/再生回数(終端で再生不可なら-1) 
-	public int update(float _deltaTime, int _padData=int.MaxValue, float _angL=float.MaxValue, float _angR=float.MaxValue){
+	//! 返値は記録/再生回数(終端で再生不可なら-1) 
+	public int update(float _deltaTime, int _padData, float _aLvRateF, float _aLhRateF, float _aRvRateF, float _aRhRateF){
 		int ret = -1;
 		if(mState==STATE.PLAY){
 			KeyInfo outInfo;
@@ -412,7 +423,7 @@ public class TmKeyRec{
 				mInfo = outInfo;
 			}
 		}else{
-			mInfo.updateInfo(_deltaTime, _padData, _angL, _angR);
+			mInfo.updateInfo(_deltaTime, _padData, _aLvRateF, _aLhRateF, _aRvRateF, _aRhRateF);
 			if(mState==STATE.REC){
 				ret = recOne(mInfo);
 			}
@@ -422,6 +433,11 @@ public class TmKeyRec{
 		//debugDisp(mState);
 		mDebug.disp(mState,pad.key,mInfo.anL.angle,new Rect(0.0f,0.0f,0.5f,0.5f),mInfo.anR.angle,new Rect(0.5f,0.0f,0.5f,0.5f));
 		return ret;
+	}
+	public int update(float _deltaTime, int _padData=int.MaxValue, float _angL=float.MaxValue, float _angR=float.MaxValue){
+		float angLP = _angL*Mathf.PI;
+		float angRP = _angR*Mathf.PI;
+		return update(_deltaTime, _padData, Mathf.Cos(angLP), Mathf.Sin(angLP), Mathf.Cos(angRP), Mathf.Sin(angRP));
 	}
 	
 	//---------------
