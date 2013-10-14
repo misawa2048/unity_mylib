@@ -8,7 +8,7 @@ public class AnimAttribute{
 }
 [System.Serializable]
 public class SpriteAnimation{
-	public const float VERSION = 2.0f;
+	public const float VERSION = 2.01f;
 	public string name;
 	public int[] frames;
 	public AnimAttribute[] attrs;
@@ -219,12 +219,15 @@ public class TmSpriteAnim : MonoBehaviour {
 		return setMeshUV(_uvPos, _size, _scaleAtUv);
 	}
 	public Mesh SetMeshUVByFrame(int _frame){
-		if(frames.Length < _frame) return getMesh();
+		if(frames.Length-1 < _frame) return getMesh();
 		mUvPos = mUvOfs+getDefFrame(_frame);
 		return setMeshUV(mUvPos, mDefSize, scaleAtUv);
 	}
 	
 	public Vector2[] AddFrame(Vector2 _vec){
+		if(frames==null){
+			frames = new Vector2[0];
+		}
 		Vector2[] ret = new Vector2[frames.Length+1];
 		frames.CopyTo(ret,0);
 		ret[frames.Length]=_vec;
