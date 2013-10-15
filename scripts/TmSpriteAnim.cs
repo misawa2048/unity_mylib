@@ -8,7 +8,7 @@ public class AnimAttribute{
 }
 [System.Serializable]
 public class SpriteAnimation{
-	public const float VERSION = 2.01f;
+	public const float VERSION = 2.1f;
 	public string name;
 	public int[] frames;
 	public AnimAttribute[] attrs;
@@ -33,12 +33,12 @@ public class TmSpriteAnim : MonoBehaviour {
 	public AnimAttribute[] frameAttrs;
 	public SpriteAnimation[] animations;
 	public string playOnAwake = "";
-	public bool scaleAtUv = false;
+	public bool scaleAtUv = true;
 	public bool setOnGrid = true;
 	public bool reverse = false;
 	public float fps = 20.0f;
 	private bool mEnabled;
-	private Vector2 mDefSize;
+	private Vector2 mDefSize { get{ return( (scaleAtUv) ? size : Vector2.Scale(size,mTexSizeInv) ); } }
 	private SpriteAnimation mCurrentAnm;
 	private float mAnimPtr;
 	private AnimAttribute mFrameAttr;
@@ -77,10 +77,6 @@ public class TmSpriteAnim : MonoBehaviour {
 		mTgetMat = outMatreial!=null ? outMatreial : renderer!=null ? renderer.sharedMaterial : null;
 		if((mTgetMat != null)&&(mTgetMat.mainTexture!=null)){
 			mTexSizeInv = new  Vector2(1.0f/(float)(mTgetMat.mainTexture.width),1.0f/(float)(mTgetMat.mainTexture.height));
-		}
-		mDefSize = size;
-		if(!scaleAtUv){
-			mDefSize.Scale(mTexSizeInv);
 		}
 		Mesh nowMesh = getMesh();
 		if(nowMesh==null){
@@ -236,10 +232,34 @@ public class TmSpriteAnim : MonoBehaviour {
 	}
 	
 	public SpriteAnimation[] AddAnimation(string _name, int[] _frames, bool _loop){
+		if(animations==null){
+			animations = new SpriteAnimation[0];
+		}
 		SpriteAnimation[] ret = new SpriteAnimation[animations.Length+1];
 		animations.CopyTo(ret,0);
 		ret[animations.Length] = new SpriteAnimation(_name, _frames, _loop);
 		animations = ret;
+		return ret;
+	}
+	
+	//! from texture tiling to TmSprAnmScale Settings.
+	public bool replaceTextureTiling(){
+		bool ret = false;
+		Material mat = renderer.material;
+		Vector2 txSze = mat.GetTextureScale("_MainTex");
+		Vector2 txOfs = mat.GetTextureOffset("_MainTex");
+		if((txSze!=Vector2.one)&&(txOfs!=Vector2.one)){
+			ret = true;
+			setOnGrid = true;
+			scaleAtUv = true;
+			size = txSze;
+			txOfs.y = 1.0f-(txSze.y+txOfs.y);
+			Debug.Log(tag+"::"+txSze.ToString()+":"+txOfs.ToString());
+			AddFrame(new Vector2(txOfs.x/txSze.x,txOfs.y/txSze.y));
+			SetMeshUVByFrame(0);
+			mat.SetTextureOffset("_MainTex",Vector2.zero);
+			mat.SetTextureScale("_MainTex",Vector2.one);
+		}
 		return ret;
 	}
 		
@@ -251,10 +271,12 @@ public class TmSpriteAnim : MonoBehaviour {
 			
 			// attribute取得
 			mFrameAttr = null;
-			for( int ii = 0; ii < frameAttrs.Length; ++ii){
-				if(frameAttrs[ii].frame==viewFrame){
-					mFrameAttr = frameAttrs[ii];
-					break;
+			if(frameAttrs!=null){
+				for( int ii = 0; ii < frameAttrs.Length; ++ii){
+					if(frameAttrs[ii].frame==viewFrame){
+						mFrameAttr = frameAttrs[ii];
+						break;
+					}
 				}
 			}
 			mAnimAttr = null;
