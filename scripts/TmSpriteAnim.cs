@@ -8,7 +8,7 @@ public class AnimAttribute{
 }
 [System.Serializable]
 public class SpriteAnimation{
-	public const float VERSION = 2.1f;
+	public const float VERSION = 2.11f;
 	public string name;
 	public int[] frames;
 	public AnimAttribute[] attrs;
@@ -243,7 +243,7 @@ public class TmSpriteAnim : MonoBehaviour {
 	}
 	
 	//! from texture tiling to TmSprAnmScale Settings.
-	public bool replaceTextureTiling(){
+	public bool replaceTextureTiling(Material _sharedMat){
 		bool ret = false;
 		Material mat = renderer.material;
 		Vector2 txSze = mat.GetTextureScale("_MainTex");
@@ -257,8 +257,7 @@ public class TmSpriteAnim : MonoBehaviour {
 			Debug.Log(tag+"::"+txSze.ToString()+":"+txOfs.ToString());
 			AddFrame(new Vector2(txOfs.x/txSze.x,txOfs.y/txSze.y));
 			SetMeshUVByFrame(0);
-			mat.SetTextureOffset("_MainTex",Vector2.zero);
-			mat.SetTextureScale("_MainTex",Vector2.one);
+			renderer.material = _sharedMat;
 		}
 		return ret;
 	}
