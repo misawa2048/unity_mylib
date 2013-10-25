@@ -250,7 +250,7 @@ public class TmSpriteAnim : MonoBehaviour {
 	}
 	
 	//! from texture tiling to TmSprAnmScale Settings.
-		public bool replaceTextureTiling(Material _sharedMat){ 
+	public bool replaceTextureTiling(Material _sharedMat){ 
 		bool ret = false;
 		Material mat = renderer.material;
 		Vector2 txSze = mat.GetTextureScale("_MainTex");
