@@ -8,7 +8,7 @@ public class AnimAttribute{
 }
 [System.Serializable]
 public class SpriteAnimation{
-	public const float VERSION = 2.1f;
+	public const float VERSION = 2.2f;
 	public string name;
 	public int[] frames;
 	public AnimAttribute[] attrs;
@@ -25,6 +25,12 @@ public class SpriteAnimation{
 // アニメーション結果を自前Materialに保存またはメッシュを書き換え、
 // 使いまわすことでDrawCallBatcingを適用させる 
 public class TmSpriteAnim : MonoBehaviour {
+	public enum FLIP{
+		NONE,
+		LR,
+		UD,
+		LRUD
+	};
 	private const float ANIM_TIME_MIN = 0.0001f;
 	private Material outMatreial=null;
 	public Vector2 size;
@@ -36,6 +42,7 @@ public class TmSpriteAnim : MonoBehaviour {
 	public bool scaleAtUv = true;
 	public bool setOnGrid = true;
 	public bool reverse = false;
+	public FLIP flip = FLIP.NONE;
 	public float fps = 20.0f;
 	private bool mEnabled;
 	private Vector2 mDefSize { get{ return( (scaleAtUv) ? size : Vector2.Scale(size,mTexSizeInv) ); } }
@@ -211,13 +218,13 @@ public class TmSpriteAnim : MonoBehaviour {
 		return nowMesh;
 	}
 	
-	public Mesh SetMeshUV(Vector2 _uvPos, Vector2 _size, bool _scaleAtUv=true){
-		return setMeshUV(_uvPos, _size, _scaleAtUv);
+	public Mesh SetMeshUV(Vector2 _uvPos, Vector2 _size, FLIP _flip, bool _scaleAtUv=true){
+		return setMeshUV(_uvPos, _size, _flip, _scaleAtUv);
 	}
 	public Mesh SetMeshUVByFrame(int _frame){
 		if(frames.Length-1 < _frame) return getMesh();
 		mUvPos = mUvOfs+getDefFrame(_frame);
-		return setMeshUV(mUvPos, mDefSize, scaleAtUv);
+		return setMeshUV(mUvPos, mDefSize, flip, scaleAtUv);
 	}
 	
 	public Vector2[] AddFrame(Vector2 _vec){
@@ -243,7 +250,7 @@ public class TmSpriteAnim : MonoBehaviour {
 	}
 	
 	//! from texture tiling to TmSprAnmScale Settings.
-	public bool replaceTextureTiling(){
+		public bool replaceTextureTiling(Material _sharedMat){ 
 		bool ret = false;
 		Material mat = renderer.material;
 		Vector2 txSze = mat.GetTextureScale("_MainTex");
@@ -257,8 +264,7 @@ public class TmSpriteAnim : MonoBehaviour {
 			Debug.Log(tag+"::"+txSze.ToString()+":"+txOfs.ToString());
 			AddFrame(new Vector2(txOfs.x/txSze.x,txOfs.y/txSze.y));
 			SetMeshUVByFrame(0);
-			mat.SetTextureOffset("_MainTex",Vector2.zero);
-			mat.SetTextureScale("_MainTex",Vector2.one);
+			renderer.material = _sharedMat;
 		}
 		return ret;
 	}
@@ -300,14 +306,22 @@ public class TmSpriteAnim : MonoBehaviour {
 	}
 	
 	private Mesh setMeshUv(){
-		return setMeshUV(mUvPos,mDefSize,scaleAtUv);
+		return setMeshUV(mUvPos,mDefSize,flip,scaleAtUv);
 	}
-	private Mesh setMeshUV(Vector2 _uvPos, Vector2 _size, bool _scaleAtUv){
+	private Mesh setMeshUV(Vector2 _uvPos, Vector2 _size, FLIP _flip, bool _scaleAtUv){
 		Mesh nowMesh = getMesh();
 		if(nowMesh!=null){
 			Vector2[] tmpUv = new Vector2[mDefUvs.Length];
 			if(!_scaleAtUv){
 				_size.Scale(mTexSizeInv);
+			}
+			if((_flip == FLIP.LR)||(_flip == FLIP.LRUD)){
+				_uvPos.x += _size.x;
+				_size.x *= -1.0f;
+			}
+			if((_flip == FLIP.UD)||(_flip == FLIP.LRUD)){
+				_uvPos.y += _size.y;
+				_size.y *= -1.0f;
 			}
 			for(int ii = 0; ii< mDefUvs.Length; ++ii){
 				tmpUv[ii] = Vector2.Scale(mDefUvs[ii],_size) + _uvPos;
