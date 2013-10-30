@@ -8,7 +8,7 @@ public class AnimAttribute{
 }
 [System.Serializable]
 public class SpriteAnimation{
-	public const float VERSION = 2.2f;
+	public const float VERSION = 2.21f;
 	public string name;
 	public int[] frames;
 	public AnimAttribute[] attrs;
@@ -32,6 +32,7 @@ public class TmSpriteAnim : MonoBehaviour {
 		LRUD
 	};
 	private const float ANIM_TIME_MIN = 0.0001f;
+	private const float EDGE_CLIP_RATE = 0.001f;
 	private Material outMatreial=null;
 	public Vector2 size;
 	public Vector2 offset;
@@ -261,7 +262,6 @@ public class TmSpriteAnim : MonoBehaviour {
 			scaleAtUv = true;
 			size = txSze;
 			txOfs.y = 1.0f-(txSze.y+txOfs.y);
-			Debug.Log(tag+"::"+txSze.ToString()+":"+txOfs.ToString());
 			AddFrame(new Vector2(txOfs.x/txSze.x,txOfs.y/txSze.y));
 			SetMeshUVByFrame(0);
 			renderer.material = _sharedMat;
@@ -323,6 +323,8 @@ public class TmSpriteAnim : MonoBehaviour {
 				_uvPos.y += _size.y;
 				_size.y *= -1.0f;
 			}
+			_size *= (1.0f-EDGE_CLIP_RATE);
+			_uvPos += _size*(EDGE_CLIP_RATE*0.5f);
 			for(int ii = 0; ii< mDefUvs.Length; ++ii){
 				tmpUv[ii] = Vector2.Scale(mDefUvs[ii],_size) + _uvPos;
 			}
