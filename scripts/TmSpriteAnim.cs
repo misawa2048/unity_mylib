@@ -166,24 +166,26 @@ public class TmSpriteAnim : MonoBehaviour {
 		updateMesh();
 	}
 
-	public bool PlayAnimation(int _id){
+	public bool PlayAnimation(int _id, bool _sameAnimReset=false){
 		bool ret = false;
 		if(_id < animations.Length){
 			mEnabled = true;
-			mCurrentAnm = animations[_id];
-			mAnimPtr = 0.0f;
-			mIsEndOfFrame = false;
-			updateAnim();
-			updateMesh();
+			if(_sameAnimReset || (mCurrentAnm != animations[_id])){
+				mCurrentAnm = animations[_id];
+				mAnimPtr = 0.0f;
+				mIsEndOfFrame = false;
+				updateAnim();
+				updateMesh();
+			}
 			ret = true;
 		}
 		return ret;
 	}
-	public bool PlayAnimation(string _animName){
+	public bool PlayAnimation(string _animName, bool _sameAnimReset=false){
 		bool ret = false;
 		for(int ii = 0; ii < animations.Length; ++ii){
 			if(animations[ii].name==_animName){
-				ret = PlayAnimation(ii);
+				ret = PlayAnimation(ii,_sameAnimReset);
 				break;
 			}
 		}
