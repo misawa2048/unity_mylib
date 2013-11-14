@@ -5,15 +5,26 @@ public class TmMath {
 	//! 点にもっとも近い直線上の点(isSegmentがtrueで線分判定)
 	//-----------------------------------------------------------------------------
 	static public Vector2 nearestPointOnLine(Vector2 p1, Vector2 p2, Vector2 p, bool isSegment=true){
-	    Vector2 d = p2 - p1;
-	    if (d.sqrMagnitude == 0)    return p1;
-	    float t = (d.x * (p - p1).x + d.y * (p - p1).y) / d.sqrMagnitude;
+		Vector2 d = p2 - p1;
+		if (d.sqrMagnitude == 0)    return p1;
+		float t = (d.x * (p - p1).x + d.y * (p - p1).y) / d.sqrMagnitude;
 		if(isSegment){
-		    if (t < 0)    return p1;
-		    if (t > 1)    return p2;
+			if (t < 0)    return p1;
+			if (t > 1)    return p2;
 		}
 		Vector2 c = new Vector2( (1 - t) * p1.x + t * p2.x, (1 - t) * p1.y + t * p2.y);
-	    return c;
+		return c;
+	}
+	static public Vector3 nearestPointOnLine(Vector3 p1, Vector3 p2, Vector3 p, bool isSegment=true){
+		Vector3 d = p2 - p1;
+		if (d.sqrMagnitude == 0)    return p1;
+		float t = (d.x * (p - p1).x + d.y * (p - p1).y + d.z * (p - p1).z) / d.sqrMagnitude;
+		if(isSegment){
+			if (t < 0)    return p1;
+			if (t > 1)    return p2;
+		}
+		Vector3 c = new Vector3( (1 - t) * p1.x + t * p2.x, (1 - t) * p1.y + t * p2.y, (1 - t) * p1.z + t * p2.z);
+		return c;
 	}
 	
 	//-----------------------------------------------------------------------------
@@ -22,11 +33,14 @@ public class TmMath {
 	static public float lineToPointDistance(Vector2 p1, Vector2 p2, Vector2 p, bool isSegment=true){
 		return ( p - nearestPointOnLine(p1,p2,p,isSegment) ).magnitude;
 	}
+	static public float lineToPointDistance(Vector3 p1, Vector3 p2, Vector3 p, bool isSegment=true){
+		return ( p - nearestPointOnLine(p1,p2,p,isSegment) ).magnitude;
+	}
 	
 	//-----------------------------------------------------------------------------
 	//! 線分の交差チェック : 交差したらtrue
 	//-----------------------------------------------------------------------------
-  static bool crossCheck(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4) {
+	static bool crossCheck(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4) {
 		if(((p1.x-p2.x)*(p3.y-p1.y)+(p1.y-p2.y)*(p1.x-p3.x))*((p1.x-p2.x)*(p4.y-p1.y)+(p1.y-p2.y)*(p1.x-p4.x))<0){
 			if(((p3.x-p4.x)*(p1.y-p3.y)+(p3.y-p4.y)*(p3.x-p1.x))*((p3.x-p4.x)*(p2.y-p3.y)+(p3.y-p4.y)*(p3.x-p2.x))<0){
 				return(true);
@@ -34,7 +48,7 @@ public class TmMath {
 		}
 		return(false);
 	}
-
+	
 	//-----------------------------------------------------------------------------
 	//! 直線と直線の交点(isSegmentがtrueで線分判定) : falseなら交差しない 
 	//-----------------------------------------------------------------------------
