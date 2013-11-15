@@ -58,7 +58,7 @@ public class TmMath {
 			p0 = nearestPointOnLine(p1, p2, p0, isSegment);
 			q0 = nearestPointOnLine(q1, q2, q0, isSegment);
 		}
-		return (q0-q0).magnitude;
+		return (q0-p0).magnitude;
 	}
 	
 	//-----------------------------------------------------------------------------
