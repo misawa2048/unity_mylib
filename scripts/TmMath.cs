@@ -4,27 +4,19 @@ public class TmMath {
 	//-----------------------------------------------------------------------------
 	//! 点にもっとも近い直線上の点(isSegmentがtrueで線分判定)
 	//-----------------------------------------------------------------------------
-	static public Vector2 nearestPointOnLine(Vector2 p1, Vector2 p2, Vector2 p, bool isSegment=true){
-		Vector2 d = p2 - p1;
-		if (d.sqrMagnitude == 0)    return p1;
-		float t = (d.x * (p - p1).x + d.y * (p - p1).y) / d.sqrMagnitude;
-		if(isSegment){
-			if (t < 0)    return p1;
-			if (t > 1)    return p2;
-		}
-		Vector2 c = new Vector2( (1 - t) * p1.x + t * p2.x, (1 - t) * p1.y + t * p2.y);
-		return c;
-	}
 	static public Vector3 nearestPointOnLine(Vector3 p1, Vector3 p2, Vector3 p, bool isSegment=true){
 		Vector3 d = p2 - p1;
-		if (d.sqrMagnitude == 0)    return p1;
+		if (d.sqrMagnitude == 0.0f)    return p1;
 		float t = (d.x * (p - p1).x + d.y * (p - p1).y + d.z * (p - p1).z) / d.sqrMagnitude;
 		if(isSegment){
-			if (t < 0)    return p1;
-			if (t > 1)    return p2;
+			if (t < 0.0f)    return p1;
+			if (t > 1.0f)    return p2;
 		}
-		Vector3 c = new Vector3( (1 - t) * p1.x + t * p2.x, (1 - t) * p1.y + t * p2.y, (1 - t) * p1.z + t * p2.z);
-		return c;
+		return new Vector3( (1.0f-t)*p1.x + t*p2.x, (1.0f-t)*p1.y + t*p2.y, (1.0f-t)*p1.z + t*p2.z);
+	}
+	static public Vector2 nearestPointOnLine(Vector2 p1, Vector2 p2, Vector2 p, bool isSegment=true){
+		Vector3 ret = nearestPointOnLine(new Vector3(p1.x,p1.y), new Vector3(p2.x,p2.y), new Vector3(p.x,p.y),isSegment);
+		return new Vector2(ret.x,ret.y);
 	}
 	
 	//-----------------------------------------------------------------------------
@@ -38,27 +30,43 @@ public class TmMath {
 	}
 	
 	//-----------------------------------------------------------------------------
-	//! 2直線の距離(isSegmentがtrueで線分判定)
+	//! 2直線の近傍点(isSegmentがtrueで線分判定)
 	//-----------------------------------------------------------------------------
-	static public float lineToLineDistance(Vector3 p1, Vector3 p2, Vector3 q1, Vector3 q2, bool isSegment=true){
-		Vector3 m = (p2-p1).normalized;
-		Vector3 n = (q2-q1).normalized;
-		if(m.sqrMagnitude==0.0f) return lineToPointDistance(q1,q2,p1,isSegment);
-		if(n.sqrMagnitude==0.0f) return lineToPointDistance(p1,p2,q1,isSegment);
-		
-		Vector3 ab = q1-p1;
-		if((m-n).sqrMagnitude==0) return (ab-Vector3.Dot(ab,m)*m).magnitude;
-		
-		float mn = Vector3.Dot(m,n);
-		float s = (Vector3.Dot(ab,m)-Vector3.Dot(ab,n)*mn)/(1.0f-mn*mn);
-		float t = (Vector3.Dot(ab,m)*mn-Vector3.Dot(ab,n))/(1.0f-mn*mn);
-		Vector3 p0 = p1+m*s;
-		Vector3 q0 = q1+n*t;
-		if(isSegment){
-			p0 = nearestPointOnLine(p1, p2, p0, isSegment);
-			q0 = nearestPointOnLine(q1, q2, q0, isSegment);
+	static public float lineToLineDistance(out Vector3 p0, out Vector3 q0, Vector3 p1, Vector3 p2, Vector3 q1, Vector3 q2, bool isSegment=true){
+		if((p2-p1).sqrMagnitude==0.0f){
+			p0 = p1;
+			q0 = nearestPointOnLine(q1, q2, p1, isSegment);
+		}else if((q2-q1).sqrMagnitude==0.0f){
+			p0 = nearestPointOnLine(p1, p2, q1, isSegment);
+			q0 = q1;
+		}else{
+			Vector3 m = (p2-p1).normalized;
+			Vector3 n = (q2-q1).normalized;
+			Vector3 ab = q1-p1;
+			float mn = Vector3.Dot(m,n);
+			if(Mathf.Abs(mn)==1.0f){
+				Vector3 tp1 = nearestPointOnLine(p1, p2, q1, true);
+				Vector3 tp2 = nearestPointOnLine(p1, p2, q2, true);
+				Vector3 tq1 = nearestPointOnLine(q1, q2, p1, true);
+				Vector3 tq2 = nearestPointOnLine(q1, q2, p2, true);
+				p0 = (tp1+tp2)*0.5f;
+				q0 = (tq1+tq2)*0.5f;
+			}else{
+				float s = (Vector3.Dot(ab,m)-Vector3.Dot(ab,n)*mn)/(1.0f-mn*mn);
+				float t = (Vector3.Dot(ab,m)*mn-Vector3.Dot(ab,n))/(1.0f-mn*mn);
+				p0 = p1+m*s;
+				q0 = q1+n*t;
+				if(isSegment){
+					p0 = nearestPointOnLine(p1, p2, p0, true);
+					q0 = nearestPointOnLine(q1, q2, q0, true);
+				}
+			}
 		}
 		return (q0-p0).magnitude;
+	}
+	static public float lineToLineDistance(Vector3 p1, Vector3 p2, Vector3 q1, Vector3 q2, bool isSegment=true){
+		Vector3 p0,q0;
+		return lineToLineDistance(out p0, out q0, p1, p2, q1, q2, isSegment);
 	}
 	
 	//-----------------------------------------------------------------------------
