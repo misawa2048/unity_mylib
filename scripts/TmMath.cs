@@ -38,6 +38,30 @@ public class TmMath {
 	}
 	
 	//-----------------------------------------------------------------------------
+	//! 2直線の距離(isSegmentがtrueで線分判定)
+	//-----------------------------------------------------------------------------
+	static public float lineToLineDistance(Vector3 p1, Vector3 p2, Vector3 q1, Vector3 q2, bool isSegment=true){
+		Vector3 m = (p2-p1).normalized;
+		Vector3 n = (q2-q1).normalized;
+		if(m.sqrMagnitude==0.0f) return lineToPointDistance(q1,q2,p1,isSegment);
+		if(n.sqrMagnitude==0.0f) return lineToPointDistance(p1,p2,q1,isSegment);
+		
+		Vector3 ab = q1-p1;
+		if((m-n).sqrMagnitude==0) return (ab-Vector3.Dot(ab,m)*m).magnitude;
+		
+		float mn = Vector3.Dot(m,n);
+		float s = (Vector3.Dot(ab,m)-Vector3.Dot(ab,n)*mn)/(1.0f-mn*mn);
+		float t = (Vector3.Dot(ab,m)*mn-Vector3.Dot(ab,n))/(1.0f-mn*mn);
+		Vector3 p0 = p1+m*s;
+		Vector3 q0 = q1+n*t;
+		if(isSegment){
+			p0 = nearestPointOnLine(p1, p2, p0, isSegment);
+			q0 = nearestPointOnLine(q1, q2, q0, isSegment);
+		}
+		return (q0-q0).magnitude;
+	}
+	
+	//-----------------------------------------------------------------------------
 	//! 線分の交差チェック : 交差したらtrue
 	//-----------------------------------------------------------------------------
 	static bool crossCheck(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4) {
