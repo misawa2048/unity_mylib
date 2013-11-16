@@ -12,7 +12,7 @@ public class TmMath {
 			if (t < 0.0f)    return p1;
 			if (t > 1.0f)    return p2;
 		}
-		return new Vector3( (1.0f-t)*p1.x + t*p2.x, (1.0f-t)*p1.y + t*p2.y, (1.0f-t)*p1.z + t*p2.z);
+		return (1.0f-t)*p1 + t*p2;
 	}
 	static public Vector2 nearestPointOnLine(Vector2 p1, Vector2 p2, Vector2 p, bool isSegment=true){
 		Vector3 ret = nearestPointOnLine(new Vector3(p1.x,p1.y), new Vector3(p2.x,p2.y), new Vector3(p.x,p.y),isSegment);
@@ -98,5 +98,24 @@ public class TmMath {
 			}
 		}
 		return result;
+	}
+	
+	//-----------------------------------------------------------------------
+	//! 弾丸衝突チェック 
+	//-----------------------------------------------------------------------
+	static public bool bulletHit(out Vector3 hit, Vector3 p, Vector3 pOld, float pRadius, Vector3 q, Vector3 qOld, float qRadius){
+		bool ret = false;
+		Vector3 p0,q0;
+		float hitRad = pRadius+qRadius;
+		float dist = lineToLineDistance(out p0, out q0, p, pOld, q, qOld, true);
+		hit = (p0*pRadius+q0*qRadius)/hitRad;
+		if(dist<=hitRad){
+			Vector3 qp = qOld+(q-qOld)*((p0-pOld).magnitude/(p-pOld).magnitude); // sync time 
+			Vector3 pq = pOld+(p-pOld)*((q0-qOld).magnitude/(q-qOld).magnitude); // sync time 
+			if(((p0-qp).sqrMagnitude < hitRad*hitRad)||((pq-q0).sqrMagnitude < hitRad*hitRad)){
+				ret = true;
+			}
+		}
+		return ret;
 	}
 }
