@@ -9,7 +9,7 @@ public class CreateCircle : MonoBehaviour
 	[MenuItem ("GameObject/Create Other/Other/Circle")]
 	static void Create ()
 	{
-		const int DEG_NUM=256;
+		const int DEG_NUM=32;
 //		const int UV_DEG_NUM = 1; //DEG_NUM;
 		GameObject newGameobject = new GameObject ("Circle"+DEG_NUM.ToString());
 		
@@ -27,16 +27,19 @@ public class CreateCircle : MonoBehaviour
 		Vector3[] verts = new Vector3[DEG_NUM+1];
 		Vector2[] uvs = new Vector2[DEG_NUM+1];
 		Vector3[] norms = new Vector3[DEG_NUM+1];
+		Vector4[] tgts = new Vector4[DEG_NUM+1];
 		Color[] cols = new Color[DEG_NUM+1];
 		verts[0]= new Vector3(0.0f,0.0f,0.0f);
 		uvs[0]= new Vector2(0.5f,0.0f);
 		norms[0]= new Vector3(0.0f,0.0f,1.0f);
+		tgts[0]= new Vector4(1.0f,0.0f,0.0f,0.0f);
 		cols[0] = new Color(1.0f,1.0f,1.0f,1.0f);
 		for(int ii=0; ii< DEG_NUM; ++ii){
 			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)DEG_NUM))*0.5f;
 			float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)DEG_NUM))*0.5f;
 			verts[ii+1]= new Vector3(fx,fy,0.0f);
 			norms[ii+1]= new Vector3(0.0f,0.0f,1.0f);
+			tgts[ii+1]= new Vector4(fx,fy,0.0f,0.0f);
 			cols[ii+1] = new Color(1.0f,1.0f,1.0f,1.0f);
 		}
 		
@@ -58,8 +61,9 @@ public class CreateCircle : MonoBehaviour
 		mesh.triangles = tris;
 		mesh.uv = uvs;
 		mesh.normals = norms;
+		mesh.tangents = tgts;
 		mesh.colors = cols;
-		
+
 		mesh.RecalculateNormals ();	// 法線の再計算
 		mesh.RecalculateBounds ();	// バウンディングボリュームの再計算
 		mesh.Optimize ();
