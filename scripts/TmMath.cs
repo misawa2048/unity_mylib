@@ -118,4 +118,32 @@ public class TmMath {
 		}
 		return ret;
 	}
+	
+	//-----------------------------------------------------------------------
+	//! 衝突時刻取得:q1+qSpd*retがhit場所(retがマイナスの場合はhitしない） 
+	//-----------------------------------------------------------------------
+	static public float getCollideTime(Vector3 q1, Vector3 qSpd, Vector3 p1, float ps){
+		float ret = float.MinValue;
+		Vector3 p0,q0;
+		float qs = qSpd.magnitude;
+		Vector3 q2 = q1+qSpd;
+		float d = lineToLineDistance(out p0,out q0,p1,p1,q1,q2,false);
+		// p1から直線q1q2にひいた垂線の交点 を通る時間 t0
+		float t0 = Vector3.Dot(qSpd.normalized,p0-q1)/qs;
+		float a = qs*qs - ps*ps;
+		float b = -(2*t0*qs*qs);
+		float c = (t0*qs)*(t0*qs) + d*d;
+		float aa = b*b - 4 * a * c;
+		if(a==0.0f){
+			ret = (-c/b);
+		}else if(aa>0.0f){
+			float t1 = (-b+Mathf.Sqrt(aa)) / (2*a);
+			float t2 = (-b-Mathf.Sqrt(aa)) / (2*a);
+			ret = Mathf.Min(t1,t2);
+			if(ret<0.0f){
+				ret = Mathf.Max(t1,t2);
+			}
+		}
+		return ret;
+	}
 }
