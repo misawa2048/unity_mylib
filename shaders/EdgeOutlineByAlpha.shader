@@ -14,7 +14,6 @@ SubShader {
 //		Lighting On
 //		ColorMask RGBA
 		Blend SrcAlpha OneMinusSrcAlpha
-
 		
 		CGPROGRAM
 // Upgrade NOTE: excluded shader from DX11 and Xbox360; has structs without semantics (struct v2f members ofs,lightDir)
@@ -54,25 +53,25 @@ SubShader {
 		    o.uv = TRANSFORM_TEX (v.texcoord, _MainTex);
 		    o.uv1 = TRANSFORM_TEX (v.texcoord1, _FontTex);
 		    o.color = v.color * unity_LightColor[0] + UNITY_LIGHTMODEL_AMBIENT;
-		    o.ofs = normalize(ObjSpaceLightDir(v.vertex))*_Offset.xy;
+//		    o.ofs = normalize(ObjSpaceLightDir(v.vertex)).xy*_Offset.xy;
+		    o.ofs = _Offset.xy;
 		    return o;
 		}
 		
 		half4 frag (v2f i) : COLOR
 		{
-			half a = tex2D (_FontTex, i.uv1).a;
 			half ae=0;
-			ae += tex2D (_FontTex, i.uv1 + float2(_Offset.x,_Offset.y)).a;
-			ae += tex2D (_FontTex, i.uv1 + float2(_Offset.x,_Offset.y)).a;
-			ae += tex2D (_FontTex, i.uv1 + float2(-_Offset.x,_Offset.y)).a;
-			ae += tex2D (_FontTex, i.uv1 + float2(_Offset.x,-_Offset.y)).a;
-			ae += tex2D (_FontTex, i.uv1 + float2(-_Offset.x,-_Offset.y)).a;
-			ae += tex2D (_FontTex, i.uv1 + float2(_Offset.x,0)).a;
-			ae += tex2D (_FontTex, i.uv1 + float2(-_Offset.x,0)).a;
-			ae += tex2D (_FontTex, i.uv1 + float2(0,_Offset.y)).a;
-			ae += tex2D (_FontTex, i.uv1 + float2(0,-_Offset.y)).a;
+			ae += tex2D (_FontTex, i.uv1 + i.ofs).a;
+			ae += tex2D (_FontTex, i.uv1 - i.ofs).a;
+			ae += tex2D (_FontTex, i.uv1 + i.ofs * float2(1,-1)).a;
+			ae += tex2D (_FontTex, i.uv1 - i.ofs * float2(1,-1)).a;
+			ae += tex2D (_FontTex, i.uv1 + i.ofs * float2(1,0)).a;
+			ae += tex2D (_FontTex, i.uv1 - i.ofs * float2(1,0)).a;
+			ae += tex2D (_FontTex, i.uv1 + i.ofs * float2(0,1)).a;
+			ae += tex2D (_FontTex, i.uv1 - i.ofs * float2(0,1)).a;
 			ae *= 0.125;
 
+			half a = tex2D (_FontTex, i.uv1).a;
 			half4 c = tex2D (_MainTex, i.uv)*i.color;
 			half4 outCol = c*ae+_Color*(1-ae)*_Offset.w;
 			outCol.a = c.a*ae+a*_Color.a*(1-ae)*_Offset.w;
