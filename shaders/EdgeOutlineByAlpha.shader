@@ -38,7 +38,6 @@ SubShader {
 		    float4  pos : SV_POSITION;
 		    float2  uv : TEXCOORD0;
 		    float2  uv1 : TEXCOORD1;
-		    float4 color : COLOR;
 		    float2 ofs;
 		};
 		
@@ -52,29 +51,27 @@ SubShader {
 		    o.pos.z += _Offset.z;
 		    o.uv = TRANSFORM_TEX (v.texcoord, _MainTex);
 		    o.uv1 = TRANSFORM_TEX (v.texcoord1, _FontTex);
-		    o.color = v.color * unity_LightColor[0] + UNITY_LIGHTMODEL_AMBIENT;
-//		    o.ofs = normalize(ObjSpaceLightDir(v.vertex)).xy*_Offset.xy;
 		    o.ofs = _Offset.xy;
 		    return o;
 		}
 		
 		half4 frag (v2f i) : COLOR
 		{
-			half ae=0;
-			ae += tex2D (_FontTex, i.uv1 + i.ofs).a;
-			ae += tex2D (_FontTex, i.uv1 - i.ofs).a;
-			ae += tex2D (_FontTex, i.uv1 + i.ofs * float2(1,-1)).a;
-			ae += tex2D (_FontTex, i.uv1 - i.ofs * float2(1,-1)).a;
-			ae += tex2D (_FontTex, i.uv1 + i.ofs * float2(1,0)).a;
-			ae += tex2D (_FontTex, i.uv1 - i.ofs * float2(1,0)).a;
-			ae += tex2D (_FontTex, i.uv1 + i.ofs * float2(0,1)).a;
-			ae += tex2D (_FontTex, i.uv1 - i.ofs * float2(0,1)).a;
-			ae *= 0.125;
+			float3 nml = float3(0,0,0.01);
+			nml += float3( 1, 1,0) * tex2D (_FontTex, i.uv1 + i.ofs).a;
+			nml -= float3( 1, 1,0) * tex2D (_FontTex, i.uv1 - i.ofs).a;
+			nml += float3( 1,-1,0) * tex2D (_FontTex, i.uv1 + i.ofs * float2(1,-1)).a;
+			nml -= float3( 1,-1,0) * tex2D (_FontTex, i.uv1 - i.ofs * float2(1,-1)).a;
+//			nml += float3( 1, 0,0) * tex2D (_FontTex, i.uv1 + i.ofs * float2(1,0)).a;
+//			nml -= float3( 1, 0,0) * tex2D (_FontTex, i.uv1 - i.ofs * float2(1,0)).a;
+//			nml += float3( 0, 1,0) * tex2D (_FontTex, i.uv1 + i.ofs * float2(0,1)).a;
+//			nml -= float3( 0, 1,0) * tex2D (_FontTex, i.uv1 - i.ofs * float2(0,1)).a;
+		    float ae = length(nml); 
 
 			half a = tex2D (_FontTex, i.uv1).a;
-			half4 c = tex2D (_MainTex, i.uv)*i.color;
-			half4 outCol = c*ae+_Color*(1-ae)*_Offset.w;
-			outCol.a = c.a*ae+a*_Color.a*(1-ae)*_Offset.w;
+			half4 c = tex2D (_MainTex, i.uv);
+			half4 outCol = _Color * ae * c * _Offset.w;
+			outCol.a = a * _Color.a * ae;
 			
 			return outCol;
 		}
