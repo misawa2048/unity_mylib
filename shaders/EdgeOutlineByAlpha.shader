@@ -1,19 +1,20 @@
 Shader "GUI/EdgeOutlineByAlpha" {
 	Properties {
 		_Color ("MainColor", Color) = (1,1,1,1)
-		_MainTex ("Base (RGB)", 2D) = "clear" {}
+		_MainTex ("Base (RGB)", 2D) = "white" {}
 		_FontTex ("Font (RGB)", 2D) = "white" {}
 		_Offset ("Offset(U,V,Z,Brightness)", Vector)=(0.01,-0.01,0.0,0.5)
 	}
 SubShader {
 		Tags { "RenderType"="Opaque" "Queue"="Geometry" "IgnoreProjector"="true" }
 	Pass {
-//		AlphaTest Greater 0.5
-		ZTest Less
+		AlphaTest Greater 0.01
+		ZTest LEqual
 		ZWrite On
-//		Lighting On
+		Lighting On
 //		ColorMask RGBA
 		Blend SrcAlpha OneMinusSrcAlpha
+
 		
 		CGPROGRAM
 // Upgrade NOTE: excluded shader from DX11 and Xbox360; has structs without semantics (struct v2f members ofs,lightDir)
@@ -22,8 +23,8 @@ SubShader {
 		#pragma fragment frag
 		#include "UnityCG.cginc"
 		
-		sampler2D _MainTex;
-		sampler2D _FontTex;
+		sampler2D _MainTex : TEXCOORD0;
+		sampler2D _FontTex : TEXCOORD1;
 		half4 _Color;
 		half4 _Offset;
 		
@@ -38,6 +39,7 @@ SubShader {
 		    float4  pos : SV_POSITION;
 		    float2  uv : TEXCOORD0;
 		    float2  uv1 : TEXCOORD1;
+		    float4 color : COLOR;
 		    float2 ofs;
 		};
 		
@@ -49,29 +51,26 @@ SubShader {
 		    v2f o;
 		    o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
 		    o.pos.z += _Offset.z;
+		    o.ofs = _Offset.xy;
+//		    o.ofs = normalize(ObjSpaceLightDir(v.vertex))*_Offset.xy;
+//		    o.ofs = ParallaxOffset(0.01,0.01,normalize(ObjSpaceLightDir(v.vertex)));
 		    o.uv = TRANSFORM_TEX (v.texcoord, _MainTex);
 		    o.uv1 = TRANSFORM_TEX (v.texcoord1, _FontTex);
-		    o.ofs = _Offset.xy;
+		    o.color = v.color * _Color;
 		    return o;
 		}
 		
 		half4 frag (v2f i) : COLOR
 		{
-			float3 nml = float3(0,0,0.01);
-			nml += float3( 1, 1,0) * tex2D (_FontTex, i.uv1 + i.ofs).a;
-			nml -= float3( 1, 1,0) * tex2D (_FontTex, i.uv1 - i.ofs).a;
-			nml += float3( 1,-1,0) * tex2D (_FontTex, i.uv1 + i.ofs * float2(1,-1)).a;
-			nml -= float3( 1,-1,0) * tex2D (_FontTex, i.uv1 - i.ofs * float2(1,-1)).a;
-//			nml += float3( 1, 0,0) * tex2D (_FontTex, i.uv1 + i.ofs * float2(1,0)).a;
-//			nml -= float3( 1, 0,0) * tex2D (_FontTex, i.uv1 - i.ofs * float2(1,0)).a;
-//			nml += float3( 0, 1,0) * tex2D (_FontTex, i.uv1 + i.ofs * float2(0,1)).a;
-//			nml -= float3( 0, 1,0) * tex2D (_FontTex, i.uv1 - i.ofs * float2(0,1)).a;
-		    float ae = length(nml); 
-
 			half a = tex2D (_FontTex, i.uv1).a;
-			half4 c = tex2D (_MainTex, i.uv);
-			half4 outCol = _Color * ae * c * _Offset.w;
-			outCol.a = a * _Color.a * ae;
+			a += tex2D (_FontTex, i.uv1+i.ofs).a;
+			a += tex2D (_FontTex, i.uv1-i.ofs).a;
+			a += tex2D (_FontTex, i.uv1+i.ofs * float2(1,-1)).a;
+			a += tex2D (_FontTex, i.uv1-i.ofs * float2(1,-1)).a;
+			a *= 0.2;
+			half4 outCol;
+			outCol = tex2D (_MainTex, i.uv)*i.color;
+			outCol.a *= (0.5-abs(a-0.5))*_Offset.w;
 			
 			return outCol;
 		}
