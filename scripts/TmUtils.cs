@@ -249,6 +249,19 @@ public class TmUtils {
 		return retRect;
 	}
 
+	// 画面内判定 
+	public static bool isInnerScreen(Vector3 _worldPos, float _rate=1.0f){
+		bool ret = false;
+		float dd = (1.0f-_rate);
+		Vector2 scr = new Vector2(Screen.width,Screen.height);
+		Rect rect = new Rect(scr.x*dd,scr.y*dd,scr.x*(1.0f-dd*2.0f),scr.y*(1.0f-dd*2.0f));
+		Vector3 sPos = Camera.main.WorldToScreenPoint(_worldPos);
+		if(rect.Contains(new Vector2(sPos.x,sPos.y))){
+			ret = true;
+		}
+		return ret;
+	}
+
 	// ----------------
 	// TextAsset関係 
 	// ----------------
