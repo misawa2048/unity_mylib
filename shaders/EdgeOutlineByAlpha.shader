@@ -6,7 +6,7 @@ Shader "GUI/EdgeOutlineByAlpha" {
 		_Offset ("Offset(U,V,Z,Brightness)", Vector)=(0.01,-0.01,0.0,0.5)
 	}
 SubShader {
-		Tags { "RenderType"="Opaque" "Queue"="Geometry" "IgnoreProjector"="true" }
+		Tags { "RenderType"="Transparent" "Queue"="Transparent" "IgnoreProjector"="true" }
 	Pass {
 		AlphaTest Greater 0.01
 		ZTest LEqual

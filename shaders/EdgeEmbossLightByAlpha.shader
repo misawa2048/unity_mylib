@@ -7,9 +7,9 @@
 	}
 	
 SubShader {
-		Tags { "RenderType"="Opaque" "Queue"="Geometry" "IgnoreProjector"="true" }
+		Tags { "RenderType"="Transparent" "Queue"="Transparent" "IgnoreProjector"="true" }
 	Pass {
-//		AlphaTest Greater 0.5
+		AlphaTest Greater 0.1
 		ZTest Less
 		ZWrite On
 		Lighting On
