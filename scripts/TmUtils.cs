@@ -270,11 +270,14 @@ public class TmUtils {
 				}
 			}
 		}
-		string[,] retMap = new string[dataListArr.Count,maxLength];
+		string[,] retMap = new string[maxLength,dataListArr.Count];
 		if((dataListArr.Count>0)&&(maxLength>0)){
-			for(int x = 0; x < dataListArr.Count; ++x){
-				for(int y = 0; y < dataListArr[x].Count; ++y){
-					retMap[x,y] = dataListArr[x][y];
+			for(int y = 0; y < dataListArr.Count; ++y){
+				for(int x = 0; x < dataListArr[y].Count; ++x){
+					retMap[x,y] = dataListArr[y][x].Replace("\r","");
+				}
+				for(int x = dataListArr[y].Count; x < maxLength; ++x){
+					retMap[x,y] = "";
 				}
 			}
 		}
