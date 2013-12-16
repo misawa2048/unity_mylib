@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections.Generic;
+using System.Xml;
 public class TmUtils {
 	// ----------------
 	// Time関係 
@@ -245,5 +247,44 @@ public class TmUtils {
 		retRect.x = (int)(retRect.x+d.x);
 		retRect.y = (int)(retRect.y+d.y);
 		return retRect;
+	}
+
+	// ----------------
+	// TextAsset関係 
+	// ----------------
+	// csvファイルを2次元配列に格納(_commentで始まる行はコメント) 
+	public static string[,] CsvToMap(TextAsset _csvData, string _comment="//"){
+		List<List<string>> dataListArr = new List<List<string>>();
+		string[] lines = _csvData.text.Split("\n"[0]);
+		int maxLength = 0;
+		if(lines.Length>0){
+			foreach( string line in lines){
+				if((_comment!="")&&(!line.StartsWith(_comment))){
+					List<string> dataList = new List<string>();
+					string[] datas = line.Split(","[0]);
+					maxLength = Mathf.Max(maxLength,datas.Length);
+					foreach( string data in datas){
+						dataList.Add(data);
+					}
+					dataListArr.Add(dataList);
+				}
+			}
+		}
+		string[,] retMap = new string[dataListArr.Count,maxLength];
+		if((dataListArr.Count>0)&&(maxLength>0)){
+			for(int x = 0; x < dataListArr.Count; ++x){
+				for(int y = 0; y < dataListArr[x].Count; ++y){
+					retMap[x,y] = dataListArr[x][y];
+				}
+			}
+		}
+		return retMap;
+	}
+
+	// xmlファイルをXmlDocumentに格納 
+	public static XmlDocument XmlToDoc(TextAsset _xmlData){
+		XmlDocument doc = new XmlDocument();
+		doc.LoadXml(_xmlData.text);
+		return doc;
 	}
 }
