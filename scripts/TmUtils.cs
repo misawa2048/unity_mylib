@@ -123,16 +123,12 @@ public class TmUtils {
 				vertices[yy*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,uvPos.y-0.5f,0.0f);
 				uv[yy*(_divX+1)+xx] = uvPos;
 				colors[yy*(_divX+1)+xx] = _vertCol;
-			}
-		}
-		for(int yy = 0; yy < _divY; ++yy){
-			for(int xx = 0; xx < _divX; ++xx){
-				triangles[(yy*_divX+xx)*6+0] = (yy+0)*(_divX+1)+(xx+0);
-				triangles[(yy*_divX+xx)*6+1] = (yy+1)*(_divX+1)+(xx+1);
-				triangles[(yy*_divX+xx)*6+2] = (yy+0)*(_divX+1)+(xx+1);
-				triangles[(yy*_divX+xx)*6+3] = (yy+0)*(_divX+1)+(xx+0);
-				triangles[(yy*_divX+xx)*6+4] = (yy+1)*(_divX+1)+(xx+0);
-				triangles[(yy*_divX+xx)*6+5] = (yy+1)*(_divX+1)+(xx+1);
+				if((xx<_divX)&&(yy<_divY)){
+					int[] sw={0,0,1,1,1,0,1,1,0,0,0,1};
+					for(int ii = 0; ii < 6; ++ii){
+						triangles[(yy*_divX+xx)*6+ii] = (yy+sw[ii*2+1])*(_divX+1)+(xx+sw[ii*2+0]);
+					}
+				}
 			}
 		}
 		
@@ -148,7 +144,7 @@ public class TmUtils {
 		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
 		return mesh;
 	}
-	
+
 	public static Mesh CreatePolyRing(int _vertNum, float _minRad, float _maxRad){
 		Vector3[] vertices = new Vector3[(_vertNum+1)*2];
 		int[] triangles = new int[(_vertNum+1)*6];
