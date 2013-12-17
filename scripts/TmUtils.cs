@@ -250,18 +250,16 @@ public class TmUtils {
 	}
 
 	// 画面内判定 
-	public static bool isInnerScreen(Vector3 _worldPos, float _rate=1.0f){
-		bool ret = false;
-		float dd = (1.0f-_rate);
-		Vector2 scr = new Vector2(Screen.width,Screen.height);
-		Rect rect = new Rect(scr.x*dd,scr.y*dd,scr.x*(1.0f-dd*2.0f),scr.y*(1.0f-dd*2.0f));
+	public static Vector2 ScreenDisplacement(Vector3 _worldPos){
+		Vector2 scr = new Vector2((float)Screen.width,(float)Screen.height) * 0.5f;
 		Vector3 sPos = Camera.main.WorldToScreenPoint(_worldPos);
-		if(rect.Contains(new Vector2(sPos.x,sPos.y))){
-			ret = true;
-		}
-		return ret;
+		return new Vector2(Mathf.Abs((scr.x-sPos.x)/scr.x),Mathf.Abs((scr.y-sPos.y)/scr.y));
 	}
-
+	public static bool IsInnerScreen(Vector3 _worldPos, float _rate=1.0f){
+		Vector2 displacement = ScreenDisplacement(_worldPos);
+		return(Mathf.Max(displacement.x, displacement.y) <= _rate);
+	}
+	
 	// ----------------
 	// TextAsset関係 
 	// ----------------
