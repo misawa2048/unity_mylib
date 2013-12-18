@@ -92,7 +92,7 @@ public class TmUtils {
 			vertices[cnt] = new Vector3(fx,fy,0.0f);
 			triangles[cnt] = cnt;
 			uv[cnt] = new Vector2(vertices[cnt].x+0.5f,vertices[cnt].y+0.5f);
-            colors[cnt] = _color;
+			colors[cnt] = _color;
 			cnt++;
 		}
 		Mesh mesh = new Mesh();
