@@ -101,37 +101,38 @@ public class TmMath {
 	}
 	
 	//-----------------------------------------------------------------------------
-	//! 円(p,r)と直線(ax+by+c=0)の交点 : 0なら交差しない 
+	//! 円(p,r)と直線(ax+by+c=0)の交点数 : -1:解なし(!直線)
 	//-----------------------------------------------------------------------------
 	static public int CircleLineIntersection(out Vector2[] ret, Vector2 p, float r, float a, float b, float c){
+		int result = -1;
 		float l = a*a+b*b;
-		float k = a*p.x+b*p.y+c;
-		float d = l*r*r-k*k;
-		int result = 0;
-		if(d>0){
-			result = 2;
-			ret = new Vector2[result];
-			float ds = Mathf.Sqrt(d);
-			float apl = a/l;
-			float bpl = b/l;
-			float xc = p.x-apl*k;
-			float yc = p.y-bpl*k;
-			float xd = bpl*ds;
-			float yd = apl*ds;
-			ret[0] = new Vector2(xc-xd,yc+yd);
-			ret[1] = new Vector2(xc+xd,yc-yd);
-		}else if(d==0){
-			result = 1;
-			ret = new Vector2[result];
-			ret[0] = new Vector2(p.x-a*k/l,p.y-b*k/l);
+		if(l!=0){
+			float k = a*p.x+b*p.y+c;
+			float d = l*r*r-k*k;
+			if(d>0){
+				result = 2;
+				float ds = Mathf.Sqrt(d);
+				float apl = a/l;
+				float bpl = b/l;
+				float xc = p.x-apl*k;
+				float yc = p.y-bpl*k;
+				float xd = bpl*ds;
+				float yd = apl*ds;
+				ret = new Vector2[2]{ new Vector2(xc-xd,yc+yd),new Vector2(xc+xd,yc-yd)};
+			}else if(d==0){
+				result = 1;
+				ret = new Vector2[1]{new Vector2(p.x-a*k/l,p.y-b*k/l)};
+			}else{
+				result = 0;
+				ret = new Vector2[0];
+			}
 		}else{
-			result = 0;
-			ret = new Vector2[result];
+			ret = new Vector2[0];
 		}
 		return result;
 	}
 	//-----------------------------------------------------------------------------
-	//! 円と円の交点 : 0なら交差しない 
+	//! 円と円の交点 : 0なら交差しない -1なら同一円
 	//-----------------------------------------------------------------------------
 	static public int CircleIntersection(out Vector2[] ret, Vector2 p, float rp, Vector2 q, float rq){
 		float c = 0.5f * ((rp-rq)*(rp+rq)-(p.x-q.x)*(p.x+q.x)-(p.y-q.y)*(p.y+q.y));
