@@ -270,6 +270,31 @@ public class TmUtils {
 		return ViewportToWorldRect(retRect,_dist);
 	}
 	
+	//  画面内の最も近い点を取得  
+	public static Vector3 NearestPosInScreen(Vector3 _wpos, float _dist=float.MinValue){
+		if(_dist==float.MinValue){
+			Plane plane = new Plane(Camera.main.transform.forward,_wpos);
+			_dist = -plane.GetDistanceToPoint(Camera.main.transform.position);
+		}
+		Rect wr = ViewportToWorldRect(new Rect(0,0,1,1), _dist);
+		Vector2 ret = _wpos;
+		ret.x = (_wpos.x < wr.xMin) ? wr.xMin : (_wpos.x > wr.xMax) ? wr.xMax : _wpos.x;
+		ret.y = (_wpos.y < wr.yMin) ? wr.yMin : (_wpos.y > wr.yMax) ? wr.yMax : _wpos.y;
+		return ret;
+	}
+	
+	// 画面変位 
+	public static Vector2 ScreenDisplacement(Vector3 _worldPos){
+		Vector2 scr = new Vector2((float)Screen.width,(float)Screen.height) * 0.5f;
+		Vector3 sPos = Camera.main.WorldToScreenPoint(_worldPos);
+		return new Vector2(Mathf.Abs((scr.x-sPos.x)/scr.x),Mathf.Abs((scr.y-sPos.y)/scr.y));
+	}
+	// 画面内判定 
+	public static bool IsInnerScreen(Vector3 _worldPos, float _rate=1.0f){
+		Vector2 displacement = ScreenDisplacement(_worldPos);
+		return(Mathf.Max(displacement.x, displacement.y) <= _rate);
+	}
+	
 	// 現在のRectを含む最小のべき乗Rectを取得(左下原点) 
 	public static Rect PowerOfTwoRect(Rect _srcRect, TextAnchor _ancor = TextAnchor.LowerLeft){
 		Rect retRect = new Rect(_srcRect);
@@ -292,17 +317,6 @@ public class TmUtils {
 		return retRect;
 	}
 
-	// 画面内判定 
-	public static Vector2 ScreenDisplacement(Vector3 _worldPos){
-		Vector2 scr = new Vector2((float)Screen.width,(float)Screen.height) * 0.5f;
-		Vector3 sPos = Camera.main.WorldToScreenPoint(_worldPos);
-		return new Vector2(Mathf.Abs((scr.x-sPos.x)/scr.x),Mathf.Abs((scr.y-sPos.y)/scr.y));
-	}
-	public static bool IsInnerScreen(Vector3 _worldPos, float _rate=1.0f){
-		Vector2 displacement = ScreenDisplacement(_worldPos);
-		return(Mathf.Max(displacement.x, displacement.y) <= _rate);
-	}
-	
 	// ----------------
 	// TextAsset関係 
 	// ----------------
