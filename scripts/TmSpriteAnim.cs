@@ -1,41 +1,42 @@
 using UnityEngine;
 using System.Collections;
 
-[System.Serializable]
-public class AnimAttribute{
-	public int frame;
-	public int flag;
-}
-[System.Serializable]
-public class SpriteAnimation{
-	public const float VERSION = 2.21f;
-	public string name;
-	public int[] frames;
-	public AnimAttribute[] attrs;
-	public bool loop;
-	
-	public SpriteAnimation(string _name, int[] _frames, bool _loop){
-		name = _name;
-		frames = _frames;
-		loop = _loop;
-	}
-}
-
 // 簡易アニメーション
 // アニメーション結果を自前Materialに保存またはメッシュを書き換え、
 // 使いまわすことでDrawCallBatcingを適用させる 
 public class TmSpriteAnim : MonoBehaviour {
+	[System.Serializable]
+	public class AnimAttribute{
+		public int frame;
+		public int flag;
+	}
+	[System.Serializable]
+	public class SpriteAnimation{
+		public string name;
+		public int[] frames;
+		public AnimAttribute[] attrs;
+		public bool loop;
+		
+		public SpriteAnimation(string _name, int[] _frames, bool _loop){
+			name = _name;
+			frames = _frames;
+			loop = _loop;
+		}
+	}
+	
 	public enum FLIP{
 		NONE,
 		LR,
 		UD,
 		LRUD
 	};
+	public const float VERSION = 2.30f;
 	private const float ANIM_TIME_MIN = 0.0001f;
 	private const float EDGE_CLIP_RATE = 0.001f;
 	private Material outMatreial=null;
 	public Vector2 size;
 	public Vector2 offset;
+	public Sprite[] frames2D; // use only "Slice>Grid" sprite.
 	public Vector2[] frames;
 	public AnimAttribute[] frameAttrs;
 	public SpriteAnimation[] animations;
@@ -80,6 +81,16 @@ public class TmSpriteAnim : MonoBehaviour {
 	
 	void Awake(){
 		if(!this.enabled) return;
+
+		if(frames2D.Length>0){
+			scaleAtUv = setOnGrid = true;
+			frames = new Vector2[frames2D.Length];
+			for(int ii = 0; ii < frames2D.Length; ++ii){
+				float x = frames2D[ii].rect.x / frames2D[ii].rect.width;
+				float y = (frames2D[ii].texture.height-frames2D[ii].rect.y) / frames2D[ii].rect.height -1.0f;
+				frames[ii] = new Vector2(x,y);
+			}
+		}
 		
 		mEnabled = true;
 		mTgetMat = outMatreial!=null ? outMatreial : renderer!=null ? renderer.sharedMaterial : null;
