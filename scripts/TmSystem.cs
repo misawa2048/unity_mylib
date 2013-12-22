@@ -120,26 +120,30 @@ public class TmSystem : MonoBehaviour {
 		return ret;
 	}
 	//---------------------------------------------------------
-	public bool soundCall(SOUND_CH _ch, int _sysClipId, float _volRate=1.0f, bool _isOneShot=false){
+	public bool soundCall(SOUND_CH _ch, int _sysClipId, float _volRate=1.0f, float _oneShotRate=0.0f){
 		bool ret = false;
 		if( (sysSeList!=null) && (sysSeList.clipList.Length > _sysClipId) ){
-			ret = soundCall(_ch, sysSeList.clipList[_sysClipId], _volRate, _isOneShot);
+			ret = soundCall(_ch, sysSeList.clipList[_sysClipId], _volRate, _oneShotRate);
 		}
 		return ret;
 	}
-	public bool soundCall(SOUND_CH _ch, AudioClip _clip, float _volRate=1.0f, bool _isOneShot=false){
+	public bool soundCall(SOUND_CH _ch, AudioClip _clip, float _volRate=1.0f, float _oneShotRate=0.0f){
 		float vol=getChannelVolume(_ch);
-		if(_isOneShot){
+		AudioSource source = sysAudioSource[(int)_ch];
+		if(_oneShotRate>=1.0f){
 			if(_clip==null)	return false;
-			sysAudioSource[(int)_ch].PlayOneShot(_clip,vol * _volRate);
+			source.PlayOneShot(_clip,vol * _volRate);
 		}else{
-			if(_clip!=null){
-				sysAudioSource[(int)_ch].Stop();
+			if((_oneShotRate>0.0f)&&source.isPlaying&&(source.clip!=null)){
+				if((source.time/source.clip.length)<(_oneShotRate)){
+					return false;
+				}
 			}
 			sysAudioSource[(int)_ch].volume = vol * _volRate;
 			if(_clip!=null){
-				sysAudioSource[(int)_ch].clip = _clip;
-				sysAudioSource[(int)_ch].Play();
+				source.Stop();
+				source.clip = _clip;
+				source.Play();
 			}
 		}
 		return true;
