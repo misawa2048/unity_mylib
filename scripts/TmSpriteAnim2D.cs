@@ -62,7 +62,6 @@ public class TmSpriteAnim2D : MonoBehaviour {
 		mCurrentAnm = null;
 		mAnimPtr = 0.0f;
 		mSprRend = GetComponent<SpriteRenderer>();
-		mSprRend.color = Color.red;
 		if(playOnAwake!=""){
 			PlayAnimation(playOnAwake);
 		}
