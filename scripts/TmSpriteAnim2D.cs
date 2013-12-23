@@ -80,25 +80,7 @@ public class TmSpriteAnim2D : MonoBehaviour {
 		
 		float oldPtr = mAnimPtr;
 		float animSpeed = Time.deltaTime*(fps<0.1f?0.1f:fps) * (!reverse?1.0f:-1.0f);
-		mAnimPtr += animSpeed;
-		if(!reverse){
-			mIsEndOfFrame = ((mAnimPtr+animSpeed) > (float)mCurrentAnm.frames.Length);
-		}else{
-			mIsEndOfFrame = ((mAnimPtr+animSpeed) < 0.0f);
-		}
-		if(mCurrentAnm.loop){
-			mAnimPtr = (mAnimPtr)%(float)mCurrentAnm.frames.Length;
-			if(mAnimPtr<0.0f){
-				mAnimPtr += (float)mCurrentAnm.frames.Length;
-			}
-		}else{
-			if(!reverse){
-				mAnimPtr = Mathf.Min(mAnimPtr,(float)mCurrentAnm.frames.Length-ANIM_TIME_MIN);
-			}else{
-				mAnimPtr = Mathf.Max(0.0f,mAnimPtr);
-			}
-		}
-
+		mAnimPtr = updateAnimPtr(mAnimPtr,animSpeed);
 		if(Mathf.FloorToInt(oldPtr) != Mathf.FloorToInt(mAnimPtr)){
 			updateAnim();
 		}
@@ -173,7 +155,29 @@ public class TmSpriteAnim2D : MonoBehaviour {
 		animations = ret;
 		return ret;
 	}
-	
+
+	private float updateAnimPtr(float _ptr, float _animSpeed){
+		_ptr += _animSpeed;
+		if(!reverse){
+			mIsEndOfFrame = ((_ptr+_animSpeed) > (float)mCurrentAnm.frames.Length);
+		}else{
+			mIsEndOfFrame = ((_ptr+_animSpeed) < 0.0f);
+		}
+		if(mCurrentAnm.loop){
+			_ptr = (_ptr)%(float)mCurrentAnm.frames.Length;
+			if(_ptr<0.0f){
+				_ptr += (float)mCurrentAnm.frames.Length;
+			}
+		}else{
+			if(!reverse){
+				_ptr = Mathf.Min(_ptr,(float)mCurrentAnm.frames.Length-ANIM_TIME_MIN);
+			}else{
+				_ptr = Mathf.Max(0.0f,_ptr);
+			}
+		}
+		return _ptr;
+	}
+
 	private void updateAnim(){
 		int animFrame = Mathf.FloorToInt(mAnimPtr);
 		if((mCurrentAnm!=null)&&(animFrame < mCurrentAnm.frames.Length)){
