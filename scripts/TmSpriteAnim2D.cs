@@ -28,7 +28,7 @@ public class TmSpriteAnim2D : MonoBehaviour {
 		UD,
 		LRUD
 	};
-	public const float VERSION = 0.1f;
+	public const float VERSION = 0.5f;
 	private const float ANIM_TIME_MIN = 0.0001f;
 	public Sprite[] frames2D;
 	public AnimAttribute[] frameAttrs;
@@ -143,7 +143,7 @@ public class TmSpriteAnim2D : MonoBehaviour {
 		mEnabled = false;
 	}
 	
-	public Color SetColor(Color _col){
+	public Color SetMeshColor(Color _col){
 		Color ret = _col;
 		if(mSprRend!=null){
 			ret = mSprRend.color;
