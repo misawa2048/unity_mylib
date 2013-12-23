@@ -34,9 +34,10 @@ public class TmSpriteAnim2D : MonoBehaviour {
 	public AnimAttribute[] frameAttrs;
 	public SpriteAnimation[] animations;
 	public string playOnAwake = "";
-	public bool reverse = false;
 	public FLIP flip = FLIP.NONE;
 	public float fps = 20.0f;
+	public bool reverse = false;
+	public bool useCrossFade = false;
 	private bool mEnabled;
 	private SpriteAnimation mCurrentAnm;
 	private float mAnimPtr;
@@ -46,6 +47,7 @@ public class TmSpriteAnim2D : MonoBehaviour {
 	private AnimAttribute mAnimAttrOld;
 	private bool mIsEndOfFrame;
 	private SpriteRenderer mSprRend;
+	private SpriteRenderer mCrossFadeSprRend;
 	public bool isPlay { get{ return mEnabled; } }
 	public bool isEndFrame{ get{ return (mIsEndOfFrame); } }
 	public int frameFlag { get{ return (mFrameAttr!=null ? mFrameAttr.flag : 0); } }
@@ -69,6 +71,16 @@ public class TmSpriteAnim2D : MonoBehaviour {
 	
 	// Use this for initialization
 	void Start () {
+		if(useCrossFade){
+			GameObject crossFadeObj = new GameObject("CrossFadeObj");
+			crossFadeObj.transform.position = transform.position;
+			crossFadeObj.transform.parent = transform;
+			mCrossFadeSprRend = crossFadeObj.AddComponent<SpriteRenderer>();
+			mCrossFadeSprRend.color = mSprRend.color;
+			mCrossFadeSprRend.material = mSprRend.material;
+			mCrossFadeSprRend.sprite = mSprRend.sprite;
+			mCrossFadeSprRend.sortingOrder = mSprRend.sortingOrder+1;
+		}
 	}
 	
 	// Update is called once per frame
@@ -83,6 +95,11 @@ public class TmSpriteAnim2D : MonoBehaviour {
 		mAnimPtr = updateAnimPtr(mAnimPtr,animSpeed);
 		if(Mathf.FloorToInt(oldPtr) != Mathf.FloorToInt(mAnimPtr)){
 			updateAnim();
+		}
+		if(mCrossFadeSprRend!=null){
+			Color col = mSprRend.color;
+			col = new Color(col.r,col.g,col.b, col.a*(1.0f-(mAnimPtr%1.0f)));
+			mCrossFadeSprRend.color = col;
 		}
 
 		Vector3 scl = transform.localScale;
@@ -184,6 +201,15 @@ public class TmSpriteAnim2D : MonoBehaviour {
 			int viewFrame = mCurrentAnm.frames[animFrame];
 			if(mSprRend!=null){
 				mSprRend.sprite = frames2D[viewFrame];
+			}
+			if(mCrossFadeSprRend!=null){
+				float animSpeed = (1.0f+Time.deltaTime*(fps<0.1f?0.1f:fps)) * (!reverse?1.0f:-1.0f);
+				float nextAnimPtr = updateAnimPtr(mAnimPtr,animSpeed);
+				int animFrame0 = Mathf.FloorToInt(nextAnimPtr);
+				if((mCurrentAnm!=null)&&(animFrame0 < mCurrentAnm.frames.Length)){
+					int viewFrame0 = mCurrentAnm.frames[animFrame0];
+					mCrossFadeSprRend.sprite = frames2D[viewFrame0];
+				}
 			}
 
 			// attribute取得
