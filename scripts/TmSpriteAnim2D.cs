@@ -74,6 +74,7 @@ public class TmSpriteAnim2D : MonoBehaviour {
 		if(crossFadeRate>0.0f){
 			GameObject crossFadeObj = new GameObject("CrossFadeObj");
 			crossFadeObj.transform.position = transform.position;
+			crossFadeObj.transform.localScale = transform.localScale;
 			crossFadeObj.transform.parent = transform;
 			mCrossFadeSprRend = crossFadeObj.AddComponent<SpriteRenderer>();
 			mCrossFadeSprRend.color = mSprRend.color;
