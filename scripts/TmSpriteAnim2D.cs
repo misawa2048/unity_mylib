@@ -37,7 +37,7 @@ public class TmSpriteAnim2D : MonoBehaviour {
 	public FLIP flip = FLIP.NONE;
 	public float fps = 20.0f;
 	public bool reverse = false;
-	public bool useCrossFade = false;
+	public float crossFadeRate = 0.0f;
 	private bool mEnabled;
 	private SpriteAnimation mCurrentAnm;
 	private float mAnimPtr;
@@ -71,7 +71,7 @@ public class TmSpriteAnim2D : MonoBehaviour {
 	
 	// Use this for initialization
 	void Start () {
-		if(useCrossFade){
+		if(crossFadeRate>0.0f){
 			GameObject crossFadeObj = new GameObject("CrossFadeObj");
 			crossFadeObj.transform.position = transform.position;
 			crossFadeObj.transform.parent = transform;
@@ -97,8 +97,10 @@ public class TmSpriteAnim2D : MonoBehaviour {
 			updateAnim();
 		}
 		if(mCrossFadeSprRend!=null){
+			float fadeRate = reverse ? (1.0f-(mAnimPtr%1.0f)) : (mAnimPtr%1.0f);
+			fadeRate = Mathf.Clamp((fadeRate-1.0f+crossFadeRate)/crossFadeRate,0.0f,1.0f);
 			Color col = mSprRend.color;
-			col = new Color(col.r,col.g,col.b, col.a*(1.0f-(mAnimPtr%1.0f)));
+			col = new Color(col.r,col.g,col.b, col.a*fadeRate);
 			mCrossFadeSprRend.color = col;
 		}
 
