@@ -35,11 +35,15 @@ public class TmUtils {
 	// Graphic関係
 	// ----------------
 	public static Mesh CreateGridXY(int _width, int _height){
+		return CreateGridXY(_width, _height, new Color(0.5f,0.5f,0.5f,1.0f));
+	}
+	public static Mesh CreateGridXY(int _width, int _height, Color _vertCol){
 		Vector3[] vertices = new Vector3[(_width+1)*(_height+1)*2];
 		int[] triangles = new int[(((_width+1)*(_height+1)*2)/3+1)*3];
 		Vector2[] uv = new Vector2[(_width+1)*(_height+1)*2];
 		Color[] colors = new Color[(_width+1)*(_height+1)*2];
 		Vector3[] normals = new Vector3[(_width+1)*(_height+1)*2];
+		Vector4[] tangents = new Vector4[(_width+1)*(_height+1)*2];
 
 		int cnt = 0;
 		for(int ix = 0; ix <= _width; ++ix){
@@ -50,6 +54,8 @@ public class TmUtils {
 			uv[cnt*2+0] = new Vector2(vertices[cnt*2+0].x+0.5f,vertices[cnt*2+0].y+0.5f);
 			uv[cnt*2+1] = new Vector2(vertices[cnt*2+1].x+0.5f,vertices[cnt*2+1].y+0.5f);
 			colors[cnt*2+0] = colors[cnt*2+1] = new Color(0.5f,0.5f,0.5f,1.0f);
+			normals[cnt*2+0] = normals[cnt*2+1] = new Vector3(0.0f,0.0f,-1.0f);
+			tangents[cnt*2+0] = tangents[cnt*2+1] = new Vector4(1.0f,0.0f,0.0f,0.0f);
 			cnt++;
 		}
 		for(int iy = 0; iy <= _height; ++iy){
@@ -60,6 +66,8 @@ public class TmUtils {
 			uv[cnt*2+0] = new Vector2(vertices[cnt*2+0].x+0.5f,vertices[cnt*2+0].y+0.5f);
 			uv[cnt*2+1] = new Vector2(vertices[cnt*2+1].x+0.5f,vertices[cnt*2+1].y+0.5f);
 			colors[cnt*2+0] = colors[cnt*2+1] = new Color(0.5f,0.5f,0.5f,1.0f);
+			normals[cnt*2+0] = normals[cnt*2+1] = new Vector3(0.0f,0.0f,-1.0f);
+			tangents[cnt*2+0] = tangents[cnt*2+1] = new Vector4(1.0f,0.0f,0.0f,0.0f);
 			cnt++;
 		}
 		Mesh mesh = new Mesh();
@@ -68,7 +76,8 @@ public class TmUtils {
 		mesh.uv = uv;
 		mesh.colors = colors;
 		mesh.normals = normals;
-		mesh.RecalculateNormals ();
+		mesh.tangents = tangents;
+//		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
 		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Lines,0);
@@ -79,11 +88,12 @@ public class TmUtils {
 		return CreateLineCircle(_vertNum, new Color(0.5f,0.5f,0.5f,1.0f));
 	}
 	public static Mesh CreateLineCircle(int _vertNum, Color _color){
-		Vector3[] vertices = new Vector3[(_vertNum)];
-		int[] triangles = new int[(((_vertNum))/3+1)*3];
-		Vector2[] uv = new Vector2[(_vertNum)];
-		Color[] colors = new Color[(_vertNum)];
-		Vector3[] normals = new Vector3[(_vertNum)];
+		Vector3[] vertices = new Vector3[_vertNum];
+		int[] triangles = new int[((_vertNum)/3+1)*3];
+		Vector2[] uv = new Vector2[_vertNum];
+		Color[] colors = new Color[_vertNum];
+		Vector3[] normals = new Vector3[_vertNum];
+		Vector4[] tangents = new Vector4[_vertNum];
 
 		int cnt = 0;
 		for(int ii = 0; ii < _vertNum; ++ii){
@@ -93,6 +103,8 @@ public class TmUtils {
 			triangles[cnt] = cnt;
 			uv[cnt] = new Vector2(vertices[cnt].x+0.5f,vertices[cnt].y+0.5f);
 			colors[cnt] = _color;
+			normals[cnt] = new Vector3(0.0f,0.0f,-1.0f);
+			tangents[cnt] = new Vector4(1.0f,0.0f,0.0f,0.0f);
 			cnt++;
 		}
 		Mesh mesh = new Mesh();
@@ -101,7 +113,8 @@ public class TmUtils {
 		mesh.uv = uv;
 		mesh.colors = colors;
 		mesh.normals = normals;
-		mesh.RecalculateNormals ();
+		mesh.tangents = tangents;
+//		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
 		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.LineStrip,0);
@@ -109,7 +122,7 @@ public class TmUtils {
 	}
 	
 	public static Mesh CreateTileMesh(int _divX, int _divY){
-		return CreateTileMesh(_divX, _divY, Color.white);
+		return CreateTileMesh(_divX, _divY, new Color(0.5f,0.5f,0.5f,1.0f));
 	}
 	public static Mesh CreateTileMesh(int _divX, int _divY, Color _vertCol){
 		int vertNum = (_divX+1)*(_divY+1);
@@ -119,13 +132,16 @@ public class TmUtils {
 		Vector2[] uv = new Vector2[vertNum];
 		Color[] colors = new Color[vertNum];
 		Vector3[] normals = new Vector3[vertNum];
-		
+		Vector4[] tangents = new Vector4[vertNum];
+
 		for(int yy = 0; yy < (_divY+1); ++yy){
 			for(int xx = 0; xx < (_divX+1); ++xx){
 				Vector2 uvPos = new Vector2((float)xx/(float)_divX,(float)yy/(float)_divY);
 				vertices[yy*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,uvPos.y-0.5f,0.0f);
 				uv[yy*(_divX+1)+xx] = uvPos;
 				colors[yy*(_divX+1)+xx] = _vertCol;
+				normals[yy*(_divX+1)+xx] = new Vector3(0.0f,0.0f,-1.0f);
+				tangents[yy*(_divX+1)+xx] = new Vector4(1.0f,0.0f,0.0f);
 				if((xx<_divX)&&(yy<_divY)){
 					int[] sw={0,0,1,1,1,0,1,1,0,0,0,1};
 					for(int ii = 0; ii < 6; ++ii){
@@ -141,19 +157,68 @@ public class TmUtils {
 		mesh.uv = uv;
 		mesh.colors = colors;
 		mesh.normals = normals;
-		mesh.RecalculateNormals ();
+		mesh.tangents = tangents;
+//		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
 		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
 		return mesh;
 	}
 
+	public static Mesh CreatePoly(int _vertNum){
+		return CreatePoly(_vertNum, new Color(0.5f,0.5f,0.5f,1.0f));
+	}
+	public static Mesh CreatePoly(int _vertNum, Color _color){
+		Vector3[] verts = new Vector3[_vertNum+1];
+		Vector2[] uvs = new Vector2[_vertNum+1];
+		Vector3[] norms = new Vector3[_vertNum+1];
+		Vector4[] tgts = new Vector4[_vertNum+1];
+		Color[] cols = new Color[_vertNum+1];
+		verts[0]= new Vector3(0.0f,0.0f,0.0f);
+		uvs[0]= new Vector2(0.5f,0.5f);
+		norms[0]= new Vector3(0.0f,0.0f,-1.0f);
+		tgts[0]= new Vector4(1.0f,0.0f,0.0f,0.0f);
+		cols[0] = _color;
+		for(int ii=0; ii< _vertNum; ++ii){
+			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)_vertNum))*0.5f;
+			float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)_vertNum))*0.5f;
+			verts[ii+1]= new Vector3(fx,fy,0.0f);
+			uvs[ii+1]= new Vector2(fx+0.5f,fy+0.5f);
+			cols[ii+1] = _color;
+			norms[ii+1]= new Vector3(0.0f,0.0f,-1.0f);
+			tgts[ii+1]= new Vector4(fx,fy,0.0f,0.0f);
+		}
+		
+		int[] tris = new int[_vertNum*3];
+		for(int ii=0; ii< _vertNum; ++ii){
+			tris[ii*3+0] = 0;
+			tris[ii*3+1] = (ii<(_vertNum-1)) ? (ii+2) : 1;
+			tris[ii*3+2] = ii+1;
+		}
+		
+		Mesh mesh = new Mesh();
+		mesh.vertices = verts;
+		mesh.triangles = tris;
+		mesh.uv = uvs;
+		mesh.colors = cols;
+		mesh.normals = norms;
+		mesh.tangents = tgts;
+		//		mesh.RecalculateNormals ();
+		mesh.RecalculateBounds ();
+		mesh.Optimize();
+		return mesh;
+	}
+
 	public static Mesh CreatePolyRing(int _vertNum, float _minRad, float _maxRad){
+		return CreatePolyRing(_vertNum, _minRad, _maxRad, new Color(0.5f,0.5f,0.5f,1.0f));
+	}
+	public static Mesh CreatePolyRing(int _vertNum, float _minRad, float _maxRad, Color _color){
 		Vector3[] vertices = new Vector3[(_vertNum+1)*2];
 		int[] triangles = new int[(_vertNum+1)*6];
 		Vector2[] uv = new Vector2[(_vertNum+1)*2];
 		Color[] colors = new Color[(_vertNum+1)*2];
 		Vector3[] normals = new Vector3[(_vertNum+1)*2];
+		Vector4[] tangents = new Vector4[(_vertNum+1)*2];
 
 		int cnt = 0;
 		for(int ii = 0; ii <= _vertNum; ++ii){
@@ -167,11 +232,11 @@ public class TmUtils {
 			triangles[cnt*6+3] = cnt*2+0;
 			triangles[cnt*6+4] = (ii>0) ? (cnt*2-1) : 0;
 			triangles[cnt*6+5] = cnt*2+1;
-//			uv[cnt*2+0] = new Vector2(vertices[cnt*2+0].x+0.5f,vertices[cnt*2+0].y+0.5f);
-//			uv[cnt*2+1] = new Vector2(vertices[cnt*2+1].x+0.5f,vertices[cnt*2+1].y+0.5f);
 			uv[cnt*2+0] = new Vector2((float)ii/(float)_vertNum,0.0f);
 			uv[cnt*2+1] = new Vector2((float)ii/(float)_vertNum,1.0f);
-			colors[cnt*2+0] = colors[cnt*2+1] = new Color(0.5f,0.5f,0.5f,1.0f);
+			colors[cnt*2+0] = colors[cnt*2+1] = _color;
+			normals[cnt*2+0] = normals[cnt*2+1] = new Vector3(0.0f,0.0f,-1.0f);
+			tangents[cnt*2+0] = tangents[cnt*2+1] = new Vector4(1.0f,0.0f,0.0f,0.0f);
 			cnt++;
 		}
 		Mesh mesh = new Mesh();
@@ -180,6 +245,7 @@ public class TmUtils {
 		mesh.uv = uv;
 		mesh.colors = colors;
 		mesh.normals = normals;
+		mesh.tangents = tangents;
 		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
