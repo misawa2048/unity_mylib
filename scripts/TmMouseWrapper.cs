@@ -68,6 +68,7 @@ public class TmMouseWrapper{
 	public Vector3 dragPosOld{ get { return mDragPosOld; } }
 	public Vector3 dragSpeed{ get { return mDragSpeed; } }
 	public Vector3 dragScrSpeed{ get { return dragScrVec; } }
+	public float dragScrAngle(Vector3 _center){	return Quaternion.FromToRotation(Input.mousePosition - _center,mDragSttScrPos - _center).eulerAngles.z; }
 	public GameObject hitTarget { get { return mTarget; } }
 	public GameObject hitTargetOld { get { return mTargetOld; } }
 	public GameObject dragTarget { get { return mDragTarget; } }
