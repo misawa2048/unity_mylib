@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class TmMath {
 	//-----------------------------------------------------------------------------
@@ -101,6 +102,25 @@ public class TmMath {
 	}
 	
 	//-----------------------------------------------------------------------------
+	//! 円(p,r)と直線の交点数(isSegmentがtrueで線分判定) : -1:解なし(!直線)
+	//-----------------------------------------------------------------------------
+	static public int CircleLineIntersection(out Vector2[] ret, Vector2 p, float r, Vector2 p1, Vector2 p2, bool isSegment=true){
+		float a = p2.y-p1.y;
+		float b = p2.x-p1.x;
+		int num = CircleLineIntersection(out ret, p, r, -a, b, a*p1.x-b*p1.y);
+		if(isSegment){
+			List <Vector2> vecList = new List<Vector2>();
+			foreach(Vector2 vec in ret){
+				if(LineToPointDistance(p1,p2,vec,true)==0.0f){
+					vecList.Add(vec);
+				}
+			}
+			num = vecList.Count;
+			ret = vecList.ToArray();
+		}
+		return num;
+	}
+	//-----------------------------------------------------------------------------
 	//! 円(p,r)と直線(ax+by+c=0)の交点数 : -1:解なし(!直線)
 	//-----------------------------------------------------------------------------
 	static public int CircleLineIntersection(out Vector2[] ret, Vector2 p, float r, float a, float b, float c){
@@ -167,7 +187,7 @@ public class TmMath {
 		float qs = qSpd.magnitude;
 		Vector3 q2 = q1+qSpd;
 		float d = LineToLineDistance(out p0,out q0,p1,p1,q1,q2,false);
-		// p1から直線q1q2にひいた垂線の交点 を通る時間 t0
+		// p1から直線q1q2に下ろした垂線の交点 を通る時間 t0
 		float t0 = Vector3.Dot(qSpd.normalized,p0-q1)/qs;
 		float a = qs*qs - ps*ps;
 		float b = -(2*t0*qs*qs);
