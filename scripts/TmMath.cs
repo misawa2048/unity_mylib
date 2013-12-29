@@ -108,7 +108,7 @@ public class TmMath {
 		float a = p2.y-p1.y;
 		float b = p2.x-p1.x;
 		int num = CircleLineIntersection(out ret, p, r, -a, b, a*p1.x-b*p1.y);
-		if(isSegment){
+		if((num>0) && isSegment){
 			List <Vector2> vecList = new List<Vector2>();
 			foreach(Vector2 vec in ret){
 				if(LineToPointDistance(p1,p2,vec,true)==0.0f){
