@@ -54,6 +54,8 @@ public class TmSystem : MonoBehaviour {
 					sysObj.tag = TAG_NAME;
 					m_Instance = sysObj.AddComponent<TmSystem>();
 				}
+				sysObj.transform.parent = Camera.main.transform;
+				sysObj.transform.localPosition = Vector3.zero;
 //				DontDestroyOnLoad(sysObj);
 			}
 			return m_Instance;
