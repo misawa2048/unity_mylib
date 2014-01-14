@@ -14,7 +14,6 @@ public class TmSpriteAnim2D : MonoBehaviour {
 		public int[] frames;
 		public AnimAttribute[] attrs;
 		public bool loop;
-		
 		public SpriteAnimation(string _name, int[] _frames, bool _loop){
 			name = _name;
 			frames = _frames;
@@ -48,6 +47,7 @@ public class TmSpriteAnim2D : MonoBehaviour {
 	private bool mIsEndOfFrame;
 	private SpriteRenderer mSprRend;
 	private SpriteRenderer mCrossFadeSprRend;
+	private Color mDefCol;
 	public bool isPlay { get{ return mEnabled; } }
 	public bool isEndFrame{ get{ return (mIsEndOfFrame); } }
 	public int frameFlag { get{ return (mFrameAttr!=null ? mFrameAttr.flag : 0); } }
@@ -76,6 +76,7 @@ public class TmSpriteAnim2D : MonoBehaviour {
 			crossFadeObj.transform.position = transform.position;
 			crossFadeObj.transform.localScale = transform.localScale;
 			crossFadeObj.transform.parent = transform;
+			mDefCol = mSprRend.color;
 			mCrossFadeSprRend = crossFadeObj.AddComponent<SpriteRenderer>();
 			mCrossFadeSprRend.color = mSprRend.color;
 			mCrossFadeSprRend.material = mSprRend.material;
@@ -100,9 +101,11 @@ public class TmSpriteAnim2D : MonoBehaviour {
 		if(mCrossFadeSprRend!=null){
 			float fadeRate = reverse ? (1.0f-(mAnimPtr%1.0f)) : (mAnimPtr%1.0f);
 			fadeRate = Mathf.Clamp((fadeRate-1.0f+crossFadeRate)/crossFadeRate,0.0f,1.0f);
-			Color col = mSprRend.color;
+			Color col = mDefCol;
 			col = new Color(col.r,col.g,col.b, col.a*fadeRate);
 			mCrossFadeSprRend.color = col;
+			col.a = mDefCol.a*(1.0f-fadeRate);
+			mSprRend.color = col;
 		}
 
 		Vector3 scl = transform.localScale;
@@ -146,11 +149,8 @@ public class TmSpriteAnim2D : MonoBehaviour {
 	}
 	
 	public Color SetMeshColor(Color _col){
-		Color ret = _col;
-		if(mSprRend!=null){
-			ret = mSprRend.color;
-			mSprRend.color = _col;
-		}
+		Color ret = mDefCol;
+		mDefCol = _col;
 		return ret;
 	}
 
