@@ -40,6 +40,7 @@ public class TmSpriteAnim2D : MonoBehaviour {
 	private bool mEnabled;
 	private SpriteAnimation mCurrentAnm;
 	private float mAnimPtr;
+	private Sprite mSpriteOld;
 	private AnimAttribute mFrameAttr;
 	private AnimAttribute mAnimAttr;
 	private AnimAttribute mFrameAttrOld;
@@ -63,6 +64,7 @@ public class TmSpriteAnim2D : MonoBehaviour {
 		mAnimAttr = mAnimAttrOld = null;
 		mCurrentAnm = null;
 		mAnimPtr = 0.0f;
+		mSpriteOld = null;
 		mSprRend = GetComponent<SpriteRenderer>();
 		if(playOnAwake!=""){
 			PlayAnimation(playOnAwake);
@@ -99,7 +101,7 @@ public class TmSpriteAnim2D : MonoBehaviour {
 			updateAnim();
 		}
 		if(mCrossFadeSprRend!=null){
-			float fadeRate = reverse ? (1.0f-(mAnimPtr%1.0f)) : (mAnimPtr%1.0f);
+			float fadeRate = reverse ? (mAnimPtr%1.0f) : (1.0f-(mAnimPtr%1.0f));
 			fadeRate = Mathf.Clamp((fadeRate-1.0f+crossFadeRate)/crossFadeRate,0.0f,1.0f);
 			Color col = mDefCol;
 			col = new Color(col.r,col.g,col.b, col.a*fadeRate);
@@ -203,16 +205,11 @@ public class TmSpriteAnim2D : MonoBehaviour {
 		if((mCurrentAnm!=null)&&(animFrame < mCurrentAnm.frames.Length)){
 			int viewFrame = mCurrentAnm.frames[animFrame];
 			if(mSprRend!=null){
+				mSpriteOld = mSprRend.sprite;
 				mSprRend.sprite = frames2D[viewFrame];
 			}
 			if(mCrossFadeSprRend!=null){
-				float animSpeed = (1.0f+Time.deltaTime*(fps<0.1f?0.1f:fps)) * (!reverse?1.0f:-1.0f);
-				float nextAnimPtr = updateAnimPtr(mAnimPtr,animSpeed);
-				int animFrame0 = Mathf.FloorToInt(nextAnimPtr);
-				if((mCurrentAnm!=null)&&(animFrame0 < mCurrentAnm.frames.Length)){
-					int viewFrame0 = mCurrentAnm.frames[animFrame0];
-					mCrossFadeSprRend.sprite = frames2D[viewFrame0];
-				}
+				mCrossFadeSprRend.sprite = mSpriteOld; // frames2D[viewFrame0];
 			}
 
 			// attribute取得
