@@ -63,6 +63,9 @@ public class TmKeyRec{
 		public PAD_KEY(PAD_KEY _origin){
 			mData = _origin.data;
 		}
+		public PAD_KEY(int _data){
+			mData = _data;
+		}
 		public PAD_KEY clone(){ return new PAD_KEY(this); }
 		
 		public void updateInfo(int _setData=int.MaxValue){
@@ -170,6 +173,9 @@ public class TmKeyRec{
 			public RATE(RATE _origin){
 				mRate = (_origin!=null) ? _origin.mRate : 0;
 			}
+			public RATE(float _rateF){
+				mRate = (int)((float)DEF_DIV*_rateF);
+			}
 			public RATE clone(){ return new RATE(this); }
 			
 			public float rateF{ // -1.0f - 1.0f
@@ -209,6 +215,10 @@ public class TmKeyRec{
 			hRate = new RATE(_origin.hRate);
 			vRate = new RATE(_origin.vRate);
 		}
+		public ANALOG(float _hRateF, float _vRateF){
+			hRate = new RATE(_hRateF);
+			vRate = new RATE(_vRateF);
+		}
 		public ANALOG clone(){ return new ANALOG(this); }
 		
 		public void updateInfo(float _setAng=0.0f){
@@ -225,6 +235,30 @@ public class TmKeyRec{
 		}
 	}
 	//++++++++++++++++++++++++++++++++++++++++++
+	[Serializable]
+	public class KeyInfoPlane{
+		private float mDeltaTime;
+		private int mCount;
+		private int mPadData;
+		private float mAnLHRateF;
+		private float mAnLVRateF;
+		private float mAnRHRateF;
+		private float mAnRVRateF;
+		public KeyInfoPlane(KeyInfo _info){
+			mDeltaTime = _info.deltaTime;
+			mCount = _info.count;
+			mPadData = _info.pad.data;
+			mAnLHRateF = _info.anL.hRate.rateF;
+			mAnLVRateF = _info.anL.vRate.rateF;
+			mAnRHRateF = _info.anR.hRate.rateF;
+			mAnRVRateF = _info.anR.vRate.rateF;
+		}
+		public float deltaTime { get{ return mDeltaTime; } }
+		public int count { get{ return mCount; } }
+		public PAD_KEY pad { get{ return new PAD_KEY(mPadData); } }
+		public ANALOG anL { get{ return new ANALOG(mAnLHRateF,mAnLVRateF); } }
+		public ANALOG anR { get{ return new ANALOG(mAnRHRateF,mAnRVRateF); } }
+	}
 	public class KeyInfo{
 		private float mDeltaTime;
 		private int mCount;
@@ -233,7 +267,7 @@ public class TmKeyRec{
 		private ANALOG mAnR;
 		private void updateDeltaTime(float _deltaTime){ mDeltaTime = _deltaTime; }
 		public float deltaTime { get{ return mDeltaTime; } }
-		public float count { get{ return mCount; } }
+		public int count { get{ return mCount; } }
 		public PAD_KEY pad { get{ return mPad; } }
 		public ANALOG anL { get{ return mAnL; } }
 		public ANALOG anR { get{ return mAnR; } }
@@ -252,7 +286,14 @@ public class TmKeyRec{
 			mAnL = _origin.mAnL.clone();
 			mAnR = _origin.mAnR.clone();
 		}
-		
+		public KeyInfo(KeyInfoPlane _planeData){
+			mDeltaTime = _planeData.deltaTime;
+			mCount = _planeData.count;
+			mPad = _planeData.pad;
+			mAnL = _planeData.anL;
+			mAnR = _planeData.anR;
+		}
+
 		public KeyInfo clone(){ return new KeyInfo(this);	}
 		
 		public void updateInfo(float _deltaTime, int _padData, float _aLvRateF, float _aLhRateF, float _aRvRateF, float _aRhRateF){
@@ -275,13 +316,6 @@ public class TmKeyRec{
 		}
 
 		public bool isSameValue(KeyInfo _tgt){ return ((_tgt.pad.isSameValue(mPad))&&(_tgt.anL.isSameValue(mAnL))&&(_tgt.anR.isSameValue(mAnR))); }
-//		public KeyInfo[] compressedInfo(KeyInfo[] _srcArr){
-//			int cnt = 0;
-//			for(int ii = 0; ii < _srcArr.Length; ++ii){
-//				
-//			}
-//		}
-		public bool decompressInfo(byte[] _compressed){ return false; }
 	}
 	
 //=========================================
@@ -382,7 +416,8 @@ public class TmKeyRec{
 	public KeyInfo keyInfo { get{ return mInfo; } }
 	public KeyInfo[] recInfoRaw { get{	return (KeyInfo[])mRecInfo.Clone(); } }
 	public KeyInfo[] recInfo { get{	return getSortedRecInfo(); } }
-	
+	public byte[] compressedKeyInfo { get{ return compressKeyInfo(recInfo); } }
+
 	public TmKeyRec():this(DEF_REC_BUFF_SIZE,BUFF_TYPE.NORMAL){}
 	public TmKeyRec(int _buffSize, BUFF_TYPE _buffType){
 		mBuffSize = _buffSize;
@@ -501,9 +536,6 @@ public class TmKeyRec{
 		return retInfo;
 	}
 	
-	//	public KeyInfo[] compressedInfo(){}
-//	public bool decompressInfo(byte[] _compressed){ return false; }
-	
 	//---------------
 	//! 返り値はrec回数（失敗で-1） 
 	private int recOne(KeyInfo _data){
@@ -558,5 +590,35 @@ public class TmKeyRec{
 			}
 		}
 		return ret;
+	}
+	//---------------
+	private byte[] compressKeyInfo(KeyInfo[] _srcArr){
+		KeyInfoPlane[] srcPlaneArr = new KeyInfoPlane[_srcArr.Length];
+		for(int ii = 0; ii < _srcArr.Length; ++ii){
+			srcPlaneArr[ii] = new KeyInfoPlane(_srcArr[ii]);
+		}
+		BinaryFormatter formatter = new BinaryFormatter();
+		MemoryStream ms = new MemoryStream();
+		formatter.Serialize(ms,srcPlaneArr);
+
+//		byte[] buff = ms.ToArray();
+//		MemoryStream ms2 = new MemoryStream();
+//		GZipStream comp = new GZipStream(ms2,CompressionMode.Compress,true);
+//		comp.Write(buff,0,buff.Length);
+		
+		return ms.ToArray();
+	}
+	private KeyInfo[] decompressKeyInfo(byte[] _compressed){
+		KeyInfoPlane[] srcPlaneArr;
+		BinaryFormatter formatter = new BinaryFormatter();
+		MemoryStream ms = new MemoryStream();
+		ms.Write(_compressed,0,_compressed.Length);
+		srcPlaneArr = formatter.Deserialize(ms) as KeyInfoPlane[];
+
+		KeyInfo[] info = new KeyInfo[srcPlaneArr.Length];
+		for(int ii = 0; ii < srcPlaneArr.Length; ++ii){
+			info[ii] = new KeyInfo(srcPlaneArr[ii]);
+		}
+		return info;
 	}
 }
