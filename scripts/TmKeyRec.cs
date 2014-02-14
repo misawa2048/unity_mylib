@@ -235,29 +235,41 @@ public class TmKeyRec{
 		}
 	}
 	//++++++++++++++++++++++++++++++++++++++++++
-	[Serializable]
-	public class KeyInfoPlane{
-		private float mDeltaTime;
-		private int mCount;
-		private int mPadData;
-		private float mAnLHRateF;
-		private float mAnLVRateF;
-		private float mAnRHRateF;
-		private float mAnRVRateF;
+	public struct KeyInfoPlane{
+		public const int arrSize = sizeof(int)*2+sizeof(float)*5;
+		private byte[] mByteArr;
 		public KeyInfoPlane(KeyInfo _info){
-			mDeltaTime = _info.deltaTime;
-			mCount = _info.count;
-			mPadData = _info.pad.data;
-			mAnLHRateF = _info.anL.hRate.rateF;
-			mAnLVRateF = _info.anL.vRate.rateF;
-			mAnRHRateF = _info.anR.hRate.rateF;
-			mAnRVRateF = _info.anR.vRate.rateF;
+			float mDeltaTime = _info.deltaTime;
+			int mCount = _info.count;
+			int mPadData = _info.pad.data;
+			float mAnLHRateF = _info.anL.hRate.rateF;
+			float mAnLVRateF = _info.anL.vRate.rateF;
+			float mAnRHRateF = _info.anR.hRate.rateF;
+			float mAnRVRateF = _info.anR.vRate.rateF;
+			int cnt=0;
+			mByteArr = new byte[arrSize];
+			BitConverter.GetBytes(mDeltaTime).CopyTo(mByteArr,cnt);  cnt += sizeof(float);
+			BitConverter.GetBytes(mCount).CopyTo(mByteArr,cnt);      cnt += sizeof(int);
+			BitConverter.GetBytes(mPadData).CopyTo(mByteArr,cnt);    cnt += sizeof(int);
+			BitConverter.GetBytes(mAnLHRateF).CopyTo(mByteArr,cnt);  cnt += sizeof(float);
+			BitConverter.GetBytes(mAnLVRateF).CopyTo(mByteArr,cnt);  cnt += sizeof(float);
+			BitConverter.GetBytes(mAnRHRateF).CopyTo(mByteArr,cnt);  cnt += sizeof(float);
+			BitConverter.GetBytes(mAnRVRateF).CopyTo(mByteArr,cnt);  cnt += sizeof(float);
 		}
-		public float deltaTime { get{ return mDeltaTime; } }
-		public int count { get{ return mCount; } }
-		public PAD_KEY pad { get{ return new PAD_KEY(mPadData); } }
-		public ANALOG anL { get{ return new ANALOG(mAnLHRateF,mAnLVRateF); } }
-		public ANALOG anR { get{ return new ANALOG(mAnRHRateF,mAnRVRateF); } }
+		public KeyInfoPlane(byte[] _byteArr){
+			mByteArr = _byteArr;
+		}
+		public float deltaTime { get{ return BitConverter.ToSingle(mByteArr,4*0); } }
+		public int count { get{ return BitConverter.ToInt32(mByteArr,4*1); } }
+		public int padData { get{ return BitConverter.ToInt32(mByteArr,4*2); } }
+		public PAD_KEY pad { get{ return new PAD_KEY(BitConverter.ToInt32(mByteArr,4*2)); } }
+		public ANALOG anL { get{ return new ANALOG(BitConverter.ToSingle(mByteArr,4*3),BitConverter.ToSingle(mByteArr,4*4)); } }
+		public ANALOG anR { get{ return new ANALOG(BitConverter.ToSingle(mByteArr,4*5),BitConverter.ToSingle(mByteArr,4*6)); } }
+		public float anLHRateF { get{ return BitConverter.ToSingle(mByteArr,4*3); } }
+		public float anLVRateF { get{ return BitConverter.ToSingle(mByteArr,4*4); } }
+		public float anRHRateF { get{ return BitConverter.ToSingle(mByteArr,4*5); } }
+		public float anRVRateF { get{ return BitConverter.ToSingle(mByteArr,4*6); } }
+		public byte[] byteArr { get{ return mByteArr; } }
 	}
 	public class KeyInfo{
 		private float mDeltaTime;
@@ -593,31 +605,29 @@ public class TmKeyRec{
 	}
 	//---------------
 	private byte[] compressKeyInfo(KeyInfo[] _srcArr){
-		KeyInfoPlane[] srcPlaneArr = new KeyInfoPlane[_srcArr.Length];
-		for(int ii = 0; ii < _srcArr.Length; ++ii){
+		int size = _srcArr.Length;
+		KeyInfoPlane[] srcPlaneArr = new KeyInfoPlane[size];
+		for(int ii = 0; ii < size; ++ii){
 			srcPlaneArr[ii] = new KeyInfoPlane(_srcArr[ii]);
 		}
-		BinaryFormatter formatter = new BinaryFormatter();
-		MemoryStream ms = new MemoryStream();
-		formatter.Serialize(ms,srcPlaneArr);
-		ms.Flush();
 
-//		byte[] buff = ms.ToArray();
-//		MemoryStream ms2 = new MemoryStream();
-//		GZipStream comp = new GZipStream(ms2,CompressionMode.Compress,true);
-//		comp.Write(buff,0,buff.Length);
-		
-		return ms.ToArray();
+		byte[] ret = new byte[KeyInfoPlane.arrSize*size];
+		for(int ii = 0; ii < size; ++ii){
+			srcPlaneArr[ii].byteArr.CopyTo(ret, KeyInfoPlane.arrSize*ii);
+		}
+		return ret;
 	}
 
 	public int decompressKeyInfo(byte[] _compressed){
-		KeyInfoPlane[] srcPlaneArr;
-		BinaryFormatter formatter = new BinaryFormatter();
-		MemoryStream ms = new MemoryStream(_compressed);
-		object obj = formatter.Deserialize(ms);
-		ms.Close();
-
-		srcPlaneArr = obj as KeyInfoPlane[];
+		int size = (int)(_compressed.Length/KeyInfoPlane.arrSize);
+		KeyInfoPlane[] srcPlaneArr = new KeyInfoPlane[size];
+		for(int ii = 0; ii < size; ++ii){
+			byte[] tmpArr = new byte[KeyInfoPlane.arrSize];
+			for(int jj = 0; jj < KeyInfoPlane.arrSize; ++jj){
+				tmpArr[jj] = _compressed[KeyInfoPlane.arrSize*ii+jj];
+			}
+			srcPlaneArr[ii] = new KeyInfoPlane(tmpArr);
+		}
 
 		mBuffPtr = 0;
 		mRecSize = 0;
