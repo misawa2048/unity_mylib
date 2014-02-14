@@ -600,6 +600,7 @@ public class TmKeyRec{
 		BinaryFormatter formatter = new BinaryFormatter();
 		MemoryStream ms = new MemoryStream();
 		formatter.Serialize(ms,srcPlaneArr);
+		ms.Flush();
 
 //		byte[] buff = ms.ToArray();
 //		MemoryStream ms2 = new MemoryStream();
@@ -608,17 +609,24 @@ public class TmKeyRec{
 		
 		return ms.ToArray();
 	}
-	private KeyInfo[] decompressKeyInfo(byte[] _compressed){
+
+	public int decompressKeyInfo(byte[] _compressed){
 		KeyInfoPlane[] srcPlaneArr;
 		BinaryFormatter formatter = new BinaryFormatter();
-		MemoryStream ms = new MemoryStream();
-		ms.Write(_compressed,0,_compressed.Length);
-		srcPlaneArr = formatter.Deserialize(ms) as KeyInfoPlane[];
+		MemoryStream ms = new MemoryStream(_compressed);
+		object obj = formatter.Deserialize(ms);
+		ms.Close();
 
-		KeyInfo[] info = new KeyInfo[srcPlaneArr.Length];
+		srcPlaneArr = obj as KeyInfoPlane[];
+
+		mBuffPtr = 0;
+		mRecSize = 0;
 		for(int ii = 0; ii < srcPlaneArr.Length; ++ii){
-			info[ii] = new KeyInfo(srcPlaneArr[ii]);
+			if(ii>=mBuffSize) break;
+			mRecInfo[ii] = new KeyInfo(srcPlaneArr[srcPlaneArr.Length - 1 - ii]);
+			mBuffPtr = ii;
+			mRecSize = mBuffPtr+1;
 		}
-		return info;
+		return mRecSize;
 	}
 }
