@@ -34,6 +34,19 @@ public class TmKeyRec{
 		RING
 	};
 	
+	public class USE_FLAG{
+		public const short DTIME = (1<<0);
+		public const short COUNT = (1<<1);
+		public const short PAD   = (1<<2);
+		public const short ANLH  = (1<<3);
+		public const short ANLV  = (1<<4);
+		public const short ANRH  = (1<<5);
+		public const short ANRV  = (1<<6);
+		public const short ANL  = (ANLH|ANLV);
+		public const short ANR  = (ANRH|ANRV);
+		public const short ALL  = (DTIME|COUNT|PAD|ANLH|ANLV|ANRH|ANRV);
+	}
+
 	public class PAD_KEY{
 		public const int MOUSE_L = (1<<0);
 		public const int MOUSE_R = (1<<1);
@@ -98,7 +111,6 @@ public class TmKeyRec{
 		}
 	}
 	//++++++++++++++++++++++++++++++++++++++++++
-#if true
 	public class PAD{
 		public const float DEF_REP_STT_TIME = 1.0f;
 		public const float DEF_REP_CONT_TIME = 0.1f;
@@ -158,7 +170,6 @@ public class TmKeyRec{
 			}
 		}
 	}
-#endif	
 	//++++++++++++++++++++++++++++++++++++++++++
 	public class ANALOG{
 		public class RATE{
@@ -216,9 +227,15 @@ public class TmKeyRec{
 		}
 	}
 	//++++++++++++++++++++++++++++++++++++++++++
-	public struct KeyInfoPlane{
+	public class KeyInfoPlane{
 		public const int arrSize = sizeof(int)*2+sizeof(float)*5;
 		private byte[] mByteArr;
+		public KeyInfoPlane(){
+			mByteArr = new byte[arrSize];
+		}
+		public KeyInfoPlane(byte[] _byteArr){
+			mByteArr = _byteArr;
+		}
 		public KeyInfoPlane(KeyInfo _info){
 			float mDeltaTime = _info.deltaTime;
 			int mCount = _info.count;
@@ -237,20 +254,38 @@ public class TmKeyRec{
 			BitConverter.GetBytes(mAnRHRateF).CopyTo(mByteArr,cnt);  cnt += sizeof(float);
 			BitConverter.GetBytes(mAnRVRateF).CopyTo(mByteArr,cnt);  cnt += sizeof(float);
 		}
-		public KeyInfoPlane(byte[] _byteArr){
-			mByteArr = _byteArr;
-		}
-		public float deltaTime { get{ return BitConverter.ToSingle(mByteArr,4*0); } }
-		public int count { get{ return BitConverter.ToInt32(mByteArr,4*1); } }
-		public int padData { get{ return BitConverter.ToInt32(mByteArr,4*2); } }
 		public PAD_KEY pad { get{ return new PAD_KEY(BitConverter.ToInt32(mByteArr,4*2)); } }
 		public ANALOG anL { get{ return new ANALOG(BitConverter.ToSingle(mByteArr,4*3),BitConverter.ToSingle(mByteArr,4*4)); } }
 		public ANALOG anR { get{ return new ANALOG(BitConverter.ToSingle(mByteArr,4*5),BitConverter.ToSingle(mByteArr,4*6)); } }
-		public float anLHRateF { get{ return BitConverter.ToSingle(mByteArr,4*3); } }
-		public float anLVRateF { get{ return BitConverter.ToSingle(mByteArr,4*4); } }
-		public float anRHRateF { get{ return BitConverter.ToSingle(mByteArr,4*5); } }
-		public float anRVRateF { get{ return BitConverter.ToSingle(mByteArr,4*6); } }
-		public byte[] byteArr { get{ return mByteArr; } }
+		public byte[] byteArr {	get{ return mByteArr; } set{ mByteArr = value; } }
+		public float deltaTime {
+			get{ return BitConverter.ToSingle(mByteArr,4*0); }
+			set{ BitConverter.GetBytes(value).CopyTo(mByteArr,4*0); }
+		}
+		public int count {
+			get{ return BitConverter.ToInt32(mByteArr,4*1); }
+			set{ BitConverter.GetBytes(value).CopyTo(mByteArr,4*1); }
+		}
+		public int padData {
+			get{ return BitConverter.ToInt32(mByteArr,4*2); }
+			set{ BitConverter.GetBytes(value).CopyTo(mByteArr,4*2); }
+		}
+		public float anLHRateF {
+			get{ return BitConverter.ToSingle(mByteArr,4*3); }
+			set{ BitConverter.GetBytes(value).CopyTo(mByteArr,4*3); }
+		}
+		public float anLVRateF {
+			get{ return BitConverter.ToSingle(mByteArr,4*4); }
+			set{ BitConverter.GetBytes(value).CopyTo(mByteArr,4*4); }
+		}
+		public float anRHRateF {
+			get{ return BitConverter.ToSingle(mByteArr,4*5); }
+			set{ BitConverter.GetBytes(value).CopyTo(mByteArr,4*5); }
+		}
+		public float anRVRateF {
+			get{ return BitConverter.ToSingle(mByteArr,4*6); }
+			set{ BitConverter.GetBytes(value).CopyTo(mByteArr,4*6); }
+		}
 	}
 	public class KeyInfo{
 		private float mDeltaTime;
@@ -618,6 +653,139 @@ public class TmKeyRec{
 			mBuffPtr = ii;
 			mRecSize = mBuffPtr+1;
 		}
+		return mRecSize;
+	}
+
+	//---------------
+	public byte[] compressKeyInfoStream(short _KeyInfo_USE_FLAG) {
+		return compressKeyInfoStream(getSortedRecInfo(),_KeyInfo_USE_FLAG);
+	}
+	private byte[] compressKeyInfoStream(KeyInfo[] _srcArr, short _use_flag){
+		int keyLen = _srcArr.Length;
+		int size = 0;
+		size += sizeof(short); // id[2]
+		if((_use_flag & USE_FLAG.DTIME) != 0){ size += keyLen * sizeof(float); }
+		if((_use_flag & USE_FLAG.COUNT) != 0){ size += keyLen * sizeof(int); }
+		if((_use_flag & USE_FLAG.PAD) != 0)  { size += keyLen * sizeof(int); }
+		if((_use_flag & USE_FLAG.ANLH) != 0) { size += keyLen * sizeof(float); }
+		if((_use_flag & USE_FLAG.ANLV) != 0) { size += keyLen * sizeof(float); }
+		if((_use_flag & USE_FLAG.ANRH) != 0) { size += keyLen * sizeof(float); }
+		if((_use_flag & USE_FLAG.ANRV) != 0) { size += keyLen * sizeof(float); }
+
+		byte[] outArr = new byte[size];
+		int cnt = 0;
+		{
+			byte[] data = BitConverter.GetBytes(_use_flag);
+			data.CopyTo(outArr,cnt);
+			cnt += data.Length;
+		}
+		if((_use_flag & USE_FLAG.DTIME)!=0){
+			for(int ii = 0; ii < keyLen; ++ii){
+				byte[] data = BitConverter.GetBytes(_srcArr[ii].deltaTime);
+				data.CopyTo(outArr,cnt);
+				cnt += data.Length;
+			}
+		}
+		if((_use_flag & USE_FLAG.COUNT)!=0){
+			for(int ii = 0; ii < keyLen; ++ii){
+				byte[] data = BitConverter.GetBytes(_srcArr[ii].count);
+				data.CopyTo(outArr,cnt);
+				cnt += data.Length;
+			}
+		}
+		if((_use_flag & USE_FLAG.PAD)!=0){
+			for(int ii = 0; ii < keyLen; ++ii){
+				byte[] data = BitConverter.GetBytes(_srcArr[ii].pad.data);
+				data.CopyTo(outArr,cnt);
+				cnt += data.Length;
+			}
+		}
+		if((_use_flag & USE_FLAG.ANLH)!=0){
+			for(int ii = 0; ii < keyLen; ++ii){
+				byte[] data = BitConverter.GetBytes(_srcArr[ii].anL.hRate.rateF);
+				data.CopyTo(outArr,cnt);
+				cnt += data.Length;
+			}
+		}
+		if((_use_flag & USE_FLAG.ANLV)!=0){
+			for(int ii = 0; ii < keyLen; ++ii){
+				byte[] data = BitConverter.GetBytes(_srcArr[ii].anL.vRate.rateF);
+				data.CopyTo(outArr,cnt);
+				cnt += data.Length;
+			}
+		}
+		if((_use_flag & USE_FLAG.ANRH)!=0){
+			for(int ii = 0; ii < _srcArr.Length; ++ii){
+				byte[] data = BitConverter.GetBytes(_srcArr[ii].anR.hRate.rateF);
+				data.CopyTo(outArr,cnt);
+				cnt += data.Length;
+			}
+		}
+		if((_use_flag & USE_FLAG.ANRV)!=0){
+			for(int ii = 0; ii < _srcArr.Length; ++ii){
+				byte[] data = BitConverter.GetBytes(_srcArr[ii].anR.vRate.rateF);
+				data.CopyTo(outArr,cnt);
+				cnt += data.Length;
+			}
+		}
+
+		return outArr;
+	}
+	
+	public int decompressKeyInfoStream(byte[] _compressed){
+		short use_flag = BitConverter.ToInt16(_compressed,0);
+		int size = 0; // size of KeyInfo
+		int cnt = 0; // pos of byte[]
+		cnt += sizeof(short); // +use_flag
+		if((use_flag & USE_FLAG.DTIME)!=0){ size += sizeof(float); }
+		if((use_flag & USE_FLAG.COUNT)!=0){ size += sizeof(int); }
+		if((use_flag & USE_FLAG.PAD)!=0)  { size += sizeof(int); }
+		if((use_flag & USE_FLAG.ANLH)!=0) { size += sizeof(float); }
+		if((use_flag & USE_FLAG.ANLV)!=0) { size += sizeof(float); }
+		if((use_flag & USE_FLAG.ANRH)!=0) { size += sizeof(float); }
+		if((use_flag & USE_FLAG.ANRV)!=0) { size += sizeof(float); }
+		int len = (_compressed.Length - cnt) / size;
+
+		KeyInfoPlane infoPlane = new KeyInfoPlane();
+
+		for(int ii = 0; ii < len; ++ii){
+			int ofs = cnt;
+			if((use_flag & USE_FLAG.DTIME)!=0){
+				infoPlane.deltaTime = BitConverter.ToSingle(_compressed,sizeof(float)*ii + ofs);
+				ofs += sizeof(float)*len;
+			}
+			if((use_flag & USE_FLAG.COUNT)!=0){
+				infoPlane.count = BitConverter.ToInt32(_compressed,sizeof(int)*ii + ofs);
+				ofs += sizeof(int)*len;
+			}
+			if((use_flag & USE_FLAG.PAD)!=0){
+				infoPlane.padData = BitConverter.ToInt32(_compressed,sizeof(int)*ii+ofs);
+				ofs += sizeof(int)*len;
+			}
+			if((use_flag & USE_FLAG.ANLH)!=0){
+				infoPlane.anLHRateF = BitConverter.ToSingle(_compressed,sizeof(float)*ii+ofs);
+				ofs += sizeof(float)*len;
+			}
+			if((use_flag & USE_FLAG.ANLV)!=0){
+				infoPlane.anLVRateF = BitConverter.ToSingle(_compressed,sizeof(float)*ii+ofs);
+				ofs += sizeof(float)*len;
+			}
+			if((use_flag & USE_FLAG.ANRH)!=0){
+				infoPlane.anRHRateF = BitConverter.ToSingle(_compressed,sizeof(float)*ii+ofs);
+				ofs += sizeof(float)*(len-ii);
+			}
+			if((use_flag & USE_FLAG.ANRV)!=0){
+				infoPlane.anRVRateF = BitConverter.ToSingle(_compressed,sizeof(float)*ii+ofs);
+				ofs += sizeof(float)*(len-ii);
+			}
+			
+			if(ii>=mBuffSize) break;
+
+			mRecInfo[len - 1 - ii] = new KeyInfo(infoPlane);
+			mBuffPtr = ii;
+			mRecSize = ii+1;
+		}
+
 		return mRecSize;
 	}
 }
