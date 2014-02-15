@@ -163,40 +163,21 @@ public class TmKeyRec{
 	public class ANALOG{
 		public class RATE{
 			public const int DEF_DIV = 4096; // アナログ値分割(0-(DEF_DIV-1)) 
-			private int mRate; // 0-(DIV-1) 
+			private float mRateF;
 			public int rate{
-				get { return mRate;}
-				set { mRate = (int)Mathf.Clamp(value,0,(DEF_DIV-1)); }
+				get { return (int)(mRateF*DEF_DIV);}
+				set { mRateF = (float)value/(float)DEF_DIV; }
 			}
 			
 			public RATE():this(null){}
 			public RATE(RATE _origin){
-				mRate = (_origin!=null) ? _origin.mRate : 0;
+				mRateF = (_origin!=null) ? _origin.mRateF : 0;
 			}
 			public RATE(float _rateF){
-				mRate = (int)((float)DEF_DIV*_rateF);
+				mRateF = _rateF;
 			}
 			public RATE clone(){ return new RATE(this); }
-			
-			public float rateF{ // -1.0f - 1.0f
-				get{ return (mRate / (float)(DEF_DIV-1))*2.0f-1.0f; }
-				set{
-					float df = value;
-					if(df>=0.0f){
-						df = (df %2.0f);
-						if(df > 1.0f){
-							df = -2.0f+df;
-						}
-					}else{
-						df = (-df %2.0f);
-						if(df > 1.0f){
-							df = -2.0f+df;
-						}
-						df *= -1;
-					}
-					mRate = (int)((df+1.0f)*0.5f * (float)(DEF_DIV-1));
-				}
-			}
+			public float rateF{ get{ return mRateF; } set{ mRateF = value; } }
 		}
 		
 		public RATE hRate; // 0-(DIV-1) 
