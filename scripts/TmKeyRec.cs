@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.IO;
-using System.IO.Compression;
 using System.Runtime.Serialization.Formatters.Binary;
 using System;
 
@@ -11,7 +10,8 @@ using System;
 //  _key.setRecState(REC/STOP/PAUSE/PLAY);
 
 public class TmKeyRec{
-	public const float VERSION = 0.60f;
+	public const float VERSION = 0.70f;
+	public const short COMPRESS_VERSION = 0x01;
 	private const int DEF_REC_BUFF_SIZE = 65535;
 	//++++++++++++++++++++++++++++++++++++++++++
 	public enum DEBUG_MODE{
@@ -445,6 +445,7 @@ public class TmKeyRec{
 	public KeyInfo[] recInfoRaw { get{	return (KeyInfo[])mRecInfo.Clone(); } }
 	public KeyInfo[] recInfo { get{	return getSortedRecInfo(); } }
 	public byte[] compressedKeyInfo { get{ return compressKeyInfo(recInfo); } }
+	public byte[] compressedKeyInfoStream { get{ return compressKeyInfoStream(recInfo,USE_FLAG.ALL); } }
 
 	public TmKeyRec():this(DEF_REC_BUFF_SIZE,BUFF_TYPE.NORMAL){}
 	public TmKeyRec(int _buffSize, BUFF_TYPE _buffType){
@@ -627,20 +628,30 @@ public class TmKeyRec{
 			srcPlaneArr[ii] = new KeyInfoPlane(_srcArr[ii]);
 		}
 
-		byte[] ret = new byte[KeyInfoPlane.arrSize*size];
+		byte[] data;
+		byte[] ret = new byte[KeyInfoPlane.arrSize*size+sizeof(short)]; // +COMPRESS_VERSION
+		int cnt = 0;
+		data = BitConverter.GetBytes(COMPRESS_VERSION);
+		data.CopyTo(ret,cnt);
+		cnt += data.Length;
 		for(int ii = 0; ii < size; ++ii){
-			srcPlaneArr[ii].byteArr.CopyTo(ret, KeyInfoPlane.arrSize*ii);
+			data = srcPlaneArr[ii].byteArr;
+			data.CopyTo(ret,cnt);
+			cnt += data.Length;
 		}
 		return ret;
 	}
 
 	public int decompressKeyInfo(byte[] _compressed){
-		int size = (int)(_compressed.Length/KeyInfoPlane.arrSize);
+//		short ver = BitConverter.ToInt16(_compressed,0);
+		int size = _compressed.Length;
+		size -= sizeof(short); // COMPRESS_VERSION
+		size /= KeyInfoPlane.arrSize;
 		KeyInfoPlane[] srcPlaneArr = new KeyInfoPlane[size];
 		for(int ii = 0; ii < size; ++ii){
 			byte[] tmpArr = new byte[KeyInfoPlane.arrSize];
 			for(int jj = 0; jj < KeyInfoPlane.arrSize; ++jj){
-				tmpArr[jj] = _compressed[KeyInfoPlane.arrSize*ii+jj];
+				tmpArr[jj] = _compressed[KeyInfoPlane.arrSize*ii+jj+sizeof(short)]; // +COMPRESS_VERSION
 			}
 			srcPlaneArr[ii] = new KeyInfoPlane(tmpArr);
 		}
@@ -657,13 +668,14 @@ public class TmKeyRec{
 	}
 
 	//---------------
-	public byte[] compressKeyInfoStream(short _KeyInfo_USE_FLAG) {
-		return compressKeyInfoStream(getSortedRecInfo(),_KeyInfo_USE_FLAG);
+	public byte[] compressKeyInfoStream(short _USE_FLAG) {
+		return compressKeyInfoStream(getSortedRecInfo(),_USE_FLAG);
 	}
 	private byte[] compressKeyInfoStream(KeyInfo[] _srcArr, short _use_flag){
 		int keyLen = _srcArr.Length;
 		int size = 0;
-		size += sizeof(short); // id[2]
+		size += sizeof(short); // COMPRESS_VERSION
+		size += sizeof(short); // _use_flag[2]
 		if((_use_flag & USE_FLAG.DTIME) != 0){ size += keyLen * sizeof(float); }
 		if((_use_flag & USE_FLAG.COUNT) != 0){ size += keyLen * sizeof(int); }
 		if((_use_flag & USE_FLAG.PAD) != 0)  { size += keyLen * sizeof(int); }
@@ -673,57 +685,61 @@ public class TmKeyRec{
 		if((_use_flag & USE_FLAG.ANRV) != 0) { size += keyLen * sizeof(float); }
 
 		byte[] outArr = new byte[size];
+		byte[] data;
 		int cnt = 0;
 		{
-			byte[] data = BitConverter.GetBytes(_use_flag);
+			data = BitConverter.GetBytes(COMPRESS_VERSION);
+			data.CopyTo(outArr,cnt);
+			cnt += data.Length;
+			data = BitConverter.GetBytes(_use_flag);
 			data.CopyTo(outArr,cnt);
 			cnt += data.Length;
 		}
 		if((_use_flag & USE_FLAG.DTIME)!=0){
 			for(int ii = 0; ii < keyLen; ++ii){
-				byte[] data = BitConverter.GetBytes(_srcArr[ii].deltaTime);
+				data = BitConverter.GetBytes(_srcArr[ii].deltaTime);
 				data.CopyTo(outArr,cnt);
 				cnt += data.Length;
 			}
 		}
 		if((_use_flag & USE_FLAG.COUNT)!=0){
 			for(int ii = 0; ii < keyLen; ++ii){
-				byte[] data = BitConverter.GetBytes(_srcArr[ii].count);
+				data = BitConverter.GetBytes(_srcArr[ii].count);
 				data.CopyTo(outArr,cnt);
 				cnt += data.Length;
 			}
 		}
 		if((_use_flag & USE_FLAG.PAD)!=0){
 			for(int ii = 0; ii < keyLen; ++ii){
-				byte[] data = BitConverter.GetBytes(_srcArr[ii].pad.data);
+				data = BitConverter.GetBytes(_srcArr[ii].pad.data);
 				data.CopyTo(outArr,cnt);
 				cnt += data.Length;
 			}
 		}
 		if((_use_flag & USE_FLAG.ANLH)!=0){
 			for(int ii = 0; ii < keyLen; ++ii){
-				byte[] data = BitConverter.GetBytes(_srcArr[ii].anL.hRate.rateF);
+				data = BitConverter.GetBytes(_srcArr[ii].anL.hRate.rateF);
 				data.CopyTo(outArr,cnt);
 				cnt += data.Length;
 			}
 		}
 		if((_use_flag & USE_FLAG.ANLV)!=0){
 			for(int ii = 0; ii < keyLen; ++ii){
-				byte[] data = BitConverter.GetBytes(_srcArr[ii].anL.vRate.rateF);
+				data = BitConverter.GetBytes(_srcArr[ii].anL.vRate.rateF);
 				data.CopyTo(outArr,cnt);
 				cnt += data.Length;
 			}
 		}
 		if((_use_flag & USE_FLAG.ANRH)!=0){
 			for(int ii = 0; ii < _srcArr.Length; ++ii){
-				byte[] data = BitConverter.GetBytes(_srcArr[ii].anR.hRate.rateF);
+				data = BitConverter.GetBytes(_srcArr[ii].anR.hRate.rateF);
 				data.CopyTo(outArr,cnt);
 				cnt += data.Length;
 			}
 		}
 		if((_use_flag & USE_FLAG.ANRV)!=0){
 			for(int ii = 0; ii < _srcArr.Length; ++ii){
-				byte[] data = BitConverter.GetBytes(_srcArr[ii].anR.vRate.rateF);
+				data = BitConverter.GetBytes(_srcArr[ii].anR.vRate.rateF);
 				data.CopyTo(outArr,cnt);
 				cnt += data.Length;
 			}
@@ -733,9 +749,11 @@ public class TmKeyRec{
 	}
 	
 	public int decompressKeyInfoStream(byte[] _compressed){
-		short use_flag = BitConverter.ToInt16(_compressed,0);
+//		short ver = BitConverter.ToInt16(_compressed,0);
+		short use_flag = BitConverter.ToInt16(_compressed,2);
 		int size = 0; // size of KeyInfo
 		int cnt = 0; // pos of byte[]
+		cnt += sizeof(short); // +COMPRESS_VERSION
 		cnt += sizeof(short); // +use_flag
 		if((use_flag & USE_FLAG.DTIME)!=0){ size += sizeof(float); }
 		if((use_flag & USE_FLAG.COUNT)!=0){ size += sizeof(int); }
