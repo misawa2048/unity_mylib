@@ -2,11 +2,10 @@ using UnityEngine;
 using System.Collections;
 
 public class TmMouseWrapper{
-	public const float VERSION = 3.0f;
+	public const float VERSION = 3.1f;
 	public enum STATE{
 		NONE=0,
 		DOWN,
-		DRAG,
 		ON,
 		UP
 	}
@@ -29,11 +28,11 @@ public class TmMouseWrapper{
 	public TmMouseWrapper(){ awake();	}
 	private bool       mStarted=false;
 	private bool       mIsDrag;
-	private STATE      mMouseState;
 	private STATE      mButtonState;
 	private bool       mIsMouseHit;
 	private Ray        mMouseRay;
 	private RaycastHit mMouseHit;
+	private Vector3    mMousePosition;
 	private Vector3    mDragSttPos;
 	private Vector3    mDragSttScrPos;
 	private Vector3    mDragPos;
@@ -53,22 +52,22 @@ public class TmMouseWrapper{
 	private float      mDefPlaneDist = 10.0f;
 	private Plane      mMousePlane;
 	private Plane      mDragPlane;
-	public STATE mouseState{ get{ return mMouseState; } }
 	public STATE buttonState{ get{ return mButtonState; } }
-	public bool isMouseState(STATE _state){ return (_state==mMouseState); }
+	public bool isDrag(){ return mIsDrag; }
+	public bool isDragContinue(){ return (mIsDrag&&(mButtonState==STATE.ON)); }
 	public bool isButtonState(STATE _state){ return (_state==mButtonState); }
 	public GESTURE_DIR mouseGestureDir { get { return mMouseGestureDir; } }
 	public bool isMouseHit{ get{ return mIsMouseHit; } }
 	public RaycastHit mouseHit{ get{ return mMouseHit; } }
 	public Vector3 dragSttScrPos{ get{ return mDragSttScrPos; } }
-	public Vector3 dragScrVec{ get{ return (Input.mousePosition - mDragSttScrPos); } }
+	public Vector3 dragScrVec{ get{ return (mMousePosition - mDragSttScrPos); } }
 	public Ray mouseRay{ get { return mMouseRay; } }
 	public Vector3 dragVec{ get { return (mDragPos - mDragSttPos); } }
 	public Vector3 dragPos{ get { return mDragPos; } }
 	public Vector3 dragPosOld{ get { return mDragPosOld; } }
 	public Vector3 dragSpeed{ get { return mDragSpeed; } }
 	public Vector3 dragScrSpeed{ get { return dragScrVec; } }
-	public Quaternion dragScrRot(Vector3 _center){	return Quaternion.FromToRotation(Input.mousePosition - _center,mDragSttScrPos - _center); }
+	public Quaternion dragScrRot(Vector3 _center){	return Quaternion.FromToRotation(mMousePosition - _center,mDragSttScrPos - _center); }
 	public GameObject hitTarget { get { return mTarget; } }
 	public GameObject hitTargetOld { get { return mTargetOld; } }
 	public GameObject dragTarget { get { return mDragTarget; } }
@@ -96,31 +95,25 @@ public class TmMouseWrapper{
 		mStarted = true;
 		mMousePlane = calcPlane();
 	}
-	public void update (){
+	public void update (bool _isAutoUpdateInput = true){
 		if(!mStarted){ start(); }
+		if(_isAutoUpdateInput){ updateInput(); }
+
 		mDragPosOld = mDragPos;
-		mMouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+		mMouseRay = Camera.main.ScreenPointToRay(mMousePosition);
 		mIsMouseHit = Physics.Raycast(mMouseRay,out mMouseHit,mRayDist,mMouseHitLayerMask);
 		mTargetOld = mTarget;
 		mTarget = ((mIsMouseHit)&&(mMouseHit.collider!=null)) ? mMouseHit.collider.gameObject : null;
 //		if( mIsMouseHit && (mMouseHit.collider.gameObject!=mHitBodyPrefab)){ mIsMouseHit = false; }
 
-		if(mIsMouseHit && Input.GetMouseButtonDown(0)) { mIsDrag =true;  mMouseState = STATE.DOWN; mDragTarget = mMouseHit.collider.gameObject; }
-		else if(mIsDrag && Input.GetMouseButtonUp(0))  { mIsDrag =false; mMouseState = STATE.UP;   mDragTarget = null; }
-		else if(mIsDrag && Input.GetMouseButton(0))    { mMouseState = STATE.DRAG; }
-		else if(Input.GetMouseButton(0))               { mMouseState = STATE.ON; }
-		else{ mMouseState = STATE.NONE; }
+		if(mIsMouseHit && isButtonState(STATE.DOWN)) { mIsDrag =true;  mDragTarget = mMouseHit.collider.gameObject; }
+		else if(mIsDrag && isButtonState(STATE.UP))  { mIsDrag =false; mDragTarget = null; }
 
-		if(Input.GetMouseButtonDown(0)) { mButtonState = STATE.DOWN; }
-		else if(Input.GetMouseButtonUp(0)) { mButtonState = STATE.UP; }
-		else if(Input.GetMouseButton(0)) { mButtonState = STATE.ON; }
-		else{ mButtonState = STATE.NONE; }
-		
 		mMousePlane = calcPlane();
 		
 		if((mButtonState == STATE.NONE)||(mButtonState == STATE.DOWN)) {
 			mDragPlane = mMousePlane;
-			mDragSttScrPos = Input.mousePosition;
+			mDragSttScrPos = mMousePosition;
 			if(mIsMouseHit){
 				mDragSttPos = mMouseHit.point;
 			}else{
@@ -135,7 +128,7 @@ public class TmMouseWrapper{
 		}
 		mDragSpeed = mDragPos - mDragSpeed;
 
-		if((mIsMouseHit)&&((mMouseState == STATE.NONE)||(mMouseState == STATE.DOWN))) {
+		if((mIsMouseHit)&&((mButtonState == STATE.NONE)||(mButtonState == STATE.DOWN))) {
 			mDragTargetOld = mDragTarget;
 			mDragSpeed = Vector3.zero;
 		}
@@ -147,9 +140,21 @@ public class TmMouseWrapper{
 		debugDraw();
 	}
 	
+	public void updateInput(STATE _buttonState, Vector3 _mousePosition){
+		mMousePosition = _mousePosition;
+		mButtonState = _buttonState;
+	}
+	private void updateInput(){
+		mMousePosition = Input.mousePosition;
+		if(Input.GetMouseButtonDown(0))    { mButtonState = STATE.DOWN; }
+		else if(Input.GetMouseButtonUp(0)) { mButtonState = STATE.UP; }
+		else if(Input.GetMouseButton(0))   { mButtonState = STATE.ON; }
+		else{ mButtonState = STATE.NONE; }
+	}
+
 	private GESTURE_DIR getGestureDir(float minRate){
 		GESTURE_DIR retDir = GESTURE_DIR.NONE;
-		Vector3 dir = (Input.mousePosition - mDragSttScrPos)/Screen.width; // 幅を基準 
+		Vector3 dir = (mMousePosition - mDragSttScrPos)/Screen.width; // 幅を基準 
 		if(Mathf.Abs(dir.magnitude)>minRate){
 			if(Mathf.Abs(dir.x) > Mathf.Abs(dir.y)){
 				retDir = (dir.x>0.0f) ? GESTURE_DIR.RIGHT : GESTURE_DIR.LEFT;
@@ -183,7 +188,7 @@ public class TmMouseWrapper{
 		if(mDragTarget==null)    return;
 		
 		Vector3 dragPos = Vector3.zero;
-		if((mMouseState == STATE.DOWN)||(mMouseState == STATE.DRAG)){
+		if((mIsMouseHit&&isButtonState(STATE.DOWN))||(isButtonState(STATE.ON))){
 			if(mDragMode == DRAG_MODE.CONST_CAMERA_DIST){
 				dragPos = mouseRay.GetPoint(mDragPlane.distance);
 			}else{
@@ -192,7 +197,7 @@ public class TmMouseWrapper{
 					dragPos = mouseRay.GetPoint(tmpDist);
 				}
 			}
-			if(mMouseState == STATE.DOWN){
+			if(mIsMouseHit&&isButtonState(STATE.DOWN)){
 				if( isMouseHit && (mDragTarget!=null) ){
 					mDragObjOfs = mDragTarget.transform.position - dragPos;
 				}
@@ -212,7 +217,7 @@ public class TmMouseWrapper{
 	
 	private void debugDraw(){
 		Color col;
-		if(mMouseState != STATE.DRAG){ col = mIsMouseHit ? Color.cyan : Color.gray; }
+		if(mIsDrag && isButtonState(STATE.ON)){ col = mIsMouseHit ? Color.cyan : Color.gray; }
 		else{ col = mIsMouseHit ? ((mMouseHit.collider.gameObject==mDragTarget) ? Color.yellow : Color.white) : Color.red; }
 		Debug.DrawRay(mMouseRay.origin,mMouseRay.direction*mRayDist, col);
 		debugDrawGizmo(mDragPos,col,0.2f);
