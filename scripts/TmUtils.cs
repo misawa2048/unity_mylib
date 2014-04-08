@@ -383,6 +383,23 @@ public class TmUtils {
 		return retRect;
 	}
 
+	// カメラアスペクトをセット 
+	public static float setAspect(Vector2 _size, Camera _cam=null) {
+		if(_cam==null) _cam = Camera.main;
+		float tmpAspect = _size.y / _size.x;
+		float myAspect = (float)Screen.height / (float)Screen.width;
+		float outAspect;
+		
+		if( tmpAspect > myAspect ){
+			outAspect = myAspect / tmpAspect;
+			_cam.rect = new Rect( ( 1.0f - outAspect )*0.5f, 0.0f, outAspect, 1.0f );
+		}else{
+			outAspect = tmpAspect / myAspect;
+			_cam.rect = new Rect( 0.0f, ( 1.0f - outAspect )*0.5f, 1.0f, outAspect );
+		}
+		return outAspect;
+	}
+	
 	// ----------------
 	// TextAsset関係 
 	// ----------------
