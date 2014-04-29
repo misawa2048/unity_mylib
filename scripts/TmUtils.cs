@@ -83,43 +83,51 @@ public class TmUtils {
 		return mesh;
 	}
 	
-	public static Mesh CreateLineCircle(int _vertNum){
-		return CreateLineCircle(_vertNum, new Color(0.5f,0.5f,0.5f,1.0f));
+	public static Mesh CreateLine(Vector3[] _vertices, bool _isRing){
+		return CreateLine(_vertices, _isRing, new Color(0.5f,0.5f,0.5f,1.0f));
 	}
-	public static Mesh CreateLineCircle(int _vertNum, Color _color){
-		Vector3[] vertices = new Vector3[_vertNum];
-		int[] incides = new int[_vertNum+1];
-		Vector2[] uv = new Vector2[_vertNum];
-		Color[] colors = new Color[_vertNum];
-		Vector3[] normals = new Vector3[_vertNum];
-		Vector4[] tangents = new Vector4[_vertNum];
-
-		int cnt = 0;
-		for(int ii = 0; ii < _vertNum; ++ii){
-			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)_vertNum))*0.5f;
-			float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)_vertNum))*0.5f;
-			vertices[cnt] = new Vector3(fx,fy,0.0f);
-			incides[cnt] = cnt;
-			uv[cnt] = new Vector2(vertices[cnt].x+0.5f,vertices[cnt].y+0.5f);
-			colors[cnt] = _color;
-			normals[cnt] = new Vector3(0.0f,0.0f,-1.0f);
-			tangents[cnt] = new Vector4(1.0f,0.0f,0.0f,0.0f);
-			cnt++;
+	public static Mesh CreateLine(Vector3[] _vertices, bool _isRing, Color _color){
+		int vertNum = _vertices.Length;
+		int[] incides = new int[_isRing?vertNum+1:vertNum];
+		Vector2[] uv = new Vector2[vertNum];
+		Color[] colors = new Color[vertNum];
+		Vector3[] normals = new Vector3[vertNum];
+		Vector4[] tangents = new Vector4[vertNum];
+		
+		for(int ii = 0; ii < vertNum; ++ii){
+			incides[ii] = ii;
+			uv[ii] = new Vector2(_vertices[ii].x+0.5f,_vertices[ii].y+0.5f);
+			colors[ii] = _color;
+			normals[ii] = new Vector3(0.0f,0.0f,-1.0f);
+			tangents[ii] = new Vector4(1.0f,0.0f,0.0f,0.0f);
 		}
-		incides[_vertNum]=0;
+		if(_isRing) incides[vertNum]=0;
 		Mesh mesh = new Mesh();
-		mesh.vertices = vertices;
+		mesh.vertices = _vertices;
 		mesh.SetIndices(incides,MeshTopology.LineStrip,0);
 		mesh.uv = uv;
 		mesh.colors = colors;
 		mesh.normals = normals;
 		mesh.tangents = tangents;
-//		mesh.RecalculateNormals ();
+		//		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
 		return mesh;
 	}
 	
+	public static Mesh CreateLineCircle(int _vertNum){
+		return CreateLineCircle(_vertNum, new Color(0.5f,0.5f,0.5f,1.0f));
+	}
+	public static Mesh CreateLineCircle(int _vertNum, Color _color){
+		Vector3[] vertices = new Vector3[_vertNum];
+		for(int ii = 0; ii < _vertNum; ++ii){
+			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)_vertNum))*0.5f;
+			float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)_vertNum))*0.5f;
+			vertices[ii] = new Vector3(fx,fy,0.0f);
+		}
+		return CreateLine(vertices,true,_color);
+	}
+
 	public static Mesh CreateTileMesh(int _divX, int _divY){
 		return CreateTileMesh(_divX, _divY, new Color(0.5f,0.5f,0.5f,1.0f));
 	}
