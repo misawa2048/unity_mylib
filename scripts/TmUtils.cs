@@ -39,7 +39,7 @@ public class TmUtils {
 	}
 	public static Mesh CreateGridXY(int _width, int _height, Color _vertCol){
 		Vector3[] vertices = new Vector3[(_width+1)*(_height+1)*2];
-		int[] triangles = new int[(((_width+1)*(_height+1)*2)/3+1)*3];
+		int[] incides = new int[(_width+1)*(_height+1)*2];
 		Vector2[] uv = new Vector2[(_width+1)*(_height+1)*2];
 		Color[] colors = new Color[(_width+1)*(_height+1)*2];
 		Vector3[] normals = new Vector3[(_width+1)*(_height+1)*2];
@@ -49,8 +49,8 @@ public class TmUtils {
 		for(int ix = 0; ix <= _width; ++ix){
 			vertices[cnt*2+0] = new Vector3(((float)ix/(float)_width - 0.5f),-0.5f,0.0f);
 			vertices[cnt*2+1] = new Vector3(((float)ix/(float)_width - 0.5f), 0.5f,0.0f);
-			triangles[cnt*2+0] = cnt*2+0;
-			triangles[cnt*2+1] = cnt*2+1;
+			incides[cnt*2+0] = cnt*2+0;
+			incides[cnt*2+1] = cnt*2+1;
 			uv[cnt*2+0] = new Vector2(vertices[cnt*2+0].x+0.5f,vertices[cnt*2+0].y+0.5f);
 			uv[cnt*2+1] = new Vector2(vertices[cnt*2+1].x+0.5f,vertices[cnt*2+1].y+0.5f);
 			colors[cnt*2+0] = colors[cnt*2+1] = new Color(0.5f,0.5f,0.5f,1.0f);
@@ -61,8 +61,8 @@ public class TmUtils {
 		for(int iy = 0; iy <= _height; ++iy){
 			vertices[cnt*2+0] = new Vector3(-0.5f,((float)iy/(float)_height - 0.5f),0.0f);
 			vertices[cnt*2+1] = new Vector3( 0.5f,((float)iy/(float)_height - 0.5f),0.0f);
-			triangles[cnt*2+0] = cnt*2+0;
-			triangles[cnt*2+1] = cnt*2+1;
+			incides[cnt*2+0] = cnt*2+0;
+			incides[cnt*2+1] = cnt*2+1;
 			uv[cnt*2+0] = new Vector2(vertices[cnt*2+0].x+0.5f,vertices[cnt*2+0].y+0.5f);
 			uv[cnt*2+1] = new Vector2(vertices[cnt*2+1].x+0.5f,vertices[cnt*2+1].y+0.5f);
 			colors[cnt*2+0] = colors[cnt*2+1] = new Color(0.5f,0.5f,0.5f,1.0f);
@@ -72,7 +72,7 @@ public class TmUtils {
 		}
 		Mesh mesh = new Mesh();
 		mesh.vertices = vertices;
-		mesh.triangles = triangles;
+		mesh.SetIndices(incides,MeshTopology.Lines,0);
 		mesh.uv = uv;
 		mesh.colors = colors;
 		mesh.normals = normals;
@@ -80,7 +80,6 @@ public class TmUtils {
 //		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
-		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Lines,0);
 		return mesh;
 	}
 	
@@ -89,7 +88,7 @@ public class TmUtils {
 	}
 	public static Mesh CreateLineCircle(int _vertNum, Color _color){
 		Vector3[] vertices = new Vector3[_vertNum];
-		int[] triangles = new int[((_vertNum)/3+1)*3];
+		int[] incides = new int[_vertNum+1];
 		Vector2[] uv = new Vector2[_vertNum];
 		Color[] colors = new Color[_vertNum];
 		Vector3[] normals = new Vector3[_vertNum];
@@ -100,16 +99,17 @@ public class TmUtils {
 			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)_vertNum))*0.5f;
 			float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)_vertNum))*0.5f;
 			vertices[cnt] = new Vector3(fx,fy,0.0f);
-			triangles[cnt] = cnt;
+			incides[cnt] = cnt;
 			uv[cnt] = new Vector2(vertices[cnt].x+0.5f,vertices[cnt].y+0.5f);
 			colors[cnt] = _color;
 			normals[cnt] = new Vector3(0.0f,0.0f,-1.0f);
 			tangents[cnt] = new Vector4(1.0f,0.0f,0.0f,0.0f);
 			cnt++;
 		}
+		incides[_vertNum]=0;
 		Mesh mesh = new Mesh();
 		mesh.vertices = vertices;
-		mesh.triangles = triangles;
+		mesh.SetIndices(incides,MeshTopology.LineStrip,0);
 		mesh.uv = uv;
 		mesh.colors = colors;
 		mesh.normals = normals;
@@ -117,7 +117,6 @@ public class TmUtils {
 //		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
-		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.LineStrip,0);
 		return mesh;
 	}
 	
@@ -241,7 +240,8 @@ public class TmUtils {
 		}
 		Mesh mesh = new Mesh();
 		mesh.vertices = vertices;
-		mesh.triangles = triangles;
+//		mesh.triangles = triangles;
+		mesh.SetIndices(triangles,MeshTopology.Triangles,0);
 		mesh.uv = uv;
 		mesh.colors = colors;
 		mesh.normals = normals;
@@ -249,7 +249,6 @@ public class TmUtils {
 		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
-		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
 		return mesh;
 	}
 	
