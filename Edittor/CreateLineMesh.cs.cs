@@ -16,7 +16,7 @@ public class CreateLineMesh : MonoBehaviour {
 		MeshFilter meshFilter = newGameobject.AddComponent<MeshFilter> ();
 		meshFilter.mesh = TmUtils.CreateGridXY(MESH_W,MESH_H);
 		Mesh mesh = meshFilter.sharedMesh;
-		mesh.name = DEF_NAME+MESH_W.ToString()+"x"+MESH_H.ToString();
+		mesh.name = DEF_NAME+MESH_W.ToString()+"x"+MESH_H.ToString()+"XY";
 
 		AssetDatabase.CreateAsset (mesh, "Assets/" + mesh.name + ".asset");
 		AssetDatabase.SaveAssets ();
