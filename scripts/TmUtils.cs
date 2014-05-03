@@ -92,14 +92,12 @@ public class TmUtils {
 		Vector2[] uv = new Vector2[vertNum];
 		Color[] colors = new Color[vertNum];
 		Vector3[] normals = new Vector3[vertNum];
-		Vector4[] tangents = new Vector4[vertNum];
 		
 		for(int ii = 0; ii < vertNum; ++ii){
 			incides[ii] = ii;
 			uv[ii] = new Vector2(_vertices[ii].x+0.5f,_vertices[ii].y+0.5f);
 			colors[ii] = _color;
-			normals[ii] = new Vector3(0.0f,0.0f,-1.0f);
-			tangents[ii] = new Vector4(1.0f,0.0f,0.0f,0.0f);
+			normals[ii] = new Vector3(0.0f,1.0f,0.0f);
 		}
 		if(_isRing) incides[vertNum]=0;
 		Mesh mesh = new Mesh();
@@ -108,13 +106,12 @@ public class TmUtils {
 		mesh.uv = uv;
 		mesh.colors = colors;
 		mesh.normals = normals;
-		mesh.tangents = tangents;
 		//		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
 		return mesh;
 	}
-	
+
 	public static Mesh CreateLineCircle(int _vertNum){
 		return CreateLineCircle(_vertNum, new Color(0.5f,0.5f,0.5f,1.0f));
 	}
