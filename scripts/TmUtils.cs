@@ -88,21 +88,27 @@ public class TmUtils {
 	}
 	public static Mesh CreateLine(Vector3[] _vertices, bool _isRing, Color _color){
 		int vertNum = _vertices.Length;
-		int[] incides = new int[_isRing?vertNum+1:vertNum];
+		int[] incides = new int[_isRing?(vertNum*2):(vertNum-1)*2];
 		Vector2[] uv = new Vector2[vertNum];
 		Color[] colors = new Color[vertNum];
 		Vector3[] normals = new Vector3[vertNum];
 		
 		for(int ii = 0; ii < vertNum; ++ii){
-			incides[ii] = ii;
+			if(ii<(vertNum-1)){
+				incides[ii*2+0] = ii;
+				incides[ii*2+1] = ii+1;
+			}
 			uv[ii] = new Vector2(_vertices[ii].x+0.5f,_vertices[ii].y+0.5f);
 			colors[ii] = _color;
 			normals[ii] = new Vector3(0.0f,1.0f,0.0f);
 		}
-		if(_isRing) incides[vertNum]=0;
+		if(_isRing){
+			incides[(vertNum-1)*2+0] = (vertNum-1);
+			incides[(vertNum-1)*2+1] = 0;
+		}
 		Mesh mesh = new Mesh();
 		mesh.vertices = _vertices;
-		mesh.SetIndices(incides,MeshTopology.LineStrip,0);
+		mesh.SetIndices(incides,MeshTopology.Lines,0);
 		mesh.uv = uv;
 		mesh.colors = colors;
 		mesh.normals = normals;
