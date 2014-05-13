@@ -288,9 +288,6 @@ public class TmUtils {
 		Plane plane = new Plane(Camera.main.transform.forward,_basePos);
 		float dist = plane.GetDistanceToPoint(Camera.main.transform.position);
 		Vector3 scrPos = new Vector3(_screenPosRate.x,_screenPosRate.y,-dist);
-		scrPos.x *= (float)Screen.width;
-		scrPos.y *= (float)Screen.height;
-		retPos = Camera.main.ScreenToWorldPoint(scrPos);
 		
 		Vector2 d=Vector2.zero;
 		switch(_ancor){ // 中心原点からの相対 
@@ -304,10 +301,10 @@ public class TmUtils {
 			case TextAnchor.LowerCenter:  d.x =  0.0f;  d.y =  0.5f;  break;
 			case TextAnchor.LowerRight:   d.x = -0.5f;  d.y =  0.5f;  break;
 		}
-		d = Vector3.Scale(d,_scaleRate);
-		retPos += Camera.main.transform.right * d.x;
-		retPos += Camera.main.transform.up * d.y;
-
+		
+		scrPos += Vector3.Scale(d,_scaleRate);
+		retPos = Camera.main.ViewportToWorldPoint(scrPos);
+		
 		return retPos;
 	}
 
@@ -339,9 +336,23 @@ public class TmUtils {
 		Vector3 upperRightVec = new Vector3(_vierportRect.xMax,_vierportRect.yMax,_dist);
 		upperRightVec = Camera.main.ViewportToWorldPoint(upperRightVec);
 		Vector3 worldSizeVec = (upperRightVec - bottomLeftVec);
-		Rect retRect = new Rect(bottomLeftVec.x,bottomLeftVec.y,worldSizeVec.x,worldSizeVec.y);
+		float zoomRate = Mathf.Sqrt(worldSizeVec.sqrMagnitude/(_vierportRect.width*_vierportRect.width + _vierportRect.height*_vierportRect.height));
+		Rect retRect = new Rect(bottomLeftVec.x,bottomLeftVec.y,_vierportRect.width*zoomRate,_vierportRect.height*zoomRate);
 		return retRect;
 	}
+	// (0,0)-(1,1)のRectをワールド系のBoundsにして返す 
+	public static Bounds ViewportToWorldBounds(Rect _vierportRect, float _dist){
+		Vector3 bottomLeftVec = new Vector3(_vierportRect.xMin,_vierportRect.yMin,_dist);
+		bottomLeftVec = Camera.main.ViewportToWorldPoint(bottomLeftVec);
+		Vector3 upperRightVec = new Vector3(_vierportRect.xMax,_vierportRect.yMax,_dist);
+		upperRightVec = Camera.main.ViewportToWorldPoint(upperRightVec);
+		Vector3 worldSizeVec = (upperRightVec - bottomLeftVec);
+		float zoomRate = Mathf.Sqrt(worldSizeVec.sqrMagnitude/(_vierportRect.width*_vierportRect.width + _vierportRect.height*_vierportRect.height));
+		upperRightVec = bottomLeftVec + (Camera.main.transform.right*_vierportRect.width + Camera.main.transform.up*_vierportRect.width)*zoomRate;
+		Bounds retBounds = new Bounds(bottomLeftVec,upperRightVec);
+		return retBounds;
+	}
+
 	public static Rect ScreenToWorldRect(Rect _worldRect, float _dist){
 		Rect retRect = new Rect(_worldRect);
 		retRect.x /= Screen.width;
