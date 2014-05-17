@@ -22,7 +22,7 @@ public class TmUtils {
 		tmpRot.eulerAngles = _axis * _ang;
 		return (_zeroRot * tmpRot);
 	}
-
+	
 	// ----------------
 	// Leap関係 
 	// ----------------
@@ -44,7 +44,7 @@ public class TmUtils {
 		Color[] colors = new Color[(_width+1)*(_height+1)*2];
 		Vector3[] normals = new Vector3[(_width+1)*(_height+1)*2];
 		Vector4[] tangents = new Vector4[(_width+1)*(_height+1)*2];
-
+		
 		int cnt = 0;
 		for(int ix = 0; ix <= _width; ++ix){
 			vertices[cnt*2+0] = new Vector3(((float)ix/(float)_width - 0.5f),-0.5f,0.0f);
@@ -77,7 +77,7 @@ public class TmUtils {
 		mesh.colors = colors;
 		mesh.normals = normals;
 		mesh.tangents = tangents;
-//		mesh.RecalculateNormals ();
+		//		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
 		return mesh;
@@ -117,7 +117,7 @@ public class TmUtils {
 		mesh.Optimize();
 		return mesh;
 	}
-
+	
 	public static Mesh CreateLineCircle(int _vertNum){
 		return CreateLineCircle(_vertNum, new Color(0.5f,0.5f,0.5f,1.0f));
 	}
@@ -130,7 +130,7 @@ public class TmUtils {
 		}
 		return CreateLine(vertices,true,_color);
 	}
-
+	
 	public static Mesh CreateTileMesh(int _divX, int _divY){
 		return CreateTileMesh(_divX, _divY, new Color(0.5f,0.5f,0.5f,1.0f));
 	}
@@ -143,7 +143,7 @@ public class TmUtils {
 		Color[] colors = new Color[vertNum];
 		Vector3[] normals = new Vector3[vertNum];
 		Vector4[] tangents = new Vector4[vertNum];
-
+		
 		for(int yy = 0; yy < (_divY+1); ++yy){
 			for(int xx = 0; xx < (_divX+1); ++xx){
 				Vector2 uvPos = new Vector2((float)xx/(float)_divX,(float)yy/(float)_divY);
@@ -168,13 +168,13 @@ public class TmUtils {
 		mesh.colors = colors;
 		mesh.normals = normals;
 		mesh.tangents = tangents;
-//		mesh.RecalculateNormals ();
+		//		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
 		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
 		return mesh;
 	}
-
+	
 	public static Mesh CreatePoly(int _vertNum, float _starRate=0.0f){
 		return CreatePoly(_vertNum, new Color(0.5f,0.5f,0.5f,1.0f),_starRate);
 	}
@@ -223,7 +223,7 @@ public class TmUtils {
 		mesh.Optimize();
 		return mesh;
 	}
-
+	
 	public static Mesh CreatePolyRing(int _vertNum, float _minRad, float _maxRad){
 		return CreatePolyRing(_vertNum, _minRad, _maxRad, new Color(0.5f,0.5f,0.5f,1.0f));
 	}
@@ -234,7 +234,7 @@ public class TmUtils {
 		Color[] colors = new Color[(_vertNum+1)*2];
 		Vector3[] normals = new Vector3[(_vertNum+1)*2];
 		Vector4[] tangents = new Vector4[(_vertNum+1)*2];
-
+		
 		int cnt = 0;
 		for(int ii = 0; ii <= _vertNum; ++ii){
 			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)_vertNum));
@@ -256,7 +256,7 @@ public class TmUtils {
 		}
 		Mesh mesh = new Mesh();
 		mesh.vertices = vertices;
-//		mesh.triangles = triangles;
+		//		mesh.triangles = triangles;
 		mesh.SetIndices(triangles,MeshTopology.Triangles,0);
 		mesh.uv = uv;
 		mesh.colors = colors;
@@ -278,36 +278,82 @@ public class TmUtils {
 		}
 		return _nowMesh;
 	}
-
+	
 	// ----------------
 	// GUI関係 
 	// ----------------
-	// 現在の_basePosの距離を基準として、画面左下から_scaleRateの位置になるようなworld座標を取得 
-	public static Vector3 GetPosOnGUI(Vector3 _basePos, Vector2 _scaleRate, Vector2 _screenPosRate, TextAnchor _ancor = TextAnchor.MiddleCenter){
-		Vector3 retPos;
-		Plane plane = new Plane(Camera.main.transform.forward,_basePos);
-		float dist = plane.GetDistanceToPoint(Camera.main.transform.position);
-		Vector3 scrPos = new Vector3(_screenPosRate.x,_screenPosRate.y,-dist);
-		
+	// カメラから、_onPlanePosが含まれる平面までの距離を取得 
+	public static float GetDistanceFromCameratoPlane(Vector3 _onPlanePos){
+		Plane plane = new Plane(Camera.main.transform.forward,_onPlanePos);
+		return -plane.GetDistanceToPoint(Camera.main.transform.position);
+	}
+	// カメラからの距離_dist、_viewPosRateの位置になるようなworld座標を取得 
+	public static Vector3 GetPosOnGUI(float _dist, Vector2 _viewPosRate){
+		return Camera.main.ViewportToWorldPoint(new Vector3(_viewPosRate.x,_viewPosRate.y,_dist));
+	}
+	public static Vector3 GetPosOnGUI(Vector3 _basePos, Vector2 _viewPosRate){
+		return GetPosOnGUI(GetDistanceFromCameratoPlane(_basePos),_viewPosRate);
+	}
+	// カメラからの距離_dist、_scaleRate	の大きさの矩形が画面左下から_viewPosRateの位置になるようなworld座標を取得 
+	public static Vector3 GetPosOnGUI(float _dist, Vector2 _viewPosRate, Vector2 _scaleRate, TextAnchor _ancor = TextAnchor.MiddleCenter){
 		Vector2 d=Vector2.zero;
 		switch(_ancor){ // 中心原点からの相対 
-			case TextAnchor.UpperLeft:    d.x =  0.5f;  d.y = -0.5f;  break;
-			case TextAnchor.UpperCenter:  d.x =  0.0f;  d.y = -0.5f;  break;
-			case TextAnchor.UpperRight:   d.x = -0.5f;  d.y = -0.5f;  break;
-			case TextAnchor.MiddleLeft:   d.x =  0.5f;  d.y =  0.0f;  break;
-			case TextAnchor.MiddleCenter: d.x =  0.0f;  d.y =  0.0f;  break;
-			case TextAnchor.MiddleRight:  d.x = -0.5f;  d.y =  0.0f;  break;
-			case TextAnchor.LowerLeft:    d.x =  0.5f;  d.y =  0.5f;  break;
-			case TextAnchor.LowerCenter:  d.x =  0.0f;  d.y =  0.5f;  break;
-			case TextAnchor.LowerRight:   d.x = -0.5f;  d.y =  0.5f;  break;
+		case TextAnchor.UpperLeft:    d.x =  0.5f;  d.y = -0.5f;  break;
+		case TextAnchor.UpperCenter:  d.x =  0.0f;  d.y = -0.5f;  break;
+		case TextAnchor.UpperRight:   d.x = -0.5f;  d.y = -0.5f;  break;
+		case TextAnchor.MiddleLeft:   d.x =  0.5f;  d.y =  0.0f;  break;
+		case TextAnchor.MiddleCenter: d.x =  0.0f;  d.y =  0.0f;  break;
+		case TextAnchor.MiddleRight:  d.x = -0.5f;  d.y =  0.0f;  break;
+		case TextAnchor.LowerLeft:    d.x =  0.5f;  d.y =  0.5f;  break;
+		case TextAnchor.LowerCenter:  d.x =  0.0f;  d.y =  0.5f;  break;
+		case TextAnchor.LowerRight:   d.x = -0.5f;  d.y =  0.5f;  break;
 		}
-		
-		scrPos += Vector3.Scale(d,_scaleRate);
-		retPos = Camera.main.ViewportToWorldPoint(scrPos);
-		
-		return retPos;
+		return GetPosOnGUI(_dist, _viewPosRate+Vector2.Scale(d,_scaleRate));
 	}
-
+	public static Vector3 GetPosOnGUI(Vector3 _basePos, Vector2 _viewPosRate, Vector2 _scaleRate, TextAnchor _ancor = TextAnchor.MiddleCenter){
+		return GetPosOnGUI(GetDistanceFromCameratoPlane(_basePos),_viewPosRate,_scaleRate,_ancor);
+	}
+	
+	// 現在の_distを基準として, quadObjectが_scaleRateになるスケール  
+	public static Vector2 GetScaleOnGUI(float _dist, Vector2 _scaleRate){
+		Vector3 p0 = TmUtils.GetPosOnGUI(_dist,Vector2.zero);
+		Vector3 p1 = TmUtils.GetPosOnGUI(_dist,Vector2.right*_scaleRate.x);
+		Vector3 p2 = TmUtils.GetPosOnGUI(_dist,Vector2.up*_scaleRate.y);
+		return new Vector2((p1-p0).magnitude,(p2-p0).magnitude);
+	}
+	public static Vector2 GetScaleOnGUI(Vector3 _basePos, Vector2 _scaleRate){
+		return GetScaleOnGUI(GetDistanceFromCameratoPlane(_basePos), _scaleRate);
+	}
+	
+	// (0,0)-(1,1)のRectをワールド系のRectにして返す 
+	public static Rect ViewportToWorldRect(Rect _vierportRect, float _dist){
+		Vector2 wScale = GetScaleOnGUI(_dist,new Vector2(_vierportRect.width,_vierportRect.height));
+		Vector3 bottomLeftVec = new Vector3(_vierportRect.xMin,_vierportRect.yMin,_dist);
+		bottomLeftVec = Camera.main.ViewportToWorldPoint(bottomLeftVec);
+		return new Rect(bottomLeftVec.x,bottomLeftVec.y,wScale.x,wScale.y);
+	}
+	// (0,0)-(1,1)のRectをワールド系のBoundsにして返す 
+	public static Bounds ViewportToWorldBounds(Rect _vierportRect, float _dist){
+		Vector3 bottomLeftVec = new Vector3(_vierportRect.xMin,_vierportRect.yMin,_dist);
+		bottomLeftVec = Camera.main.ViewportToWorldPoint(bottomLeftVec);
+		Vector3 upperRightVec = new Vector3(_vierportRect.xMax,_vierportRect.yMax,_dist);
+		upperRightVec = Camera.main.ViewportToWorldPoint(upperRightVec);
+		Vector3 worldSizeVec = (upperRightVec - bottomLeftVec);
+		float zoomRate = Mathf.Sqrt(worldSizeVec.sqrMagnitude/(_vierportRect.width*_vierportRect.width + _vierportRect.height*_vierportRect.height));
+		upperRightVec = bottomLeftVec + (Camera.main.transform.right*_vierportRect.width + Camera.main.transform.up*_vierportRect.width)*zoomRate;
+		Bounds retBounds = new Bounds(bottomLeftVec,upperRightVec);
+		return retBounds;
+	}
+	
+	public static Rect ScreenToWorldRect(Rect _screenRect, float _dist){
+		Rect retRect = new Rect(_screenRect);
+		retRect.x /= Screen.width;
+		retRect.width /= Screen.width;
+		retRect.y /= Screen.height;
+		retRect.height /= Screen.height;
+		return ViewportToWorldRect(retRect,_dist);
+	}
+	
 	// ワールド系の(_worldRect,_dist)を左下(0,0)-(1,1)のRectにして返す 
 	public static Rect WorldToViewportRect(Rect _worldSizeRect, float _dist){
 		Rect retRect;
@@ -327,39 +373,6 @@ public class TmUtils {
 		retRect.y *= Screen.height;
 		retRect.height *= Screen.height;
 		return retRect;
-	}
-	
-	// (0,0)-(1,1)のRectをワールド系のRectにして返す 
-	public static Rect ViewportToWorldRect(Rect _vierportRect, float _dist){
-		Vector3 bottomLeftVec = new Vector3(_vierportRect.xMin,_vierportRect.yMin,_dist);
-		bottomLeftVec = Camera.main.ViewportToWorldPoint(bottomLeftVec);
-		Vector3 upperRightVec = new Vector3(_vierportRect.xMax,_vierportRect.yMax,_dist);
-		upperRightVec = Camera.main.ViewportToWorldPoint(upperRightVec);
-		Vector3 worldSizeVec = (upperRightVec - bottomLeftVec);
-		float zoomRate = Mathf.Sqrt(worldSizeVec.sqrMagnitude/(_vierportRect.width*_vierportRect.width + _vierportRect.height*_vierportRect.height));
-		Rect retRect = new Rect(bottomLeftVec.x,bottomLeftVec.y,_vierportRect.width*zoomRate,_vierportRect.height*zoomRate);
-		return retRect;
-	}
-	// (0,0)-(1,1)のRectをワールド系のBoundsにして返す 
-	public static Bounds ViewportToWorldBounds(Rect _vierportRect, float _dist){
-		Vector3 bottomLeftVec = new Vector3(_vierportRect.xMin,_vierportRect.yMin,_dist);
-		bottomLeftVec = Camera.main.ViewportToWorldPoint(bottomLeftVec);
-		Vector3 upperRightVec = new Vector3(_vierportRect.xMax,_vierportRect.yMax,_dist);
-		upperRightVec = Camera.main.ViewportToWorldPoint(upperRightVec);
-		Vector3 worldSizeVec = (upperRightVec - bottomLeftVec);
-		float zoomRate = Mathf.Sqrt(worldSizeVec.sqrMagnitude/(_vierportRect.width*_vierportRect.width + _vierportRect.height*_vierportRect.height));
-		upperRightVec = bottomLeftVec + (Camera.main.transform.right*_vierportRect.width + Camera.main.transform.up*_vierportRect.width)*zoomRate;
-		Bounds retBounds = new Bounds(bottomLeftVec,upperRightVec);
-		return retBounds;
-	}
-
-	public static Rect ScreenToWorldRect(Rect _worldRect, float _dist){
-		Rect retRect = new Rect(_worldRect);
-		retRect.x /= Screen.width;
-		retRect.width /= Screen.width;
-		retRect.y /= Screen.height;
-		retRect.height /= Screen.height;
-		return ViewportToWorldRect(retRect,_dist);
 	}
 	
 	//  画面内の最も近い点を取得  
@@ -394,21 +407,21 @@ public class TmUtils {
 		retRect.height = (int)Mathf.Pow(2.0f,(Mathf.Floor(Mathf.Log((float)(_srcRect.height-1), 2.0f)) + 1.0f));
 		Vector2 d = new Vector2(retRect.width - _srcRect.width,retRect.height - _srcRect.height);
 		switch(_ancor){ // 左下原点からの相対 
-			case TextAnchor.UpperLeft:    d.x *= 0.0f;  d.y *= 1.0f;  break;
-			case TextAnchor.UpperCenter:  d.x *= 0.5f;  d.y *= 1.0f;  break;
-			case TextAnchor.UpperRight:   d.x *= 1.0f;  d.y *= 1.0f;  break;
-			case TextAnchor.MiddleLeft:   d.x *= 0.0f;  d.y *= 0.5f;  break;
-			case TextAnchor.MiddleCenter: d.x *= 0.5f;  d.y *= 0.5f;  break;
-			case TextAnchor.MiddleRight:  d.x *= 1.0f;  d.y *= 0.5f;  break;
-			case TextAnchor.LowerLeft:    d.x *= 0.0f;  d.y *= 0.0f;  break;
-			case TextAnchor.LowerCenter:  d.x *= 0.5f;  d.y *= 0.0f;  break;
-			case TextAnchor.LowerRight:   d.x *= 1.0f;  d.y *= 0.0f;  break;
+		case TextAnchor.UpperLeft:    d.x *= 0.0f;  d.y *= 1.0f;  break;
+		case TextAnchor.UpperCenter:  d.x *= 0.5f;  d.y *= 1.0f;  break;
+		case TextAnchor.UpperRight:   d.x *= 1.0f;  d.y *= 1.0f;  break;
+		case TextAnchor.MiddleLeft:   d.x *= 0.0f;  d.y *= 0.5f;  break;
+		case TextAnchor.MiddleCenter: d.x *= 0.5f;  d.y *= 0.5f;  break;
+		case TextAnchor.MiddleRight:  d.x *= 1.0f;  d.y *= 0.5f;  break;
+		case TextAnchor.LowerLeft:    d.x *= 0.0f;  d.y *= 0.0f;  break;
+		case TextAnchor.LowerCenter:  d.x *= 0.5f;  d.y *= 0.0f;  break;
+		case TextAnchor.LowerRight:   d.x *= 1.0f;  d.y *= 0.0f;  break;
 		}
 		retRect.x = (int)(retRect.x+d.x);
 		retRect.y = (int)(retRect.y+d.y);
 		return retRect;
 	}
-
+	
 	// カメラアスペクトをセット 
 	public static float setAspect(Vector2 _size, Camera _cam=null) {
 		if(_cam==null) _cam = Camera.main;
@@ -460,7 +473,7 @@ public class TmUtils {
 		}
 		return retMap;
 	}
-
+	
 	// xmlファイルをXmlDocumentに格納 
 	public static XmlDocument XmlToDoc(TextAsset _xmlData){
 		XmlDocument doc = new XmlDocument();
