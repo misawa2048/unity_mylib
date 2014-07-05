@@ -205,4 +205,13 @@ public class TmMath {
 		}
 		return ret;
 	}
+
+	//-----------------------------------------------------------------------
+	//! 2D版LookRotation
+	//-----------------------------------------------------------------------
+	static public Quaternion LookRotation2D(Vector2 _vec,Vector2 _up){
+		float tmpAng = (Mathf.Atan2(_vec.y, _vec.x)-Mathf.Atan2(_up.y, _up.x)) * Mathf.Rad2Deg;
+		Quaternion rot = Quaternion.AngleAxis(tmpAng, Vector3.forward);
+		return rot;
+	}
 }
