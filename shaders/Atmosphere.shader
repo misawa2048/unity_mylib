@@ -2,6 +2,7 @@
 	Properties {
 		_Color ("Main Color", Color) = (1,1,1,1)
 		_MainTex ("Base (RGB)", 2D) = "white" {}
+		_CloudRate ("Cloud rate", float) = 0.1
 	}
 	SubShader {
 		Tags {  "RenderType" = "Transparent" "Queue" = "Transparent" }
@@ -16,6 +17,7 @@
 
 		sampler2D _MainTex;
 		float4 _Color;
+		half _CloudRate;
 
 		struct Input {
  			float2 uv_MainTex;
@@ -24,11 +26,13 @@
 		};
 
 		void surf (Input IN, inout SurfaceOutput o) {
-			half4 c = tex2D (_MainTex, IN.uv_MainTex);
+			half4 t = tex2D (_MainTex, IN.uv_MainTex);
 			half NdotL = dot (IN.worldNormal, IN.viewDir);
-			if(NdotL>0){ NdotL*=-0.2; }
-			o.Emission = c.rgb*_Color.rgb;
-			o.Alpha = c.a*_Color.a*-NdotL;
+			half4 c = _Color;
+			c.a*=-NdotL;
+			if(NdotL>0){ c.a=t.rgb*NdotL*_CloudRate; }
+			o.Emission = c.rgb;
+			o.Alpha = c.a;
 		}
 		ENDCG
 	} 
