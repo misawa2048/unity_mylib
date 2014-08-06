@@ -283,9 +283,12 @@ public class TmUtils {
 	// GUI関係 
 	// ----------------
 	// カメラから、_onPlanePosが含まれる平面までの距離を取得 
+	public static float GetDistanceFromCameratoPlane(Camera _cam, Vector3 _onPlanePos){
+		Plane plane = new Plane(_cam.transform.forward,_onPlanePos);
+		return -plane.GetDistanceToPoint(_cam.transform.position);
+	}
 	public static float GetDistanceFromCameratoPlane(Vector3 _onPlanePos){
-		Plane plane = new Plane(Camera.main.transform.forward,_onPlanePos);
-		return -plane.GetDistanceToPoint(Camera.main.transform.position);
+		return GetDistanceFromCameratoPlane(Camera.main, _onPlanePos);
 	}
 	// カメラからの距離_dist、_viewPosRateの位置になるようなworld座標を取得 
 	public static Vector3 GetPosOnGUI(float _dist, Vector2 _viewPosRate){
