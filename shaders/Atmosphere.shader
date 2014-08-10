@@ -9,6 +9,7 @@
 		LOD 200
 		ZWrite  Off
 		Cull Off
+		ColorMaterial Emission
 		Lighting Off
 		SeparateSpecular Off
 		
