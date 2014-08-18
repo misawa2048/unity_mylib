@@ -329,46 +329,59 @@ public class TmUtils {
 	}
 	
 	// (0,0)-(1,1)のRectをワールド系のRectにして返す 
-	public static Rect ViewportToWorldRect(Rect _vierportRect, float _dist){
+	public static Rect ViewportToWorldRect(Camera _cam, Rect _vierportRect, float _dist){
 		Vector2 wScale = GetScaleOnGUI(_dist,new Vector2(_vierportRect.width,_vierportRect.height));
 		Vector3 bottomLeftVec = new Vector3(_vierportRect.xMin,_vierportRect.yMin,_dist);
-		bottomLeftVec = Camera.main.ViewportToWorldPoint(bottomLeftVec);
+		bottomLeftVec = _cam.ViewportToWorldPoint(bottomLeftVec);
 		return new Rect(bottomLeftVec.x,bottomLeftVec.y,wScale.x,wScale.y);
 	}
+	public static Rect ViewportToWorldRect(Rect _vierportRect, float _dist){
+		return ViewportToWorldRect(Camera.main,_vierportRect,_dist);
+	}
 	// (0,0)-(1,1)のRectをワールド系のBoundsにして返す 
-	public static Bounds ViewportToWorldBounds(Rect _vierportRect, float _dist){
+	public static Bounds ViewportToWorldBounds(Camera _cam, Rect _vierportRect, float _dist){
 		Vector3 bottomLeftVec = new Vector3(_vierportRect.xMin,_vierportRect.yMin,_dist);
-		bottomLeftVec = Camera.main.ViewportToWorldPoint(bottomLeftVec);
+		bottomLeftVec = _cam.ViewportToWorldPoint(bottomLeftVec);
 		Vector3 upperRightVec = new Vector3(_vierportRect.xMax,_vierportRect.yMax,_dist);
-		upperRightVec = Camera.main.ViewportToWorldPoint(upperRightVec);
+		upperRightVec = _cam.ViewportToWorldPoint(upperRightVec);
 		Vector3 worldSizeVec = (upperRightVec - bottomLeftVec);
 		float zoomRate = Mathf.Sqrt(worldSizeVec.sqrMagnitude/(_vierportRect.width*_vierportRect.width + _vierportRect.height*_vierportRect.height));
-		upperRightVec = bottomLeftVec + (Camera.main.transform.right*_vierportRect.width + Camera.main.transform.up*_vierportRect.width)*zoomRate;
+		upperRightVec = bottomLeftVec + (_cam.transform.right*_vierportRect.width + _cam.transform.up*_vierportRect.width)*zoomRate;
 		Bounds retBounds = new Bounds(bottomLeftVec,upperRightVec);
 		return retBounds;
 	}
-	
-	public static Rect ScreenToWorldRect(Rect _screenRect, float _dist){
+	public static Bounds ViewportToWorldBounds(Rect _vierportRect, float _dist){
+		return ViewportToWorldBounds(Camera.main,_vierportRect,_dist);
+	}
+
+	public static Rect ScreenToWorldRect(Camera _cam, Rect _screenRect, float _dist){
 		Rect retRect = new Rect(_screenRect);
 		retRect.x /= Screen.width;
 		retRect.width /= Screen.width;
 		retRect.y /= Screen.height;
 		retRect.height /= Screen.height;
-		return ViewportToWorldRect(retRect,_dist);
+		return ViewportToWorldRect(_cam, retRect,_dist);
 	}
-	
+	public static Rect ScreenToWorldRect(Rect _screenRect, float _dist){
+		return ScreenToWorldRect(Camera.main,_screenRect,_dist);
+	}
+
 	// ワールド系の(_worldRect,_dist)を左下(0,0)-(1,1)のRectにして返す 
-	public static Rect WorldToViewportRect(Rect _worldSizeRect, float _dist){
+	public static Rect WorldToViewportRect(Camera _cam, Rect _worldSizeRect, float _dist){
 		Rect retRect;
-		float worldZ = _dist + Camera.main.transform.position.z;
+		float worldZ = _dist + _cam.transform.position.z;
 		Vector3 worldCenter = new Vector3(_worldSizeRect.center.x,_worldSizeRect.center.y,worldZ);
 		Vector3 worldBottomLeft = new Vector3(_worldSizeRect.xMin,_worldSizeRect.yMin,worldZ);
-		Vector3 viewportCenter = Camera.main.WorldToViewportPoint(worldCenter);
-		Vector3 viewportBottomLeft = Camera.main.WorldToViewportPoint(worldBottomLeft);
+		Vector3 viewportCenter = _cam.WorldToViewportPoint(worldCenter);
+		Vector3 viewportBottomLeft = _cam.WorldToViewportPoint(worldBottomLeft);
 		Vector3 lengthVec = (viewportCenter - viewportBottomLeft) * 2.0f;
 		retRect = new Rect(viewportBottomLeft.x,viewportBottomLeft.y,lengthVec.x,lengthVec.y);
 		return retRect;
 	}
+	public static Rect WorldToViewportRect(Rect _worldSizeRect, float _dist){
+		return WorldToViewportRect(Camera.main,_worldSizeRect,_dist);
+	}
+
 	public static Rect WorldToScreenRect(Rect _worldSizeRect, float _dist){
 		Rect retRect = WorldToViewportRect(_worldSizeRect,_dist);
 		retRect.x *= Screen.width;
