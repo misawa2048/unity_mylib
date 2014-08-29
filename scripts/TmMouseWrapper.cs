@@ -26,12 +26,15 @@ public class TmMouseWrapper{
 	}
 	
 	public TmMouseWrapper(){ awake();	}
+	private Camera     mCamera;
 	private bool       mStarted=false;
 	private bool       mIsDrag;
 	private STATE      mButtonState;
 	private bool       mIsMouseHit;
+	private bool       mIsMouseHit2D;
 	private Ray        mMouseRay;
 	private RaycastHit mMouseHit;
+	private RaycastHit2D mMouseHit2D;
 	private Vector3    mMousePosition;
 	private Vector3    mDragSttPos;
 	private Vector3    mDragSttScrPos;
@@ -43,6 +46,10 @@ public class TmMouseWrapper{
 	private GameObject mTargetOld;
 	private GameObject mDragTarget;
 	private GameObject mDragTargetOld;
+	private GameObject mTarget2D;
+	private GameObject mTarget2DOld;
+	private GameObject mDragTarget2D;
+	private GameObject mDragTarget2DOld;
 	private int        mMouseHitLayerMask=-1;
 	private int        mDraggableLayerMask=-1;
 	private float      mRayDist = 50.0f;
@@ -53,12 +60,15 @@ public class TmMouseWrapper{
 	private Plane      mMousePlane;
 	private Plane      mDragPlane;
 	public STATE buttonState{ get{ return mButtonState; } }
+	public Camera setCamera(Camera _cam){ Camera old = mCamera; mCamera = _cam; return old; }
 	public bool isDrag(){ return mIsDrag; }
 	public bool isDragContinue(){ return (mIsDrag&&(mButtonState==STATE.ON)); }
 	public bool isButtonState(STATE _state){ return (_state==mButtonState); }
 	public GESTURE_DIR mouseGestureDir { get { return mMouseGestureDir; } }
 	public bool isMouseHit{ get{ return mIsMouseHit; } }
+	public bool isMouseHit2D{ get{ return mIsMouseHit2D; } }
 	public RaycastHit mouseHit{ get{ return mMouseHit; } }
+	public RaycastHit2D mouseHit2D{ get{ return mMouseHit2D; } }
 	public Vector3 dragSttScrPos{ get{ return mDragSttScrPos; } }
 	public Vector3 dragScrVec{ get{ return (mMousePosition - mDragSttScrPos); } }
 	public Ray mouseRay{ get { return mMouseRay; } }
@@ -72,6 +82,10 @@ public class TmMouseWrapper{
 	public GameObject hitTargetOld { get { return mTargetOld; } }
 	public GameObject dragTarget { get { return mDragTarget; } }
 	public GameObject dragTargetOld { get { return mDragTargetOld; } }
+	public GameObject hitTarget2D { get { return mTarget2D; } }
+	public GameObject hitTarget2DOld { get { return mTarget2DOld; } }
+	public GameObject dragTarget2D { get { return mDragTarget2D; } }
+	public GameObject dragTarget2DOld { get { return mDragTarget2DOld; } }
 	public Vector3 dragTargetOfs { get { return mDragObjOfs; } }
 	
 	public DRAG_MODE setDragMode(DRAG_MODE mode){DRAG_MODE old = mDragMode; mDragMode = mode; return old; }
@@ -83,32 +97,52 @@ public class TmMouseWrapper{
 	public bool isEnter(GameObject obj){ return ((obj!=null)&&(mTarget==obj)&&(mTarget!=mTargetOld)); }
 	public bool isOnDragTarget(){ return isHover(mDragTarget); }
 	public bool isOnDragTarget(GameObject obj){ return (isOnDragTarget())&&(mDragTarget==obj); }
-
+	public bool isHover2D(GameObject obj){ return ((obj!=null)&&(mTarget2D==obj)); }
+	public bool isEnter2D(GameObject obj){ return ((obj!=null)&&(mTarget2D==obj)&&(mTarget2D!=mTarget2DOld)); }
+	public bool isOnDragTarget2D(){ return isHover(mDragTarget2D); }
+	public bool isOnDragTarget2D(GameObject obj){ return (isOnDragTarget2D())&&(mDragTarget2D==obj); }
+	
 	private void awake (){
 		mIsDrag = false;
 		mButtonState = STATE.NONE;
 		mTarget = mTargetOld = null;
+		mTarget2D = mTarget2DOld = null;
 		mDragTarget = mDragTargetOld = null;
+		mDragTarget2D = mDragTarget2DOld = null;
 		mDragSpeed = Vector3.zero;
 	}
 	private void start(){
 		mStarted = true;
+		mCamera = Camera.main;
 		mMousePlane = calcPlane();
 	}
 	public void update (bool _isAutoUpdateInput = true){
 		if(!mStarted){ start(); }
 		if(_isAutoUpdateInput){ updateInput(); }
-
+		
 		mDragPosOld = mDragPos;
-		mMouseRay = Camera.main.ScreenPointToRay(mMousePosition);
+		mMouseRay = mCamera.ScreenPointToRay(mMousePosition);
 		mIsMouseHit = Physics.Raycast(mMouseRay,out mMouseHit,mRayDist,mMouseHitLayerMask);
+		Vector3 wPos = mCamera.ScreenToWorldPoint(mMousePosition);
+		mMouseHit2D = Physics2D.Raycast(wPos,wPos);
+		mIsMouseHit2D = (mMouseHit2D.collider!=null);
 		mTargetOld = mTarget;
 		mTarget = ((mIsMouseHit)&&(mMouseHit.collider!=null)) ? mMouseHit.collider.gameObject : null;
-//		if( mIsMouseHit && (mMouseHit.collider.gameObject!=mHitBodyPrefab)){ mIsMouseHit = false; }
-
-		if(mIsMouseHit && isButtonState(STATE.DOWN)) { mIsDrag =true;  mDragTarget = mMouseHit.collider.gameObject; }
-		else if(mIsDrag && isButtonState(STATE.UP))  { mIsDrag =false; mDragTarget = null; }
-
+		mTarget2DOld = mTarget2D;
+		mTarget2D = ((mIsMouseHit2D)&&(mMouseHit2D.collider!=null)) ? mMouseHit2D.collider.gameObject : null;
+		//		if( mIsMouseHit && (mMouseHit.collider.gameObject!=mHitBodyPrefab)){ mIsMouseHit = false; }
+		
+		if(mIsMouseHit && isButtonState(STATE.DOWN)) {
+			mIsDrag =true;  
+			mDragTarget = mIsMouseHit ? mMouseHit.collider.gameObject : null;
+			mDragTarget2D = mIsMouseHit2D ? mMouseHit2D.collider.gameObject : null;
+		}
+		else if(mIsDrag && isButtonState(STATE.UP))  {
+			mIsDrag =false;
+			mDragTarget = null;
+			mDragTarget2D = null;
+		}
+		
 		mMousePlane = calcPlane();
 		
 		if((mButtonState == STATE.NONE)||(mButtonState == STATE.DOWN)) {
@@ -120,22 +154,24 @@ public class TmMouseWrapper{
 				mDragSttPos = mMouseRay.origin+mMouseRay.direction*mDefPlaneDist;
 			}
 		}
-
+		
 		float tmpDist;
 		mDragSpeed = mDragPos;
-		if(mDragPlane.Raycast(mouseRay, out tmpDist)){
-			mDragPos = mouseRay.GetPoint(tmpDist);
+		if(mDragPlane.Raycast(mMouseRay, out tmpDist)){
+			mDragPos = mMouseRay.GetPoint(tmpDist);
 		}
 		mDragSpeed = mDragPos - mDragSpeed;
-
+		
 		if((mIsMouseHit)&&((mButtonState == STATE.NONE)||(mButtonState == STATE.DOWN))) {
 			mDragTargetOld = mDragTarget;
+			mDragTarget2DOld = mDragTarget2D;
 			mDragSpeed = Vector3.zero;
 		}
 		
 		
 		mMouseGestureDir = getGestureDir(mGestureMinRate);
 		dragTargetByMode();
+		dragTarget2DByMode();
 		
 		debugDraw();
 	}
@@ -151,7 +187,7 @@ public class TmMouseWrapper{
 		else if(Input.GetMouseButton(0))   { mButtonState = STATE.ON; }
 		else{ mButtonState = STATE.NONE; }
 	}
-
+	
 	private GESTURE_DIR getGestureDir(float minRate){
 		GESTURE_DIR retDir = GESTURE_DIR.NONE;
 		Vector3 dir = (mMousePosition - mDragSttScrPos)/Screen.width; // 幅を基準 
@@ -168,7 +204,7 @@ public class TmMouseWrapper{
 		if(mDragMode == DRAG_MODE.CONST_CAMERA_DIST){
 			float dist;
 			if(mIsMouseHit){
-				dist = (mMouseHit.point-Camera.main.transform.position).magnitude;
+				dist = (mMouseHit.point-mCamera.transform.position).magnitude;
 			}else{
 				dist = mDefPlaneDist;
 			}
@@ -180,7 +216,7 @@ public class TmMouseWrapper{
 			}else{
 				inPos = mMouseRay.origin+mMouseRay.direction*mDefPlaneDist;
 			}
-			return (new Plane(-Camera.main.transform.forward,inPos));
+			return (new Plane(-mCamera.transform.forward,inPos));
 		}
 	}
 	
@@ -190,11 +226,11 @@ public class TmMouseWrapper{
 		Vector3 dragPos = Vector3.zero;
 		if((mIsMouseHit&&isButtonState(STATE.DOWN))||(isButtonState(STATE.ON))){
 			if(mDragMode == DRAG_MODE.CONST_CAMERA_DIST){
-				dragPos = mouseRay.GetPoint(mDragPlane.distance);
+				dragPos = mMouseRay.GetPoint(mDragPlane.distance);
 			}else{
 				float tmpDist;
-				if(mDragPlane.Raycast(mouseRay, out tmpDist)){
-					dragPos = mouseRay.GetPoint(tmpDist);
+				if(mDragPlane.Raycast(mMouseRay, out tmpDist)){
+					dragPos = mMouseRay.GetPoint(tmpDist);
 				}
 			}
 			if(mIsMouseHit&&isButtonState(STATE.DOWN)){
@@ -202,7 +238,7 @@ public class TmMouseWrapper{
 					mDragObjOfs = mDragTarget.transform.position - dragPos;
 				}
 			}
-
+			
 			if(mDragMode == DRAG_MODE.NONE)     return;
 			if(((1<<mDragTarget.layer)&mDraggableLayerMask)==0)  return;
 			
@@ -210,9 +246,11 @@ public class TmMouseWrapper{
 			if(mDragMode == DRAG_MODE.CONST_X){	dragPos.x = mDragTarget.transform.position.x; }
 			else if(mDragMode == DRAG_MODE.CONST_Y){	dragPos.y = mDragTarget.transform.position.y; }
 			else if(mDragMode == DRAG_MODE.CONST_Z){	dragPos.z = mDragTarget.transform.position.z; }
-		
+			
 			mDragTarget.transform.position = dragPos;
 		}
+	}
+	private void dragTarget2DByMode(){
 	}
 	
 	private void debugDraw(){

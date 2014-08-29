@@ -82,6 +82,7 @@ public class TmSystem : MonoBehaviour {
 	}
 	// Use this for initialization
 	void Start () {
+		mw.update();
 	}
 	
 	// Update is called once per frame
