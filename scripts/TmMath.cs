@@ -207,6 +207,20 @@ public class TmMath {
 	}
 
 	//-----------------------------------------------------------------------
+	//! 重力g力vで距離dに物体を投げるときの角度 (retがマイナスの場合は届かない）
+	//-----------------------------------------------------------------------
+	static public float ParabolicRad(float _v, float _x, float _g){
+		float ret = -0.1f;
+		float A = (_g*_x*_x)/(2*_v*_v);
+		float d = (_x/A)*(_x/A)-4.0f;
+		if(d>=0){
+			float rd = Mathf.Sqrt(d);
+			ret = Mathf.Atan(Mathf.Max((-(_x/A)+rd),(-(_x/A)-rd))/2.0f);
+		}
+		return ret;
+	}
+
+	//-----------------------------------------------------------------------
 	//! 2D版LookRotation
 	//-----------------------------------------------------------------------
 	static public Quaternion LookRotation2D(Vector2 _vec,Vector2 _up){

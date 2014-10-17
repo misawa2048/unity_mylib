@@ -170,6 +170,7 @@ public class TmMesh{
 					r = _bottomR + (_topR-_bottomR)*r;
 					vertices[zz*(_divX+1)+xx].x = Mathf.Cos (p * Mathf.PI)*r;
 					vertices[zz*(_divX+1)+xx].y = Mathf.Sin (p * Mathf.PI)*r;
+					normals[zz*(_divX+1)+xx] = vertices[zz*(_divX+1)+xx].normalized;
 				}
 				if((xx<_divX)&&(zz<_divZ)){
 					int[] sw={0,0,1,1,1,0,1,1,0,0,0,1};
