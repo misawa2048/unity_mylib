@@ -2,10 +2,10 @@
 using System.Collections;
 
 public class TmMesh{
-	public static Mesh CreateGridXY(int _width, int _height){
-		return CreateGridXY(_width, _height, new Color(0.5f,0.5f,0.5f,1.0f));
+	public static Mesh CreateLineGridXY(int _width, int _height){
+		return CreateLineGridXY(_width, _height, new Color(0.5f,0.5f,0.5f,1.0f), false);
 	}
-	public static Mesh CreateGridXY(int _width, int _height, Color _vertCol){
+	public static Mesh CreateLineGridXY(int _width, int _height, Color _vertCol, bool _isUnitPerGrid){
 		Vector3[] vertices = new Vector3[(_width+1)*(_height+1)*2];
 		int[] incides = new int[(_width+1)*(_height+1)*2];
 		Vector2[] uv = new Vector2[(_width+1)*(_height+1)*2];
@@ -17,6 +17,10 @@ public class TmMesh{
 		for(int ix = 0; ix <= _width; ++ix){
 			vertices[cnt*2+0] = new Vector3(((float)ix/(float)_width - 0.5f),-0.5f,0.0f);
 			vertices[cnt*2+1] = new Vector3(((float)ix/(float)_width - 0.5f), 0.5f,0.0f);
+			if(_isUnitPerGrid){
+				vertices[cnt*2+0] = Vector3.Scale(vertices[cnt*2+0],new Vector3(_width,_height,0));
+				vertices[cnt*2+1] = Vector3.Scale(vertices[cnt*2+1],new Vector3(_width,_height,0));
+			}
 			incides[cnt*2+0] = cnt*2+0;
 			incides[cnt*2+1] = cnt*2+1;
 			uv[cnt*2+0] = new Vector2(vertices[cnt*2+0].x+0.5f,vertices[cnt*2+0].y+0.5f);
@@ -29,6 +33,10 @@ public class TmMesh{
 		for(int iy = 0; iy <= _height; ++iy){
 			vertices[cnt*2+0] = new Vector3(-0.5f,((float)iy/(float)_height - 0.5f),0.0f);
 			vertices[cnt*2+1] = new Vector3( 0.5f,((float)iy/(float)_height - 0.5f),0.0f);
+			if(_isUnitPerGrid){
+				vertices[cnt*2+0] = Vector3.Scale(vertices[cnt*2+0],new Vector3(_width,_height,0));
+				vertices[cnt*2+1] = Vector3.Scale(vertices[cnt*2+1],new Vector3(_width,_height,0));
+			}
 			incides[cnt*2+0] = cnt*2+0;
 			incides[cnt*2+1] = cnt*2+1;
 			uv[cnt*2+0] = new Vector2(vertices[cnt*2+0].x+0.5f,vertices[cnt*2+0].y+0.5f);
@@ -100,9 +108,9 @@ public class TmMesh{
 	}
 	
 	public static Mesh CreateTileMesh(int _divX, int _divY){
-		return CreateTileMesh(_divX, _divY, new Color(0.5f,0.5f,0.5f,1.0f));
+		return CreateTileMesh(_divX, _divY, new Color(0.5f,0.5f,0.5f,1.0f),false);
 	}
-	public static Mesh CreateTileMesh(int _divX, int _divY, Color _vertCol){
+	public static Mesh CreateTileMesh(int _divX, int _divY, Color _vertCol, bool _isUnitPerGrid){
 		int vertNum = (_divX+1)*(_divY+1);
 		int quadNum = _divX*_divY;
 		int[] triangles = new int[quadNum*6];
@@ -116,6 +124,9 @@ public class TmMesh{
 			for(int xx = 0; xx < (_divX+1); ++xx){
 				Vector2 uvPos = new Vector2((float)xx/(float)_divX,(float)yy/(float)_divY);
 				vertices[yy*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,uvPos.y-0.5f,0.0f);
+				if(_isUnitPerGrid){
+					vertices[yy*(_divX+1)+xx] = Vector3.Scale(vertices[yy*(_divX+1)+xx],new Vector3(_divX,_divY,0));
+				}
 				uv[yy*(_divX+1)+xx] = uvPos;
 				colors[yy*(_divX+1)+xx] = _vertCol;
 				normals[yy*(_divX+1)+xx] = new Vector3(0.0f,0.0f,-1.0f);
@@ -195,11 +206,12 @@ public class TmMesh{
 		return mesh;
 	}
 
-	public static Mesh CreatePoly(int _vertNum, float _starRate=0.0f){
-		return CreatePoly(_vertNum, new Color(0.5f,0.5f,0.5f,1.0f),_starRate);
+	public static Mesh CreatePoly(int _vertNum, float _ofsDeg=0.0f){
+		return CreatePoly(_vertNum, new Color(0.5f,0.5f,0.5f,1.0f),_ofsDeg,0.0f);
 	}
-	public static Mesh CreatePoly(int _vertNum, Color _color, float _starRate=0.0f){
+	public static Mesh CreatePoly(int _vertNum, Color _color, float _ofsDeg=0.0f, float _starRate=0.0f){
 		if(_starRate!=0.0f) _vertNum *= 2;
+		float ofsDegRate = _ofsDeg/360.0f;
 		Vector3[] verts = new Vector3[_vertNum+1];
 		Vector2[] uvs = new Vector2[_vertNum+1];
 		Vector3[] norms = new Vector3[_vertNum+1];
@@ -215,8 +227,8 @@ public class TmMesh{
 			if((_starRate!=0.0f)&&((ii&1)==1)){
 				rr *= (1.0f-_starRate);
 			}
-			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)_vertNum))*rr;
-			float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)_vertNum))*rr;
+			float fx = Mathf.Cos(Mathf.PI*2.0f * (((float)ii / (float)_vertNum)+ofsDegRate))*rr;
+			float fy = Mathf.Sin(Mathf.PI*2.0f * (((float)ii / (float)_vertNum)+ofsDegRate))*rr;
 			verts[ii+1]= new Vector3(fx,fy,0.0f);
 			uvs[ii+1]= new Vector2(fx+0.5f,fy+0.5f);
 			cols[ii+1] = _color;

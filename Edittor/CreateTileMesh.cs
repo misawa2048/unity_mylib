@@ -3,19 +3,19 @@ using UnityEditor;
 using UnityEngine;
 using System.Collections;
 
-public class CreateLineMesh : EditorWindow 
+public class CreateTileMesh : EditorWindow 
 {
-	const string DEF_NAME = "LineMesh";
+	const string DEF_NAME = "TileMesh";
 	static int mDivX=5;
 	static int mDivY=5;
 	static bool mIsUnitPerGrid=false;
 	static Color mColor = new Color(0.5f,0.5f,0.5f,1f);
-	static CreateLineMesh mWindow;
+	static CreateTileMesh mWindow;
 
 	[MenuItem ("GameObject/Create Other/Other/"+DEF_NAME)]
 	static void Init ()
 	{
-		mWindow = (CreateLineMesh)EditorWindow.GetWindow(typeof(CreateLineMesh));
+		mWindow = (CreateTileMesh)EditorWindow.GetWindow(typeof(CreateTileMesh));
 		mWindow.Show();
 	}
 	static void Create(int _divX, int _divY, Color _vertCol, bool _isUnitPerGrid){
@@ -26,14 +26,14 @@ public class CreateLineMesh : EditorWindow
 		meshRenderer.material = new Material (Shader.Find ("Diffuse"));
 		
 		MeshFilter meshFilter = newGameobject.AddComponent<MeshFilter> ();		
-		meshFilter.mesh = TmMesh.CreateLineGridXY(_divX, _divY, _vertCol, _isUnitPerGrid);
+		meshFilter.mesh = TmMesh.CreateTileMesh(_divX, _divY, _vertCol, _isUnitPerGrid);
 		Mesh mesh = meshFilter.sharedMesh;
 		mesh.name = name;
 		
 		AssetDatabase.CreateAsset (mesh, "Assets/" + mesh.name + ".asset");
 		AssetDatabase.SaveAssets ();
 	}
-	
+
 	void OnGUI() {
 		GUILayout.Label("Base Settings", EditorStyles.boldLabel);
 		mDivX = EditorGUILayout.IntField ("divX", mDivX);
@@ -45,6 +45,6 @@ public class CreateLineMesh : EditorWindow
 			mWindow.Close();
 		}
 	}
-	
+
 }
 #endif
