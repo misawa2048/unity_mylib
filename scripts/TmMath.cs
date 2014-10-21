@@ -207,15 +207,15 @@ public class TmMath {
 	}
 
 	//-----------------------------------------------------------------------
-	//! 重力g力vで距離dに物体を投げるときの角度 (retがマイナスの場合は届かない）
+	//! 重力g力vで距離sに物体を投げるときの角度 (retがマイナスの場合は届かない）
 	//-----------------------------------------------------------------------
-	static public float ParabolicRad(float _v, float _x, float _g){
+	static public float ParabolicRad(float _v, float _s, float _g){
 		float ret = -0.1f;
-		float A = (_g*_x*_x)/(2*_v*_v);
-		float d = (_x/A)*(_x/A)-4.0f;
+		float a = (_g*_s*_s)/(2*_v*_v);
+		float d = (_s/a)*(_s/a)-4.0f;
 		if(d>=0){
-			float rd = Mathf.Sqrt(d);
-			ret = Mathf.Atan(Mathf.Max((-(_x/A)+rd),(-(_x/A)-rd))/2.0f);
+			float sd = Mathf.Sqrt(d);
+			ret = Mathf.Atan(Mathf.Max((-(_s/a)+sd),(-(_s/a)-sd))/2.0f);
 		}
 		return ret;
 	}
