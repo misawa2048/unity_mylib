@@ -207,6 +207,20 @@ public class TmUtils {
 		return outAspect;
 	}
 	
+	// get fit to screen size offset
+	// ScreenToWorldRect(,Rect(-retVec.x*0.5f,-retVec.y*0.5f,scrSize.x+retVec.x,scrSize.y+retVec.y),)
+	public static Vector2 toFixRectOfs(float _srcXpY, float _tgtXpY, bool _isInner){
+		Vector2 retVec= Vector2.zero;
+		if(_isInner){
+			if(_srcXpY>_tgtXpY){ retVec.y = -(1f-_tgtXpY/_srcXpY); }
+			else               { retVec.x = -(1f-_srcXpY/_tgtXpY); }
+		}else{
+			if(_srcXpY>_tgtXpY){ retVec.x = (_srcXpY-_tgtXpY)/_tgtXpY; }
+			else{                retVec.y = (_tgtXpY-_srcXpY)/_srcXpY; }
+		}
+		return retVec;
+	}
+	
 	// ----------------
 	// TextAsset関係 
 	// ----------------
