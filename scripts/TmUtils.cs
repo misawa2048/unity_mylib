@@ -191,7 +191,7 @@ public class TmUtils {
 	}
 	
 	// カメラアスペクトをセット 
-	public static float setAspect(Vector2 _size, Camera _cam=null) {
+	public static float SetAspect(Vector2 _size, Camera _cam=null) {
 		if(_cam==null) _cam = Camera.main;
 		float tmpAspect = _size.y / _size.x;
 		float myAspect = (float)Screen.height / (float)Screen.width;
@@ -209,7 +209,7 @@ public class TmUtils {
 	
 	// get fit to screen size offset
 	// ScreenToWorldRect(,Rect(-retVec.x*0.5f,-retVec.y*0.5f,scrSize.x+retVec.x,scrSize.y+retVec.y),)
-	public static Vector2 toFixRectOfs(float _srcXpY, float _tgtXpY, bool _isInner){
+	public static Vector2 ToFixRectOfs(float _srcXpY, float _tgtXpY, bool _isInner){
 		Vector2 retVec= Vector2.zero;
 		if(_isInner){
 			if(_srcXpY>_tgtXpY){ retVec.y = -(1f-_tgtXpY/_srcXpY); }
