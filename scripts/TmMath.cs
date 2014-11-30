@@ -234,6 +234,7 @@ public class TmMath {
 	//-----------------------------------------------------------------------
 	static public bool SetVanishingPoint(Vector2 perspectiveOffset,Camera cam){
 		if(cam!=null){
+			cam.ResetProjectionMatrix();
 			Matrix4x4 m = cam.projectionMatrix;
 			float w = 2f*cam.nearClipPlane/m.m00;
 			float h = 2f*cam.nearClipPlane/m.m11;
