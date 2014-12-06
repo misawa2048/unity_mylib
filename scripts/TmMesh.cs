@@ -300,6 +300,55 @@ public class TmMesh{
 		return mesh;
 	}
 	
+	public static Mesh CreateTriStrip(Vector3[] _verts){
+		return CreateTriStrip(_verts, new Color(0.5f,0.5f,0.5f,1.0f));
+	}
+	public static Mesh CreateTriStrip(Vector3[] _verts, Color _color){
+		if (_verts.Length < 3) {
+			return null;
+		}
+		int _vertNum = _verts.Length;
+		Vector3[] verts = _verts;
+		Vector2[] uvs = new Vector2[_vertNum];
+		Vector3[] norms = new Vector3[_vertNum];
+		Vector4[] tgts = new Vector4[_vertNum];
+		Color[] cols = new Color[_vertNum];
+		
+		for(int ii=0; ii< _vertNum; ++ii){
+			float tu = (float)(ii/2)/(float)((_vertNum/2)-1);
+			float tv = (float)(ii&1);
+			uvs[ii]= new Vector2(tu,tv);
+			cols[ii] = _color;
+			norms[ii]= new Vector3(0.0f,0.0f,-1.0f);
+			tgts[ii]= new Vector4(1f,0f,0f,0f);
+		}
+		
+		int[] tris = new int[(_vertNum-2)*3];
+		for(int ii=0; ii< _vertNum-2; ++ii){
+			if((ii&1)==0){
+				tris[ii*3+0] = ii+0;
+				tris[ii*3+1] = ii+1;
+				tris[ii*3+2] = ii+2;
+			}else{
+				tris[ii*3+0] = ii+2;
+				tris[ii*3+1] = ii+1;
+				tris[ii*3+2] = ii+0;
+			}
+		}
+		
+		Mesh mesh = new Mesh();
+		mesh.vertices = verts;
+		mesh.triangles = tris;
+		mesh.uv = uvs;
+		mesh.colors = cols;
+		mesh.normals = norms;
+		mesh.tangents = tgts;
+		mesh.RecalculateNormals ();
+		mesh.RecalculateBounds ();
+		mesh.Optimize();
+		return mesh;
+	}
+
 	public static Mesh SetMeshColor(Mesh _nowMesh, Color _col){
 		if(_nowMesh!=null){
 			Color[] cols = new Color[_nowMesh.vertexCount];
