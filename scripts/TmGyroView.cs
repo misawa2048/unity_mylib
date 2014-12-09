@@ -32,9 +32,9 @@ public class TmGyroView : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		mBaseDir = updateBaseRot(); // drag to rot Y
+		mBaseDir = updateBaseRot(); // drag to rot
 		mGyroRot = updateRot ();
-		targetRotOb.transform.rotation = Quaternion.Euler(mBaseDir) * mGyroRot; 
+    targetRotOb.transform.rotation = mGyroRot * Quaternion.Euler(mBaseDir); 
 	}
 	
 	private Vector3 updateBaseRot(){
