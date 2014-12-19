@@ -43,23 +43,25 @@ public class TmGyroView : MonoBehaviour {
 			mDragSttPos=Input.mousePosition;
 			mDragSttDir = mBaseDir;
 		}else if(Input.GetMouseButton(0)){
-
 			Vector3 vec = Input.mousePosition - mDragSttPos;
+			if(Input.gyro.enabled){
+				vec.y = 0f;
+			}
 			ret = mDragSttDir+new Vector3(-vec.y*BASE_MOVE_X,vec.x*BASE_MOVE_Y,0f);
 		}
 		return ret;
 	}
 	private Quaternion updateRot(){
 		Quaternion ret;
-#if (UNITY_IPHONE||UNITY_ANDROID) && (!UNITY_EDITOR)
+		#if (UNITY_IPHONE||UNITY_ANDROID) && (!UNITY_EDITOR)
 		if(Input.gyro.enabled){
 			ret = updateBasedOnGyro();
 		}else{
 			ret = updateBasedOnAccel();
 		}
-#else
+		#else
 		ret = updateBasedKey();
-#endif
+		#endif
 		return ret;
 	}
 	
@@ -75,10 +77,12 @@ public class TmGyroView : MonoBehaviour {
 	}
 	private float getRotAng(DeviceOrientation _ori){
 		float rotAng = 0.0f;
-		if(_ori==DeviceOrientation.Portrait){ rotAng = -90.0f; }
-		if(_ori==DeviceOrientation.PortraitUpsideDown){ rotAng = 90.0f; }
-		if(_ori==DeviceOrientation.LandscapeLeft){ rotAng = 0.0f; }
-		if(_ori==DeviceOrientation.LandscapeRight){ rotAng = 180.0f; }
+		if(Screen.orientation != ScreenOrientation.AutoRotation){
+			if(_ori==DeviceOrientation.Portrait){ rotAng = -90.0f; }
+			if(_ori==DeviceOrientation.PortraitUpsideDown){ rotAng = 90.0f; }
+			if(_ori==DeviceOrientation.LandscapeLeft){ rotAng = 0.0f; }
+			if(_ori==DeviceOrientation.LandscapeRight){ rotAng = 180.0f; }
+		}
 		return rotAng;
 	}
 	#else
