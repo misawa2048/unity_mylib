@@ -23,6 +23,9 @@ public class TmGyroView : MonoBehaviour {
 		}
 		mGyroRot = updateRot ();
 		mBaseDir.y = -mGyroRot.eulerAngles.y;
+		if(SystemInfo.supportsGyroscope){
+			Input.gyro.enabled=true;
+		}
 		#if (UNITY_IPHONE||UNITY_ANDROID) && (!UNITY_EDITOR)
 		mAng = getRotAng(Input.deviceOrientation);
 		#else
@@ -32,9 +35,9 @@ public class TmGyroView : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		mBaseDir = updateBaseRot(); // drag to rot
+		mBaseDir = updateBaseRot(); // drag to rot Y
 		mGyroRot = updateRot ();
-    targetRotOb.transform.rotation = mGyroRot * Quaternion.Euler(mBaseDir); 
+		targetRotOb.transform.rotation = Quaternion.Euler(mBaseDir) * mGyroRot; 
 	}
 	
 	private Vector3 updateBaseRot(){
@@ -44,7 +47,7 @@ public class TmGyroView : MonoBehaviour {
 			mDragSttDir = mBaseDir;
 		}else if(Input.GetMouseButton(0)){
 			Vector3 vec = Input.mousePosition - mDragSttPos;
-			if(Input.gyro.enabled){
+			if(SystemInfo.supportsGyroscope){
 				vec.y = 0f;
 			}
 			ret = mDragSttDir+new Vector3(-vec.y*BASE_MOVE_X,vec.x*BASE_MOVE_Y,0f);
@@ -52,12 +55,12 @@ public class TmGyroView : MonoBehaviour {
 		return ret;
 	}
 	private Quaternion updateRot(){
-		Quaternion ret;
+		Quaternion ret = Quaternion.identity;
 		#if (UNITY_IPHONE||UNITY_ANDROID) && (!UNITY_EDITOR)
-		if(Input.gyro.enabled){
+		if(SystemInfo.supportsGyroscope){
 			ret = updateBasedOnGyro();
 		}else{
-			ret = updateBasedOnAccel();
+			//			ret = updateBasedOnAccel();
 		}
 		#else
 		ret = updateBasedKey();
@@ -67,6 +70,9 @@ public class TmGyroView : MonoBehaviour {
 	
 	#if (UNITY_IPHONE||UNITY_ANDROID) && (!UNITY_EDITOR)
 	private Quaternion updateBasedOnGyro(){
+		if(!SystemInfo.supportsGyroscope){
+			return Quaternion.identity;
+		}
 		return Quaternion.AngleAxis(90.0f,Vector3.right)*Input.gyro.attitude*Quaternion.AngleAxis(180.0f,Vector3.forward);
 	}
 	
