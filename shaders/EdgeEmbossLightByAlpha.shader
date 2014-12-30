@@ -33,6 +33,7 @@ SubShader {
 		    float4 vertex : POSITION;
 		    float2 texcoord : TEXCOORD0;
 		    float2 texcoord1 : TEXCOORD1;
+		    float4 tangent : TANGENT;
 		    float4 color : COLOR;
 		};
 		
@@ -55,7 +56,9 @@ SubShader {
 		    o.uv = TRANSFORM_TEX (v.texcoord, _MainTex);
 		    o.uv1 = TRANSFORM_TEX (v.texcoord1, _FontTex);
 		    o.color = v.color * unity_LightColor[0] + UNITY_LIGHTMODEL_AMBIENT;
-		    o.ofs = normalize(ObjSpaceLightDir(v.vertex))*_Offset.xy;
+		    float rad = atan2(v.tangent.x,v.tangent.y);
+		    float2 ofs = v.tangent.xy > 0 ? _Offset : -_Offset;
+		    o.ofs = normalize(ObjSpaceLightDir(v.vertex))*ofs.xy;
 		    return o;
 		}
 		
