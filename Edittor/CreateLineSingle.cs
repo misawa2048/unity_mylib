@@ -15,7 +15,7 @@ public class CreateLineSingle : MonoBehaviour {
 		MeshFilter meshFilter = newGameobject.AddComponent<MeshFilter> ();
 		
 		Vector3[] verts = new Vector3[]{Vector3.back*0.5f, Vector3.forward*0.5f};
-		meshFilter.mesh = TmUtils.CreateLine(verts,true);
+		meshFilter.mesh = TmMesh.CreateLine(verts,true);
 		Mesh mesh = meshFilter.sharedMesh;
 		mesh.name = DEF_NAME+DEG_NUM.ToString()+"XZ";
 		

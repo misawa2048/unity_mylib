@@ -14,7 +14,7 @@ public class CreatePanel : MonoBehaviour {
 		MeshRenderer meshRenderer = newGameobject.AddComponent<MeshRenderer> ();
 		meshRenderer.material = new Material (Shader.Find ("Diffuse"));
 		MeshFilter meshFilter = newGameobject.AddComponent<MeshFilter> ();
-		meshFilter.mesh = TmUtils.CreateTileMesh(MESH_W,MESH_H);
+		meshFilter.mesh = TmMesh.CreateTileMesh(MESH_W,MESH_H);
 		Mesh mesh = meshFilter.sharedMesh;
 		mesh.name = DEF_NAME;
 		

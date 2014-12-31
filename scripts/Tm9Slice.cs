@@ -11,7 +11,7 @@ public class Tm9Slice : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		mMesh = TmUtils.CreateTileMesh(SLICE_NUM_X,SLICE_NUM_Y,Color.white);
+		mMesh = TmMesh.CreateTileMesh(SLICE_NUM_X,SLICE_NUM_Y);
 		MeshFilter filter = GetComponent<MeshFilter>();
 		filter.mesh = mMesh;
 	}

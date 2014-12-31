@@ -14,7 +14,7 @@ public class CreateLineCircle : MonoBehaviour {
 		meshRenderer.material = new Material (Shader.Find ("Diffuse"));
 		MeshFilter meshFilter = newGameobject.AddComponent<MeshFilter> ();
 		
-		meshFilter.mesh = TmUtils.CreateLineCircle(DEG_NUM);
+		meshFilter.mesh = TmMesh.CreateLineCircle(DEG_NUM);
 		Mesh mesh = meshFilter.sharedMesh;
 		mesh.name = DEF_NAME+DEG_NUM.ToString()+"XY";
 		
