@@ -47,4 +47,17 @@ public class TmDebug {
 		DrawRay(ray.origin,ray.direction*dist,Input.GetMouseButton(0) ? Color.yellow : Color.gray);
 		#endif
 	}
+	//---------------------------------------------------------------------------
+	public static void DrawCircle( Vector3 _pos, Quaternion _rot, float _rad, Color _col, int _div=16){
+		#if TM_IS_DEBUG
+		Vector3 stt=_pos, end;
+		float dd = 360f/(float)_div;
+		for(int i=0; i<=_div; ++i){
+			Quaternion qt = Quaternion.AngleAxis(dd*(float)i, _rot*Vector3.forward);
+			end = _pos + qt*(Vector3.forward * _rad);
+			if(i>0){ Debug.DrawLine(stt,end,_col); }
+			stt=end;
+		}
+		#endif
+	}
 }
