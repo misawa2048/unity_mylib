@@ -53,8 +53,8 @@ public class TmDebug {
 		Vector3 stt=_pos, end;
 		float dd = 360f/(float)_div;
 		for(int i=0; i<=_div; ++i){
-			Quaternion qt = Quaternion.AngleAxis(dd*(float)i, _rot*Vector3.forward);
-			end = _pos + qt*(Vector3.forward * _rad);
+			Quaternion qt = Quaternion.AngleAxis(dd*(float)i, Vector3.forward);
+			end = _pos + _rot*qt*(Vector3.up * _rad);
 			if(i>0){ Debug.DrawLine(stt,end,_col); }
 			stt=end;
 		}
