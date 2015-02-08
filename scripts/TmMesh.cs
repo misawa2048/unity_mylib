@@ -153,7 +153,58 @@ public class TmMesh{
 		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
 		return mesh;
 	}
-	
+
+	public static Mesh CreateHeightMesh(float[,] _heightArr){
+		return CreateHeightMesh(_heightArr, new Color(0.5f,0.5f,0.5f,1.0f),false);
+	}
+	public static Mesh CreateHeightMesh(float[,] _heightArr, Color _vertCol, bool _isUnitPerGrid){
+		int _divX = _heightArr.GetLength(0)-1;
+		int _divZ = _heightArr.GetLength(1)-1;
+		
+		int vertNum = (_divX+1)*(_divZ+1);
+		int quadNum = _divX*_divZ;
+		int[] triangles = new int[quadNum*6];
+		Vector3[] vertices = new Vector3[vertNum];
+		Vector2[] uv = new Vector2[vertNum];
+		Color[] colors = new Color[vertNum];
+		Vector3[] normals = new Vector3[vertNum];
+		Vector4[] tangents = new Vector4[vertNum];
+		
+		for(int zz = 0; zz < (_divZ+1); ++zz){
+			for(int xx = 0; xx < (_divX+1); ++xx){
+				float height = _heightArr[xx,zz];
+				Vector2 uvPos = new Vector2((float)xx/(float)_divX,(float)zz/(float)_divZ);
+				vertices[zz*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,height,uvPos.y-0.5f);
+				if(_isUnitPerGrid){
+					vertices[zz*(_divX+1)+xx] = Vector3.Scale(vertices[zz*(_divX+1)+xx],new Vector3(_divX,1f,_divZ));
+				}
+				uv[zz*(_divX+1)+xx] = uvPos;
+				colors[zz*(_divX+1)+xx] = _vertCol;
+				normals[zz*(_divX+1)+xx] = new Vector3(0.0f,1.0f,0.0f);
+				tangents[zz*(_divX+1)+xx] = new Vector4(1.0f,0.0f,0.0f);
+				if((xx<_divX)&&(zz<_divZ)){
+					int[] sw={0,0,1,1,1,0,1,1,0,0,0,1};
+					for(int ii = 0; ii < 6; ++ii){
+						triangles[(zz*_divX+xx)*6+ii] = (zz+sw[ii*2+1])*(_divX+1)+(xx+sw[ii*2+0]);
+					}
+				}
+			}
+		}
+		
+		Mesh mesh = new Mesh();
+		mesh.vertices = vertices;
+		mesh.triangles = triangles;
+		mesh.uv = uv;
+		mesh.colors = colors;
+		mesh.normals = normals;
+		mesh.tangents = tangents;
+		mesh.RecalculateNormals ();
+		mesh.RecalculateBounds ();
+		mesh.Optimize();
+		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
+		return mesh;
+	}
+
 	public static Mesh CreateTubeMesh(int _divX, int _divZ, float _bottomR=0.5f, float _topR=0.5f){
 		return CreateTubeMesh(_divX, _divZ, _bottomR, _topR, new Color(0.5f,0.5f,0.5f,1.0f));
 	}
