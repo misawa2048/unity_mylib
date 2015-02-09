@@ -222,6 +222,49 @@ public class TmUtils {
 	}
 	
 	// ----------------
+	// MathUtil関係 
+	// ----------------
+	// float[,]のメッシュを再分割/統合 
+	public static float[,] DivHeightMapArr(float[,] _heightArr, float _hRate, bool _isInv=false, int _rndSeed=0){
+		if(_rndSeed!=0){ Random.seed = _rndSeed; }
+		
+		float[,] retArr = _heightArr;
+		int srcDivX=_heightArr.GetLength(0);
+		int srcDivY=_heightArr.GetLength(1);
+		if(_isInv){ // 結合 
+			if((srcDivX>2)&&(srcDivY>2)){
+				retArr = new float[(srcDivX+1)/2,(srcDivY+1)/2];
+				for(int iy = 0; iy<((srcDivY+1)/2); ++iy){
+					for(int ix = 0; ix<((srcDivX+1)/2); ++ix){
+						retArr[ix,iy] = _heightArr[ix*2,iy*2];
+					}
+				}
+			}
+		}else{ // 分割 
+			retArr = new float[srcDivX*2-1,srcDivY*2-1];
+			for(int iy = 0; iy<srcDivY; ++iy){
+				for(int ix = 0; ix<srcDivX; ++ix){
+					retArr[ix*2,iy*2] = _heightArr[ix,iy];
+				}
+			}
+			for(int iy = 1; iy<retArr.GetLength(1)-1; iy+=2){
+				for(int ix = 1; ix<retArr.GetLength(0)-1; ix+=2){
+					float f00 = retArr[ix-1,iy-1];
+					float f10 = retArr[ix+1,iy-1];
+					float f01 = retArr[ix-1,iy+1];
+					float f11 = retArr[ix+1,iy+1];
+					retArr[ix-1,iy] = ((Random.value-0.5f)*(_hRate/(float)srcDivX))+(f00+f01)*0.5f;
+					retArr[ix+1,iy] = ((Random.value-0.5f)*(_hRate/(float)srcDivX))+(f10+f11)*0.5f;
+					retArr[ix,iy-1] = ((Random.value-0.5f)*(_hRate/(float)srcDivX))+(f00+f10)*0.5f;
+					retArr[ix,iy+1] = ((Random.value-0.5f)*(_hRate/(float)srcDivX))+(f01+f11)*0.5f;
+					retArr[ix,iy]   = ((Random.value-0.5f)*(_hRate/(float)srcDivX))+(f00+f10+f01+f11)*0.25f;
+				}
+			}
+		}
+		return retArr;
+	}
+
+	// ----------------
 	// TextAsset関係 
 	// ----------------
 	// csvファイルを2次元配列に格納(_commentで始まる行はコメント) 
