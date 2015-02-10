@@ -208,6 +208,8 @@ public class TmMath {
 
 	//-----------------------------------------------------------------------
 	//! 重力g力vで距離sに物体を投げるときの角度 (retがマイナスの場合は届かない）
+	//! //http://www.sousakuba.com/Programming/algo_dandoukeisan2.html
+	//! _g = Physics.gravity.y
 	//-----------------------------------------------------------------------
 	static public float ParabolicRad(float _v, float _s, float _g){
 		float ret = -0.1f;
