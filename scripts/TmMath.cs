@@ -179,10 +179,10 @@ public class TmMath {
 	}
 	
 	//-----------------------------------------------------------------------
-	//! 衝突時刻取得:q1+qSpd*retがhit場所(retがマイナスの場合はhitしない） 
+	//! 衝突時刻取得:q1+qSpd*retがhit場所(retがnullの場合はhitしない） 
 	//-----------------------------------------------------------------------
-	static public float CollideTime(Vector3 q1, Vector3 qSpd, Vector3 p1, float ps){
-		float ret = float.MinValue;
+	static public float[] CollideTime(Vector3 q1, Vector3 qSpd, Vector3 p1, float ps){
+		float[] ret = null;
 		Vector3 p0,q0;
 		float qs = qSpd.magnitude;
 		Vector3 q2 = q1+qSpd;
@@ -194,13 +194,53 @@ public class TmMath {
 		float c = (t0*qs)*(t0*qs) + d*d;
 		float aa = b*b - 4 * a * c;
 		if(a==0.0f){
-			ret = (-c/b);
+			ret = new float[1];
+			ret[0] = (-c/b);
 		}else if(aa>0.0f){
-			float t1 = (-b+Mathf.Sqrt(aa)) / (2*a);
-			float t2 = (-b-Mathf.Sqrt(aa)) / (2*a);
-			ret = Mathf.Min(t1,t2);
-			if(ret<0.0f){
-				ret = Mathf.Max(t1,t2);
+			float sqa = Mathf.Sqrt(aa);
+			float t1 = Mathf.Min((-b+sqa) / (2*a),(-b-sqa) / (2*a)) ;
+			float t2 = Mathf.Max((-b+sqa) / (2*a),(-b-sqa) / (2*a)) ;
+			if(t2>0.0f){
+				if(t1>0f){
+					ret = new float[2];
+					ret[0] = t1;
+					ret[1] = t2;
+				}else{
+					ret = new float[1];
+					ret[0] = t2;
+				}
+			}
+		}
+		return ret;
+	}
+
+	//-----------------------------------------------------------------------
+	//! 重力g鉛直に投げ時間tで高さhに到達するための初速v0 
+	//-----------------------------------------------------------------------
+	static public float ParabolicSpeed(float _t, float _h, float _g){
+		// h=v0*t+1/2*g*t^2; v0=(-0.5*g*t^2+h)/t
+		return -0.5f*_g*_t+_h/_t;
+	}
+
+	//-----------------------------------------------------------------------
+	//! 重力g力vで鉛直に投げ高さhに到達する時間 (retがマイナスの場合は届かない）
+	//-----------------------------------------------------------------------
+	static public float[] ParabolicTime(float _v, float _h, float _g){
+		float[] ret = null;
+		float d = _v*_v-2f*_g*_h;
+		if(d>=0){
+			float dq = Mathf.Sqrt(d);
+			float t1 = (-_v+Mathf.Min(-dq,dq))/_g;
+			float t2 = (-_v+Mathf.Max(-dq,dq))/_g;
+			if(t2>0f){
+				if(t1>0f){
+					ret = new float[2];
+					ret[0] = t1;
+					ret[1] = t2;
+				}else{
+					ret = new float[1];
+					ret[0] = t2;
+				}
 			}
 		}
 		return ret;
