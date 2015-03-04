@@ -2,10 +2,11 @@
 using System.Collections;
 
 public class TmMesh{
-	public static Mesh CreateLineGridXY(int _width, int _height){
-		return CreateLineGridXY(_width, _height, new Color(0.5f,0.5f,0.5f,1.0f), false);
+	public enum AxisType{ XY,XZ }
+	public static Mesh CreateLineGrid(int _width, int _height, AxisType _type){
+		return CreateLineGrid(_width, _height, _type, new Color(0.5f,0.5f,0.5f,1.0f), false);
 	}
-	public static Mesh CreateLineGridXY(int _width, int _height, Color _vertCol, bool _isUnitPerGrid){
+	public static Mesh CreateLineGrid(int _width, int _height, AxisType _type, Color _vertCol, bool _isUnitPerGrid){
 		Vector3[] vertices = new Vector3[(_width+1)*(_height+1)*2];
 		int[] incides = new int[(_width+1)*(_height+1)*2];
 		Vector2[] uv = new Vector2[(_width+1)*(_height+1)*2];
@@ -46,6 +47,14 @@ public class TmMesh{
 			tangents[cnt*2+0] = tangents[cnt*2+1] = new Vector4(1.0f,0.0f,0.0f,0.0f);
 			cnt++;
 		}
+		if (_type == AxisType.XZ) {
+			for(int ii = 0; ii < vertices.Length; ++ii){
+				vertices[ii] = new Vector3(vertices[ii].x,vertices[ii].z,vertices[ii].y);
+			}
+			for(int ii = 0; ii < normals.Length; ++ii){
+				normals[ii] = new Vector3(0.0f,1.0f,0.0f);
+			}
+		}
 		Mesh mesh = new Mesh();
 		mesh.vertices = vertices;
 		mesh.SetIndices(incides,MeshTopology.Lines,0);
@@ -57,6 +66,13 @@ public class TmMesh{
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
 		return mesh;
+	}
+	
+	public static Mesh CreateLineGridXY(int _width, int _height){
+		return CreateLineGridXY(_width, _height, new Color(0.5f,0.5f,0.5f,1.0f), false);
+	}
+	public static Mesh CreateLineGridXY(int _width, int _height, Color _vertCol, bool _isUnitPerGrid){
+		return CreateLineGrid(_width, _height, AxisType.XY, new Color(0.5f,0.5f,0.5f,1.0f), false);
 	}
 	
 	public static Mesh CreateLine(Vector3[] _vertices, bool _isRing){
