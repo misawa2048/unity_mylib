@@ -110,15 +110,25 @@ public class TmMesh{
 		return mesh;
 	}
 	
-	public static Mesh CreateLineCircle(int _vertNum){
-		return CreateLineCircle(_vertNum, new Color(0.5f,0.5f,0.5f,1.0f));
+	public static Mesh CreateLineCircle(int _vertNum, AxisType _type=AxisType.XY){
+		return CreateLineCircle(_vertNum, 0.0f, _type, new Color(0.5f,0.5f,0.5f,1.0f));
 	}
-	public static Mesh CreateLineCircle(int _vertNum, Color _color){
+	public static Mesh CreateLineCircle(int _vertNum, float _ofsDeg, AxisType _type, Color _color, float _starRate=0.0f){
+		if(_starRate!=0.0f) _vertNum *= 2;
 		Vector3[] vertices = new Vector3[_vertNum];
 		for(int ii = 0; ii < _vertNum; ++ii){
-			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)_vertNum))*0.5f;
-			float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)_vertNum))*0.5f;
-			vertices[ii] = new Vector3(fx,fy,0.0f);
+			float rr = 0.5f;
+			if((_starRate!=0.0f)&&((ii&1)==1)){
+				rr *= (1.0f-_starRate);
+			}
+			float deg = Mathf.PI*2.0f * ((float)ii / (float)_vertNum) + _ofsDeg;
+			float fx = Mathf.Cos(deg)*rr;
+			float fy = Mathf.Sin(deg)*rr;
+			switch(_type){
+			default:			vertices[ii] = new Vector3(fx,fy,0.0f);  break;
+			case AxisType.XY:	vertices[ii] = new Vector3(fx,fy,0.0f);  break;
+			case AxisType.XZ:	vertices[ii] = new Vector3(fx,0.0f,fy);  break;
+			}
 		}
 		return CreateLine(vertices,true,_color);
 	}
