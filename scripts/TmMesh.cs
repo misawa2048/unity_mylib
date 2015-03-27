@@ -283,10 +283,10 @@ public class TmMesh{
 		return mesh;
 	}
 	
-	public static Mesh CreatePoly(int _vertNum, float _ofsDeg=0.0f){
-		return CreatePoly(_vertNum, new Color(0.5f,0.5f,0.5f,1.0f),_ofsDeg,0.0f);
+	public static Mesh CreatePoly(int _vertNum, AxisType _type=AxisType.XY, float _ofsDeg=0.0f){
+		return CreatePoly(_vertNum,_type, new Color(0.5f,0.5f,0.5f,1.0f),_ofsDeg,0.0f);
 	}
-	public static Mesh CreatePoly(int _vertNum, Color _color, float _ofsDeg=0.0f, float _starRate=0.0f){
+	public static Mesh CreatePoly(int _vertNum, AxisType _type, Color _color, float _ofsDeg=0.0f, float _starRate=0.0f){
 		if(_starRate!=0.0f) _vertNum *= 2;
 		float ofsDegRate = _ofsDeg/360.0f;
 		Vector3[] verts = new Vector3[_vertNum+1];
@@ -306,10 +306,15 @@ public class TmMesh{
 			}
 			float fx = Mathf.Cos(Mathf.PI*2.0f * (((float)ii / (float)_vertNum)+ofsDegRate))*rr;
 			float fy = Mathf.Sin(Mathf.PI*2.0f * (((float)ii / (float)_vertNum)+ofsDegRate))*rr;
-			verts[ii+1]= new Vector3(fx,fy,0.0f);
+			if(_type == AxisType.XY){
+				verts[ii+1]= new Vector3(fx,fy,0.0f);
+				norms[ii+1]= new Vector3(0.0f,0.0f,-1.0f);
+			}else{
+				verts[ii+1]= new Vector3(fx,0.0f,fy);
+				norms[ii+1]= new Vector3(0.0f,-1.0f,0.0f);
+			}
 			uvs[ii+1]= new Vector2(fx+0.5f,fy+0.5f);
 			cols[ii+1] = _color;
-			norms[ii+1]= new Vector3(0.0f,0.0f,-1.0f);
 			tgts[ii+1]= new Vector4(fx,fy,0.0f,0.0f);
 		}
 		
