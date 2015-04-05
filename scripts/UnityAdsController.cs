@@ -3,14 +3,15 @@ using UnityEngine.Advertisements;
 using System.Collections;
 
 //-------------------------------------------------------------------
-// 1. UnityAdsController.Initialize(_key);
+// 0. attach this script onto an empty gameObject.
+// 1. set UnityAds key(key_android/key_ios);
 //2. UnityAdsController.Show( result => { if(result == ShowResult.Finished){ } } );
 //-------------------------------------------------------------------
 
 public class UnityAdsController : MonoBehaviour {
 	public const float VERSION = 1.0f;
 	private const string PREFAB_NAME = "UnityAdsControllerPrefab";
-	public const string NAME = "_UnityAdsController";
+	private const string NAME = "_UnityAdsController";
 	public enum State{
 		WaitToStart,
 		NetCheck,
@@ -20,6 +21,8 @@ public class UnityAdsController : MonoBehaviour {
 		Error,
 	}
 
+	public const string key_android = "28877";
+	public const string key_ios = "28876";
 	private const string zoneID = "rewardedVideoZone"; //  dev setings / extrasettings
 
 	private static UnityAdsController mInstance = null;
@@ -54,6 +57,11 @@ public class UnityAdsController : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		DontDestroyOnLoad(gameObject);
+#if UNITY_ANDROID
+		initialize(key_android);
+#elif UNITY_IPHONE
+		initialize(key_ios);
+#endif
 	}
 	
 	// Update is called once per frame
@@ -79,10 +87,12 @@ public class UnityAdsController : MonoBehaviour {
 		}
 	}
 
-	static public void Initialize(string _key){
-		if((mInstance!=null)&&(mInstance.mState==State.WaitToStart)){
+	private void initialize(string _key){
+		if(mState==State.WaitToStart){
 			mInstance.mKey = _key;
 			mInstance.mState = State.NetCheck;
+		}else{
+			Debug.Log("UnityAds can't re-initializing.");
 		}
 	}
 	

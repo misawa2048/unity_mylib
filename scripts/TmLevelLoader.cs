@@ -12,6 +12,7 @@ public class TmLevelLoader : MonoBehaviour {
 		BUSY  = 2,
 		OUT = 3,
 	};
+	public string nextLevelName="";
 	public MODE mode = MODE.IDLE;
 	public Texture2D fadeTexture=null;
 	public Color fadeColor = Color.black;
@@ -66,6 +67,9 @@ public class TmLevelLoader : MonoBehaviour {
 		case MODE.BUSY: mTimer = fadeTime; break;
 		case MODE.OUT:  mTimer = fadeTime; break;
 		}
+		if(nextLevelName!=""){
+			loadLevel(nextLevelName);
+		}
 	}
 	
 	// Update is called once per frame
@@ -82,11 +86,14 @@ public class TmLevelLoader : MonoBehaviour {
 		GUI.DrawTexture (new Rect (0, 0, Screen.width, Screen.height), fadeTexture);
 	}
 
-	public static void LoadLevel(string _name){
+	public static void LoadLevel(string _name=""){
 		instance.loadLevel(_name);
 	}
-	private void loadLevel(string _name){
+	private void loadLevel(string _name=""){
 		if(!mIsLoadBusy){
+			if(_name==""){
+				_name = nextLevelName;
+			}
 			StartCoroutine("loadLevelCo",_name);
 		}
 	}
