@@ -61,7 +61,7 @@ public class TmTrail3D : MonoBehaviour {
 		case Status.ToEnd:      mFadeTimer = FADE_TIME;  break;
 		}
 		
-		mDefCol = renderer.material.color;
+		mDefCol = GetComponent<Renderer>().material.GetColor("_Color");
 		mMf = GetComponent<MeshFilter> ();
 		mMf.sharedMesh = new Mesh ();
 		mOldStatus = Status.Idle;
@@ -90,11 +90,25 @@ public class TmTrail3D : MonoBehaviour {
 		mOldRot = transform.rotation;
 	}
 
-	public LinePos getLinePosByRate(float _rate){
-		int pt = (int)(_rate * (float)mWorldVecs.Length);
-		pt = Mathf.Clamp(pt,0,mWorldVecs.Length);
-		pt = (pt+mSttPtr)%mWorldVecs.Length;
-		return mWorldVecs[pt];
+	public LinePos getLinePosByRate(float _rate,bool _isExact=false){
+		if(!_isExact){
+			int pt = (int)(_rate * (float)mWorldVecs.Length);
+			pt = Mathf.Clamp(pt,0,mWorldVecs.Length);
+			pt = (pt+mSttPtr)%mWorldVecs.Length;
+			return mWorldVecs[pt];
+		}else{
+			float ptf = (_rate * (float)mWorldVecs.Length);
+			ptf = Mathf.Clamp(ptf,0f,(float)mWorldVecs.Length);
+			int pt0 = ((int)Mathf.Floor(ptf)+mSttPtr)%mWorldVecs.Length;
+			int pt1 = ((int)Mathf.Ceil(ptf)+mSttPtr)%mWorldVecs.Length;
+			float rate = ptf % 1f;
+			LinePos lp0 = new LinePos(mWorldVecs[pt0].pos,mWorldVecs[pt0].rot);
+			LinePos lp1 = new LinePos(mWorldVecs[pt1].pos,mWorldVecs[pt1].rot);
+			lp0.pos = Vector3.Lerp(lp1.pos,lp0.pos,rate);
+			lp0.rot = Quaternion.Lerp(lp1.rot,lp0.rot,rate);
+			return lp0;
+		}
+
 	}
 
 	//<!data init
@@ -210,7 +224,7 @@ public class TmTrail3D : MonoBehaviour {
 		}
 		Color col = mDefCol;
 		col.a = mDefCol.a * (mFadeTimer / FADE_TIME);
-		renderer.material.color = col;
+		GetComponent<Renderer>().material.color = col;
 	}
 	
 	//------------------------------
@@ -253,7 +267,7 @@ public class TmTrail3D : MonoBehaviour {
 		
 		int[] tris = new int[(_vertNum-2)*3];
 		for(int ii=0; ii< _vertNum-2; ++ii){
-			if((ii&1)==0){
+			if((ii&1)==1){
 				tris[ii*3+0] = ii+0;
 				tris[ii*3+1] = ii+1;
 				tris[ii*3+2] = ii+2;
