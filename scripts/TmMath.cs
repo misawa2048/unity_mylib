@@ -3,6 +3,15 @@ using System.Collections.Generic;
 
 public class TmMath {
 	//-----------------------------------------------------------------------------
+	//! ブラウン運動乱数 (0-1)
+	//-----------------------------------------------------------------------------
+	static public float BrownRandom(float _old, float _moveRate, float _baseValue=0f, float _baseStickeyRate=0.2f) {
+		float adjValue = (((_old - 0.5f) > _baseValue) ? -1f : 1f)*Mathf.Abs(_baseValue)*_baseStickeyRate;
+		float ret = Mathf.PingPong(_old + (Random.value-0.5f+adjValue) * _moveRate,1f);
+		return ret;
+	}
+	
+	//-----------------------------------------------------------------------------
 	//! 点にもっとも近い直線上の点(isSegmentがtrueで線分判定)
 	//-----------------------------------------------------------------------------
 	static public Vector3 NearestPointOnLine(Vector3 p1, Vector3 p2, Vector3 p, bool isSegment=true){
