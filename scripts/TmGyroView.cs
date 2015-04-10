@@ -4,15 +4,17 @@ using System.Collections;
 public class TmGyroView : MonoBehaviour {
 	private const float BASE_MOVE_X = 0.2f;
 	private const float BASE_MOVE_Y = 0.2f;
+	public float defDirY;
 	public GameObject targetRotOb;
+	private float mReloadTime;
 	private Quaternion mGyroRot;
 	private Vector3 mBaseDir;
 	private Vector3 mDragSttPos;
 	private Vector3 mDragSttDir;
 	
 	#if (UNITY_IPHONE||UNITY_ANDROID) && (!UNITY_EDITOR)
-	private float mAng;
 	#else
+	public GameObject debugGyroObj;
 	private Vector3 mEuler;
 	#endif
 	
@@ -21,23 +23,36 @@ public class TmGyroView : MonoBehaviour {
 		if(targetRotOb==null){
 			targetRotOb = gameObject;
 		}
-		mGyroRot = updateRot ();
-		mBaseDir.y = -mGyroRot.eulerAngles.y;
 		if(SystemInfo.supportsGyroscope){
+			mReloadTime = (Input.gyro.enabled) ? 0.2f : 1f;
 			Input.gyro.enabled=true;
 		}
-		#if (UNITY_IPHONE||UNITY_ANDROID) && (!UNITY_EDITOR)
-		mAng = getRotAng(Input.deviceOrientation);
-		#else
-		mEuler = Vector3.zero;
-		#endif
+		StartCoroutine(initCo());
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		mBaseDir = updateBaseRot(); // drag to rot Y
 		mGyroRot = updateRot ();
-		targetRotOb.transform.rotation = Quaternion.Euler(mBaseDir) * mGyroRot; 
+		Quaternion rot = Quaternion.AngleAxis(defDirY,Vector3.up);
+		rot *= Quaternion.Euler(mBaseDir) * mGyroRot;
+		targetRotOb.transform.rotation = rot; 
+	}
+	
+	private IEnumerator initCo(){
+		mGyroRot = updateRot ();
+
+		float waitTime = mReloadTime;
+		while(waitTime>=0f){
+			waitTime -= Time.deltaTime;
+			defDirY = -mGyroRot.eulerAngles.y;
+			yield return null;
+		}
+		#if (UNITY_IPHONE||UNITY_ANDROID) && (!UNITY_EDITOR)
+		#else
+		mEuler = Vector3.zero;
+		#endif
+		yield break;
 	}
 	
 	private Vector3 updateBaseRot(){
@@ -59,8 +74,6 @@ public class TmGyroView : MonoBehaviour {
 		#if (UNITY_IPHONE||UNITY_ANDROID) && (!UNITY_EDITOR)
 		if(SystemInfo.supportsGyroscope){
 			ret = updateBasedOnGyro();
-		}else{
-			//			ret = updateBasedOnAccel();
 		}
 		#else
 		ret = updateBasedKey();
@@ -74,30 +87,20 @@ public class TmGyroView : MonoBehaviour {
 			return Quaternion.identity;
 		}
 		return Quaternion.AngleAxis(90.0f,Vector3.right)*Input.gyro.attitude*Quaternion.AngleAxis(180.0f,Vector3.forward);
-	}
-	
-	private Quaternion updateBasedOnAccel(){
-		float ang = getRotAng(Input.deviceOrientation);
-		mAng = Mathf.Lerp(mAng,ang,0.1f);
-		return Quaternion.AngleAxis(mAng,Vector3.forward);
-	}
-	private float getRotAng(DeviceOrientation _ori){
-		float rotAng = 0.0f;
-		if(Screen.orientation != ScreenOrientation.AutoRotation){
-			if(_ori==DeviceOrientation.Portrait){ rotAng = -90.0f; }
-			if(_ori==DeviceOrientation.PortraitUpsideDown){ rotAng = 90.0f; }
-			if(_ori==DeviceOrientation.LandscapeLeft){ rotAng = 0.0f; }
-			if(_ori==DeviceOrientation.LandscapeRight){ rotAng = 180.0f; }
-		}
-		return rotAng;
-	}
+	}	
 	#else
 	private Quaternion updateBasedKey(){
 		float spd = Time.deltaTime * 50f;
+		if(debugGyroObj!=null){
+			mEuler = debugGyroObj.transform.localRotation.eulerAngles;
+		}
 		if(Input.GetKey(KeyCode.UpArrow))   { mEuler.x -= spd; }
 		if(Input.GetKey(KeyCode.DownArrow)) { mEuler.x += spd; }
 		if(Input.GetKey(KeyCode.LeftArrow)) { mEuler.y -= spd; }
 		if(Input.GetKey(KeyCode.RightArrow)){ mEuler.y += spd; }
+		if(debugGyroObj!=null){
+			debugGyroObj.transform.localRotation = Quaternion.Euler(mEuler);
+		}
 		return Quaternion.Euler(mEuler);
 	}
 	#endif
