@@ -3,7 +3,7 @@ using System.Collections;
 using System;
 
 public class TmGesture{
-	public const float VERSION = 0.1f; // TmGesture version 
+	public const float VERSION = 0.2f; // TmGesture version 
 	public class TmTouchEvent{
 		public enum Gesture{
 			NONE,
@@ -18,8 +18,44 @@ public class TmGesture{
 		}
 		public Gesture gesture;
 		public Touch[] touches;
+		public TmTouchEvent(){
+			gesture = Gesture.NONE;
+			touches = null;
+		}
 	}
-	
+	public class MyInatia{
+		private float mInertiaTime = 1f;
+		private float mInetiaTimer;
+		private Vector3 mSttScrPos;
+		private Vector3 mScrPos;
+		private Vector2 mScrDragRate;
+		private Vector2 mInetiaRate;
+		private float mPinchRate;
+		public  float inetiaTime{ get { return mInertiaTime; } set{ mInertiaTime = Mathf.Max(0.01f,value);} }
+		public  Vector2 inetiaRate{ get { return mInetiaRate; } }
+		public  float pinchRate{ get { return mPinchRate; } }
+		
+		public void update(){
+			if(Input.touches.Length == 1){
+				mScrPos = Input.mousePosition;
+				if (Input.GetMouseButtonDown(0)) {
+					mSttScrPos = mScrPos;
+					mScrDragRate = Vector2.zero;
+				}
+				if (Input.GetMouseButton(0)) {
+					float size = (float)Mathf.Max (Screen.width,Screen.height);
+					mScrDragRate = (mScrPos - mSttScrPos)/size;
+					mInetiaTimer = mInertiaTime;
+				}
+			}
+			mInetiaRate = Vector2.Lerp (Vector2.zero, mScrDragRate, mInetiaTimer / mInertiaTime);
+			mInetiaTimer = Mathf.Max (mInetiaTimer - Time.deltaTime, 0f);
+			
+			mPinchRate += (float)(Input.GetAxis ("Mouse ScrollWheel")*1f);
+			mPinchRate = Mathf.Clamp01 (mPinchRate);
+		}
+	}
+
 	private int mMaxTouches;
 	private float mPinchTh;
 	private float mDblTapTime;
@@ -27,8 +63,12 @@ public class TmGesture{
 	private Vector2[] mPosition;
 	private float[] mHoldTime;
 	private bool[] mActive;
-	private TmTouchEvent.Gesture[] mGesture;
-	
+	private TmTouchEvent[] mGestureEve;
+	private MyInatia mIna;
+	public  float inetiaTime{ get { return mIna.inetiaTime; } set{ mIna.inetiaTime = value;} }
+	public  Vector2 inetiaRate{ get { return mIna.inetiaRate; } }
+	public  float pinchRate{ get { return mIna.pinchRate; } }
+
 	public delegate void OnGestureHandler(TmTouchEvent eve);
 	public event OnGestureHandler onGestureHandler;
 
@@ -41,15 +81,19 @@ public class TmGesture{
 		mPosition = new Vector2[_maxTouches];
 		mHoldTime = new float[_maxTouches];
 		mActive = new bool[_maxTouches];
-		mGesture = new TmTouchEvent.Gesture[_maxTouches];
+		mGestureEve = new TmTouchEvent[_maxTouches];
 		for(int i = 0; i < _maxTouches; ++i){
 			mActive[i] = false;
-			mGesture[i] = TmTouchEvent.Gesture.NONE;
+			mGestureEve[i] = new TmTouchEvent();
+			mGestureEve[i].gesture = TmTouchEvent.Gesture.NONE;
+			mGestureEve[i].touches = null;
 			mHoldTime[i]=0f;
 		}
+		mIna = new MyInatia(); 
 	}
 	
 	public void update(Touch[] _tc=null){
+		mIna.update(); 
 		if(_tc==null){ _tc = Input.touches; }
 		for(int i = 0; i < mMaxTouches; ++i){
 			mActive[i] = false;
@@ -73,7 +117,8 @@ public class TmGesture{
 		}
 		for(int i = 0; i < mMaxTouches; ++i){
 			if(!mActive[i]){
-				mGesture[i] = TmTouchEvent.Gesture.NONE;
+				mGestureEve[i].gesture = TmTouchEvent.Gesture.NONE;
+				mGestureEve[i].touches = null;
 			}
 		}
 		
@@ -120,16 +165,17 @@ public class TmGesture{
 	private bool setEvent(Touch[] _tc, TmTouchEvent.Gesture _gesture){
 		bool result = false;
 		if((onGestureHandler!=null)&&(_tc.Length>0)){
-			if(mGesture[_tc[0].fingerId]!=_gesture){
+//			if(mGestureEve[_tc[0].fingerId].gesture!=_gesture){
 				foreach(Touch t in _tc){
-					mGesture[t.fingerId]=_gesture;
+					mGestureEve[t.fingerId].gesture=_gesture;
+					mGestureEve[t.fingerId].touches = _tc;
 				}
 				TmTouchEvent eve = new TmTouchEvent();
 				eve.gesture = _gesture;
 				eve.touches = _tc;
 				onGestureHandler(eve);
 				result = true;
-			}
+//			}
 		}
 		return result;
 	}
