@@ -3,7 +3,7 @@ using System.Collections;
 using System;
 
 public class TmGesture{
-	public const float VERSION = 0.2f; // TmGesture version 
+	public const float VERSION = 0.3f; // TmGesture version 
 	public class TmTouchEvent{
 		public enum Gesture{
 			NONE,
@@ -25,6 +25,7 @@ public class TmGesture{
 	}
 	public class MyInatia{
 		private float mInertiaTime = 1f;
+		private bool mInetiaBreak = false;
 		private float mInetiaTimer;
 		private Vector3 mSttScrPos;
 		private Vector3 mScrPos;
@@ -36,7 +37,18 @@ public class TmGesture{
 		public  float pinchRate{ get { return mPinchRate; } }
 		
 		public void update(){
-			if(Input.touches.Length == 1){
+			if (mInetiaBreak) {
+				if (Input.touches.Length == 0) {
+					mInetiaBreak = false;
+				}
+			}else if (Input.touches.Length > 1) {
+				mInetiaBreak = true;
+			}
+#if UNITY_EDITOR
+			if(true){
+#else
+			if((!mInetiaBreak)&&(Input.touches.Length == 1)){
+#endif
 				mScrPos = Input.mousePosition;
 				if (Input.GetMouseButtonDown(0)) {
 					mSttScrPos = mScrPos;
