@@ -3,13 +3,15 @@ using UnityEngine.Advertisements;
 using System.Collections;
 
 //-------------------------------------------------------------------
-// 0. attach this script onto an empty gameObject.
-// 1. set UnityAds key(key_android/key_ios);
-//2. UnityAdsController.Show( result => { if(result == ShowResult.Finished){ } } );
+// 0. using UnityEngine.Advertisements;
+// 1. attach this script onto an empty gameObject.
+// 2. set UnityAds key(key_android/key_ios);
+// 3. UnityAdsController.Show( result => { if(result == ShowResult.Finished){ } } );
 //-------------------------------------------------------------------
 
 public class UnityAdsController : MonoBehaviour {
 	public const float VERSION = 1.0f;
+	private const bool IsTest = false;
 	private const string PREFAB_NAME = "UnityAdsControllerPrefab";
 	private const string NAME = "_UnityAdsController";
 	public enum State{
@@ -74,7 +76,7 @@ public class UnityAdsController : MonoBehaviour {
 			}
 			break;
 		case State.Init:
-			Advertisement.Initialize (mKey,false);  //Application.platform==RuntimePlatform.IPhonePlayer
+			Advertisement.Initialize (mKey,IsTest);  //Application.platform==RuntimePlatform.IPhonePlayer
 			mState = State.WaitToStandBy;
 			break;
 		case State.WaitToStandBy:
