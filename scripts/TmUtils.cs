@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using System.Xml;
 public class TmUtils {
@@ -222,6 +224,21 @@ public class TmUtils {
 	}
 	
 	// ----------------
+	// uGUI関係 
+	// ----------------
+	public static bool CheckUGUIHit(Vector3 _scrPos){ // Input.mousePosition
+		bool ret = false;
+		PointerEventData pointer = new PointerEventData (EventSystem.current);
+		pointer.position = _scrPos;
+		List<RaycastResult> result = new List<RaycastResult> ();
+		EventSystem.current.RaycastAll (pointer, result);
+		if (result.Count > 0) {
+			ret = true;
+		}
+		return ret;
+	}
+	
+	// ----------------
 	// MathUtil関係 
 	// ----------------
 	// float[,]のメッシュを再分割/統合 
@@ -305,4 +322,5 @@ public class TmUtils {
 		doc.LoadXml(_xmlData.text);
 		return doc;
 	}
+
 }
