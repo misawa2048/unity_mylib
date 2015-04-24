@@ -3,10 +3,10 @@ using UnityEngine.Advertisements;
 using System.Collections;
 
 //-------------------------------------------------------------------
-// 0. using UnityEngine.Advertisements;
 // 1. attach this script onto an empty gameObject.
-// 2. set UnityAds key(key_android/key_ios);
-// 3. UnityAdsController.Show( result => { if(result == ShowResult.Finished){ } } );
+// 2. set UnityAds key(key_android/key_ios).
+// 3. wait while(!UnityAdsController.isReady).
+// 4. UnityAdsController.Show( result => { if(result == ShowResult.Finished){ } } );
 //-------------------------------------------------------------------
 
 public class UnityAdsController : MonoBehaviour {
@@ -18,13 +18,13 @@ public class UnityAdsController : MonoBehaviour {
 		WaitToStart,
 		NetCheck,
 		Init,
-		WaitToStandBy,
-		StandBy,
+		WaitToReady,
+		Ready,
 		Error,
 	}
 
-	public const string key_android = "28877";
-	public const string key_ios = "28876";
+	public const string key_android = "33100";
+	public const string key_ios = "33099";
 	private const string zoneID = "rewardedVideoZone"; //  dev setings / extrasettings
 
 	private static UnityAdsController mInstance = null;
@@ -46,6 +46,10 @@ public class UnityAdsController : MonoBehaviour {
 	private string mKey;
 	private State mState;
 	public static State state{ get{ return (mInstance==null) ? State.Error : mInstance.mState; } }
+	public static bool isReady{ get{ return (mInstance==null) ? false : (mInstance.mState==State.Ready); } }
+	public static bool IsState(State _state){
+		return (mInstance==null) ? false : (mInstance.mState == _state);
+	}
 
 	void Awake(){
 		if(mInstance!=null){
@@ -77,14 +81,14 @@ public class UnityAdsController : MonoBehaviour {
 			break;
 		case State.Init:
 			Advertisement.Initialize (mKey,IsTest);  //Application.platform==RuntimePlatform.IPhonePlayer
-			mState = State.WaitToStandBy;
+			mState = State.WaitToReady;
 			break;
-		case State.WaitToStandBy:
+		case State.WaitToReady:
 			if (Advertisement.isInitialized && Advertisement.isReady()) {
-				mState = State.StandBy;
+				mState = State.Ready;
 			}
 			break;
-		case State.StandBy: break;
+		case State.Ready: break;
 		case State.Error:   break;
 		}
 	}
@@ -100,7 +104,7 @@ public class UnityAdsController : MonoBehaviour {
 	
 	static public bool Show(string _zoneID, ShowOptions _options){
 		bool ret = false;
-		if((mInstance!=null)&&(mInstance.mState==State.StandBy)){
+		if((mInstance!=null)&&(mInstance.mState==State.Ready)){
 			ret = true;
 			Advertisement.Show(_zoneID,_options);
 		}
@@ -109,7 +113,7 @@ public class UnityAdsController : MonoBehaviour {
 
 	static public bool Show(System.Action<ShowResult> _callback){
 		bool ret = false;
-		if((mInstance!=null)&&(mInstance.mState==State.StandBy)){
+		if((mInstance!=null)&&(mInstance.mState==State.Ready)){
 			ShowOptions options = new ShowOptions();
 			options.pause = true; // game sound
 			options.resultCallback = _callback;
