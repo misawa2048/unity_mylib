@@ -14,9 +14,12 @@ public class UnityAdsController : MonoBehaviour {
 	private const bool IsTest = false;
 	private const string PREFAB_NAME = "UnityAdsControllerPrefab";
 	private const string NAME = "_UnityAdsController";
+	private const string WWW_REACHABLE_CHECK_URL = "http://google.com";
+	private const float WWW_TIMEOUT_TIME = 30f;
 	public enum State{
 		WaitToStart,
 		NetCheck,
+		WaitNetResponce,
 		Init,
 		WaitToReady,
 		Ready,
@@ -50,6 +53,8 @@ public class UnityAdsController : MonoBehaviour {
 	public static bool IsState(State _state){
 		return (mInstance==null) ? false : (mInstance.mState == _state);
 	}
+	private WWW mWWW;
+	private float mTimeOutTimer;
 
 	void Awake(){
 		if(mInstance!=null){
@@ -76,16 +81,39 @@ public class UnityAdsController : MonoBehaviour {
 		case State.WaitToStart: break;
 		case State.NetCheck:
 			if((Application.internetReachability == NetworkReachability.ReachableViaCarrierDataNetwork)||(Application.internetReachability == NetworkReachability.ReachableViaLocalAreaNetwork)){
-				mState = State.Init;
+				mState = State.WaitNetResponce;
+				mTimeOutTimer = WWW_TIMEOUT_TIME;
+				mWWW = new WWW(WWW_REACHABLE_CHECK_URL);
+			}
+			break;
+		case State.WaitNetResponce:
+			if(mWWW.isDone){
+				if (!string.IsNullOrEmpty(mWWW.error)){
+					mTimeOutTimer -= Time.deltaTime;
+					if(mTimeOutTimer<0f){
+						mState = State.NetCheck;
+					}
+				}else{
+					mState = State.Init;
+				}
 			}
 			break;
 		case State.Init:
+			mTimeOutTimer = WWW_TIMEOUT_TIME;
 			Advertisement.Initialize (mKey,IsTest);  //Application.platform==RuntimePlatform.IPhonePlayer
 			mState = State.WaitToReady;
 			break;
 		case State.WaitToReady:
 			if (Advertisement.isInitialized && Advertisement.isReady()) {
 				mState = State.Ready;
+			}else{
+#if false
+				// use this will be update Unity Ads abilable Re-Init.
+				mTimeOutTimer -= Time.deltaTime;
+				if(mTimeOutTimer<0f){
+					mState = State.Init;
+				}
+#endif
 			}
 			break;
 		case State.Ready: break;
