@@ -104,7 +104,7 @@ public class TmMesh{
 		mesh.uv = uv;
 		mesh.colors = colors;
 		mesh.normals = normals;
-		//		mesh.RecalculateNormals ();
+		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
 		return mesh;
@@ -189,7 +189,7 @@ public class TmMesh{
 		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
 		return mesh;
 	}
-
+	
 	public static Mesh CreateHeightMesh(float[,] _heightArr){
 		return CreateHeightMesh(_heightArr, new Color(0.5f,0.5f,0.5f,1.0f),false);
 	}
@@ -240,11 +240,11 @@ public class TmMesh{
 		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
 		return mesh;
 	}
-
-	public static Mesh CreateTubeMesh(int _divX, int _divZ, float _bottomR=0.5f, float _topR=0.5f){
-		return CreateTubeMesh(_divX, _divZ, _bottomR, _topR, new Color(0.5f,0.5f,0.5f,1.0f));
+	
+	public static Mesh CreateTubeMesh(int _divX, int _divZ, AxisType _type=AxisType.XY, bool _isInner=false){
+		return CreateTubeMesh(_divX, _divZ, _type, 0.5f, 0.5f, new Color(0.5f,0.5f,0.5f,1.0f),_isInner);
 	}
-	public static Mesh CreateTubeMesh(int _divX, int _divZ, float _bottomR, float _topR, Color _vertCol){
+	public static Mesh CreateTubeMesh(int _divX, int _divZ, AxisType _type, float _bottomR, float _topR, Color _vertCol, bool _isInner){
 		int vertNum = (_divX+1)*(_divZ+1);
 		int quadNum = _divX*_divZ;
 		int[] triangles = new int[quadNum*6];
@@ -257,23 +257,38 @@ public class TmMesh{
 		for(int zz = 0; zz < (_divZ+1); ++zz){
 			for(int xx = 0; xx < (_divX+1); ++xx){
 				Vector2 uvPos = new Vector2((float)xx/(float)_divX,(float)zz/(float)_divZ);
-				vertices[zz*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,0.0f,uvPos.y-0.5f);
+				if(_type == AxisType.XY){
+					vertices[zz*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,0.0f,uvPos.y-0.5f);
+				}else{
+					vertices[zz*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,uvPos.y-0.5f,0.0f);
+				}
 				uv[zz*(_divX+1)+xx] = uvPos;
 				colors[zz*(_divX+1)+xx] = _vertCol;
-				normals[zz*(_divX+1)+xx] = new Vector3(0.0f,0.0f,-1.0f);
+				normals[zz*(_divX+1)+xx] = new Vector3(0.0f,0.0f,1.0f);
 				tangents[zz*(_divX+1)+xx] = new Vector4(1.0f,0.0f,0.0f);
 				{
 					float p = vertices[zz*(_divX+1)+xx].x*2.0f;
 					float r = (vertices[zz*(_divX+1)+xx].z+0.5f);
 					r = _bottomR + (_topR-_bottomR)*r;
 					vertices[zz*(_divX+1)+xx].x = Mathf.Cos (p * Mathf.PI)*r;
-					vertices[zz*(_divX+1)+xx].y = Mathf.Sin (p * Mathf.PI)*r;
+					if(_type == AxisType.XY){
+						vertices[zz*(_divX+1)+xx].y = Mathf.Sin (p * Mathf.PI)*r;
+					}else{
+						vertices[zz*(_divX+1)+xx].z = -Mathf.Sin (p * Mathf.PI)*r;
+					}
 					normals[zz*(_divX+1)+xx] = vertices[zz*(_divX+1)+xx].normalized;
+					if(!_isInner){
+						normals[zz*(_divX+1)+xx] *= -1f;
+					}
 				}
 				if((xx<_divX)&&(zz<_divZ)){
 					int[] sw={0,0,1,1,1,0,1,1,0,0,0,1};
 					for(int ii = 0; ii < 6; ++ii){
-						triangles[(zz*_divX+xx)*6+ii] = (zz+sw[ii*2+1])*(_divX+1)+(xx+sw[ii*2+0]);
+						if(!_isInner){
+							triangles[(zz*_divX+xx)*6+ii] = (zz+sw[ii*2+0])*(_divX+1)+(xx+sw[ii*2+1]);
+						}else{
+							triangles[(zz*_divX+xx)*6+ii] = (zz+sw[ii*2+1])*(_divX+1)+(xx+sw[ii*2+0]);
+						}
 					}
 				}
 			}
@@ -286,7 +301,7 @@ public class TmMesh{
 		mesh.colors = colors;
 		mesh.normals = normals;
 		mesh.tangents = tangents;
-		//		mesh.RecalculateNormals ();
+		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
 		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
@@ -342,7 +357,7 @@ public class TmMesh{
 		mesh.colors = cols;
 		mesh.normals = norms;
 		mesh.tangents = tgts;
-		//		mesh.RecalculateNormals ();
+		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
 		return mesh;
