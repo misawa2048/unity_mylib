@@ -157,7 +157,11 @@ public class TmMesh{
 				case AxisType.XZ:	vertices[yy*(_divX+1)+xx] = new Vector3(fx,0.0f,fy);  break;
 				}
 				if(_isUnitPerGrid){
-					vertices[yy*(_divX+1)+xx] = Vector3.Scale(vertices[yy*(_divX+1)+xx],new Vector3(_divX,_divY,0));
+					switch(_type){
+					default:			vertices[yy*(_divX+1)+xx] = Vector3.Scale(vertices[yy*(_divX+1)+xx],new Vector3(_divX,_divY,1));  break;
+					case AxisType.XY:	vertices[yy*(_divX+1)+xx] = Vector3.Scale(vertices[yy*(_divX+1)+xx],new Vector3(_divX,_divY,1));  break;
+					case AxisType.XZ:	vertices[yy*(_divX+1)+xx] = Vector3.Scale(vertices[yy*(_divX+1)+xx],new Vector3(_divX,1,_divY));  break;
+					}
 				}
 				uv[yy*(_divX+1)+xx] = uvPos;
 				colors[yy*(_divX+1)+xx] = _vertCol;
