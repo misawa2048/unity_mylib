@@ -281,6 +281,21 @@ public class TmUtils {
 		return retArr;
 	}
 
+	// float[,]のメッシュ height 
+	public static float GetMapHeight(float[,] _heightArr, Vector2 _pos){
+		int w = _heightArr.GetLength (0);
+		int h = _heightArr.GetLength (1);
+		Vector2 rPos = new Vector2(_pos.x*(float)(w-1),_pos.y*(float)(h-1));
+		Vector2 dPos = new Vector2 (1f-(rPos.x - Mathf.Floor (rPos.x)), 1f-(rPos.y - Mathf.Floor (rPos.y)));
+		int bx = (int)Mathf.Clamp(Mathf.Floor (rPos.x),0f,(float)(w-2));
+		int by = (int)Mathf.Clamp(Mathf.Floor (rPos.y),0f,(float)(h-2));
+		float retHeight = _heightArr [bx, by] * (dPos.x * dPos.y);
+		retHeight += _heightArr [bx+1, by] * ((1f-dPos.x) * dPos.y);
+		retHeight += _heightArr [bx, by+1] * (dPos.x * (1f-dPos.y));
+		retHeight += _heightArr [bx+1, by+1] * ((1f-dPos.x) * (1f-dPos.y));
+		return retHeight;
+	}
+
 	// ----------------
 	// TextAsset関係 
 	// ----------------
