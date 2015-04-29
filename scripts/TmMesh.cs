@@ -133,10 +133,10 @@ public class TmMesh{
 		return CreateLine(vertices,true,_color);
 	}
 	
-	public static Mesh CreateTileMesh(int _divX, int _divY){
-		return CreateTileMesh(_divX, _divY, new Color(0.5f,0.5f,0.5f,1.0f),false);
+	public static Mesh CreateTileMesh(int _divX, int _divY, AxisType _type =AxisType.XY ){
+		return CreateTileMesh(_divX, _divY, _type, new Color(0.5f,0.5f,0.5f,1.0f),false);
 	}
-	public static Mesh CreateTileMesh(int _divX, int _divY, Color _vertCol, bool _isUnitPerGrid){
+	public static Mesh CreateTileMesh(int _divX, int _divY, AxisType _type, Color _vertCol, bool _isUnitPerGrid){
 		int vertNum = (_divX+1)*(_divY+1);
 		int quadNum = _divX*_divY;
 		int[] triangles = new int[quadNum*6];
@@ -149,7 +149,13 @@ public class TmMesh{
 		for(int yy = 0; yy < (_divY+1); ++yy){
 			for(int xx = 0; xx < (_divX+1); ++xx){
 				Vector2 uvPos = new Vector2((float)xx/(float)_divX,(float)yy/(float)_divY);
-				vertices[yy*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,uvPos.y-0.5f,0.0f);
+				float fx = uvPos.x-0.5f;
+				float fy = uvPos.y-0.5f;
+				switch(_type){
+				default:			vertices[yy*(_divX+1)+xx] = new Vector3(fx,fy,0.0f);  break;
+				case AxisType.XY:	vertices[yy*(_divX+1)+xx] = new Vector3(fx,fy,0.0f);  break;
+				case AxisType.XZ:	vertices[yy*(_divX+1)+xx] = new Vector3(fx,0.0f,fy);  break;
+				}
 				if(_isUnitPerGrid){
 					vertices[yy*(_divX+1)+xx] = Vector3.Scale(vertices[yy*(_divX+1)+xx],new Vector3(_divX,_divY,0));
 				}
@@ -173,7 +179,7 @@ public class TmMesh{
 		mesh.colors = colors;
 		mesh.normals = normals;
 		mesh.tangents = tangents;
-		//		mesh.RecalculateNormals ();
+		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.Optimize();
 		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
