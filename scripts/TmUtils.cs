@@ -242,13 +242,13 @@ public class TmUtils {
 	// MathUtil関係 
 	// ----------------
 	// float[,]のメッシュを再分割/統合 
-	public static float[,] DivHeightMapArr(float[,] _heightArr, float _hRate, bool _isInv=false, int _rndSeed=0){
+	public static float[,] DivHeightMapArr(float[,] _heightArr, float _hRate, bool _isUnite=false, int _rndSeed=0){
 		if(_rndSeed!=0){ Random.seed = _rndSeed; }
 		
 		float[,] retArr = _heightArr;
 		int srcDivX=_heightArr.GetLength(0);
 		int srcDivY=_heightArr.GetLength(1);
-		if(_isInv){ // 結合 
+		if(_isUnite){ // 結合 
 			if((srcDivX>2)&&(srcDivY>2)){
 				retArr = new float[(srcDivX+1)/2,(srcDivY+1)/2];
 				for(int iy = 0; iy<((srcDivY+1)/2); ++iy){
@@ -266,29 +266,33 @@ public class TmUtils {
 			}
 			for(int iy = 1; iy<retArr.GetLength(1)-1; iy+=2){
 				for(int ix = 1; ix<retArr.GetLength(0)-1; ix+=2){
-					float f00 = retArr[ix-1,iy-1];
-					float f10 = retArr[ix+1,iy-1];
-					float f01 = retArr[ix-1,iy+1];
-					float f11 = retArr[ix+1,iy+1];
-					retArr[ix-1,iy] = ((Random.value-0.5f)*(_hRate/(float)srcDivX))+(f00+f01)*0.5f;
-					retArr[ix+1,iy] = ((Random.value-0.5f)*(_hRate/(float)srcDivX))+(f10+f11)*0.5f;
-					retArr[ix,iy-1] = ((Random.value-0.5f)*(_hRate/(float)srcDivX))+(f00+f10)*0.5f;
-					retArr[ix,iy+1] = ((Random.value-0.5f)*(_hRate/(float)srcDivX))+(f01+f11)*0.5f;
-					retArr[ix,iy]   = ((Random.value-0.5f)*(_hRate/(float)srcDivX))+(f00+f10+f01+f11)*0.25f;
+					retArr[ix-1,iy] = (retArr[ix-1,iy-1]+retArr[ix-1,iy+1])*0.5f;
+					retArr[ix+1,iy] = (retArr[ix+1,iy-1]+retArr[ix+1,iy+1])*0.5f;
+					retArr[ix,iy-1] = (retArr[ix-1,iy-1]+retArr[ix+1,iy-1])*0.5f;
+					retArr[ix,iy+1] = (retArr[ix-1,iy+1]+retArr[ix+1,iy+1])*0.5f;
+					retArr[ix,iy]   = (retArr[ix-1,iy-1]+retArr[ix+1,iy-1]+retArr[ix-1,iy+1]+retArr[ix+1,iy+1])*0.25f;
+					if((ix>1)&&(iy>1)&&(ix<retArr.GetLength(0)-2)&&(iy<retArr.GetLength(1)-2)){
+						retArr[ix-1,iy] += ((Random.value-0.5f)*(_hRate/(float)srcDivX));
+						retArr[ix+1,iy] += ((Random.value-0.5f)*(_hRate/(float)srcDivX));
+						retArr[ix,iy-1] += ((Random.value-0.5f)*(_hRate/(float)srcDivX));
+						retArr[ix,iy+1] += ((Random.value-0.5f)*(_hRate/(float)srcDivX));
+						retArr[ix,iy]   += ((Random.value-0.5f)*(_hRate/(float)srcDivX));
+					}
 				}
 			}
 		}
 		return retArr;
 	}
-
+	
 	// float[,]のメッシュ height 
 	public static float GetMapHeight(float[,] _heightArr, Vector2 _pos){
 		int w = _heightArr.GetLength (0);
 		int h = _heightArr.GetLength (1);
 		Vector2 rPos = new Vector2(_pos.x*(float)(w-1),_pos.y*(float)(h-1));
+		rPos *= 0.99999f;
 		Vector2 dPos = new Vector2 (1f-(rPos.x - Mathf.Floor (rPos.x)), 1f-(rPos.y - Mathf.Floor (rPos.y)));
-		int bx = (int)Mathf.Clamp(Mathf.Floor (rPos.x),0f,(float)(w-2));
-		int by = (int)Mathf.Clamp(Mathf.Floor (rPos.y),0f,(float)(h-2));
+		int bx = (int)Mathf.Clamp(Mathf.Floor (rPos.x),0f,(float)(w-1));
+		int by = (int)Mathf.Clamp(Mathf.Floor (rPos.y),0f,(float)(h-1));
 		float retHeight = _heightArr [bx, by] * (dPos.x * dPos.y);
 		retHeight += _heightArr [bx+1, by] * ((1f-dPos.x) * dPos.y);
 		retHeight += _heightArr [bx, by+1] * (dPos.x * (1f-dPos.y));
