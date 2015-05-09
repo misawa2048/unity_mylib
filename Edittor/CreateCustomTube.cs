@@ -32,8 +32,9 @@ public class CreateCustomTube : EditorWindow {
 		meshFilter.mesh = TmMesh.CreateTubeMesh(_divNum,mCvDivNum,_cv,_type,new Color(0.5f,0.5f,0.5f,1.0f), _isInv);
 		Mesh mesh = meshFilter.sharedMesh;
 		mesh.name = name;
-		
-		AssetDatabase.CreateAsset (mesh, "Assets/" + mesh.name + ".asset");
+
+		string path = AssetDatabase.GenerateUniqueAssetPath("Assets/" + mesh.name + ".asset");
+		AssetDatabase.CreateAsset (mesh, path);
 		AssetDatabase.SaveAssets ();
 	}
 
