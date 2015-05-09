@@ -10,7 +10,7 @@ public class CreateTube : EditorWindow {
 	static TmMesh.AxisType mAxisType = TmMesh.AxisType.XY;
 	static CreateTube mWindow;
 
-	[MenuItem ("GameObject/Create Other/Other/"+DEF_NAME)]
+	[MenuItem ("GameObject/Create Other/ELIX/"+DEF_NAME)]
 	static void Init ()
 	{
 		mWindow = (CreateTube)EditorWindow.GetWindow(typeof(CreateTube));

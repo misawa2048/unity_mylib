@@ -14,7 +14,7 @@ public class CreatePoly : EditorWindow
 	static TmMesh.AxisType mAxisType = TmMesh.AxisType.XY;
 	static CreatePoly mWindow;
 
-	[MenuItem ("GameObject/Create Other/Other/"+DEF_NAME_P)]
+	[MenuItem ("GameObject/Create Other/ELIX/"+DEF_NAME_P)]
 	static void Init ()
 	{
 		mWindow = (CreatePoly)EditorWindow.GetWindow(typeof(CreatePoly));

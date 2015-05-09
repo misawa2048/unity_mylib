@@ -6,7 +6,7 @@ using System.Collections;
 public class CreateRing : MonoBehaviour
 {
 
-	[MenuItem ("GameObject/Create Other/Other/Ring")]
+	[MenuItem ("GameObject/Create Other/ELIX/Ring")]
 	static void Create ()
 	{
 		const int DEG_NUM=256;

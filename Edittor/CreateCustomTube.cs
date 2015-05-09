@@ -13,7 +13,7 @@ public class CreateCustomTube : EditorWindow {
 	static CreateCustomTube mWindow;
 	static AnimationCurve mCurve = AnimationCurve.Linear(0,0,1,1);
 
-	[MenuItem ("GameObject/Create Other/Other/"+DEF_NAME)]
+	[MenuItem ("GameObject/Create Other/ELIX/"+DEF_NAME)]
 	static void Init ()
 	{
 		mWindow = (CreateCustomTube)EditorWindow.GetWindow(typeof(CreateCustomTube));

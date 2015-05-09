@@ -5,7 +5,7 @@ using System.Collections;
 
 public class CreateLineSingle : MonoBehaviour {
 	const string DEF_NAME = "LineSingle";
-	[MenuItem ("GameObject/Create Other/Other/"+DEF_NAME)]
+	[MenuItem ("GameObject/Create Other/ELIX/"+DEF_NAME)]
 	static void Create ()
 	{
 		const int DEG_NUM=2;

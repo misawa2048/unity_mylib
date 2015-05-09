@@ -5,7 +5,7 @@ using System.Collections;
 
 public class CreatePanel : MonoBehaviour {
 	const string DEF_NAME = "CustomPanel";
-	[MenuItem ("GameObject/Create Other/Other/"+DEF_NAME)]
+	[MenuItem ("GameObject/Create Other/ELIX/"+DEF_NAME)]
 	static void Create ()
 	{
 		const int MESH_W = 1;

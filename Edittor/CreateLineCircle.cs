@@ -13,7 +13,7 @@ public class CreateLineCircle : EditorWindow {
 	static CreateLineCircle mWindow;
 	static TmMesh.AxisType mAxisType = TmMesh.AxisType.XY;
 
-	[MenuItem ("GameObject/Create Other/Other/"+DEF_NAME_C)]
+	[MenuItem ("GameObject/Create Other/ELIX/"+DEF_NAME_C)]
 	static void Init ()
 	{
 		mWindow = (CreateLineCircle)EditorWindow.GetWindow(typeof(CreateLineCircle));

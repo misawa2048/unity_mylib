@@ -13,7 +13,7 @@ public class CreateTileMesh : EditorWindow
 	static CreateTileMesh mWindow;
 	static TmMesh.AxisType mAxisType = TmMesh.AxisType.XY;
 
-	[MenuItem ("GameObject/Create Other/Other/"+DEF_NAME)]
+	[MenuItem ("GameObject/Create Other/ELIX/"+DEF_NAME)]
 	static void Init ()
 	{
 		mWindow = (CreateTileMesh)EditorWindow.GetWindow(typeof(CreateTileMesh));

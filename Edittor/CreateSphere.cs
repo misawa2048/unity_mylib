@@ -11,7 +11,7 @@ public class CreateSphere : EditorWindow
 	static Color mColor = new Color(0.5f,0.5f,0.5f,1f);
 	static CreateSphere mWindow;
 	
-	[MenuItem ("GameObject/Create Other/Other/"+DEF_NAME)]
+	[MenuItem ("GameObject/Create Other/ELIX/"+DEF_NAME)]
 	static void Init ()
 	{
 		mWindow = (CreateSphere)EditorWindow.GetWindow(typeof(CreateSphere));
