@@ -263,6 +263,9 @@ public class TmMesh{
 					vertices[zz*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,uvPos.y-0.5f,0.0f);
 				}
 				uv[zz*(_divX+1)+xx] = uvPos;
+				if(!_isInner){
+					uv[zz*(_divX+1)+xx].x = 1f-uv[zz*(_divX+1)+xx].x;
+				}
 				colors[zz*(_divX+1)+xx] = _vertCol;
 				normals[zz*(_divX+1)+xx] = new Vector3(0.0f,0.0f,1.0f);
 				tangents[zz*(_divX+1)+xx] = new Vector4(1.0f,0.0f,0.0f);
