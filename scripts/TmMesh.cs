@@ -245,6 +245,12 @@ public class TmMesh{
 		return CreateTubeMesh(_divX, _divZ, _type, 0.5f, 0.5f, new Color(0.5f,0.5f,0.5f,1.0f),_isInner);
 	}
 	public static Mesh CreateTubeMesh(int _divX, int _divZ, AxisType _type, float _bottomR, float _topR, Color _vertCol, bool _isInner){
+		AnimationCurve curve = AnimationCurve.Linear(0f,_bottomR,1f,_topR);
+		return CreateTubeMesh(_divX, _divZ, curve, _type, _vertCol, _isInner);
+	}
+	public static Mesh CreateTubeMesh(int _divX, int _divZ, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner){
+		float sttTime = _cv.keys[0].time;
+		float endTime = _cv.keys[_cv.length-1].time;
 		int vertNum = (_divX+1)*(_divZ+1);
 		int quadNum = _divX*_divZ;
 		int[] triangles = new int[quadNum*6];
@@ -271,8 +277,7 @@ public class TmMesh{
 				tangents[zz*(_divX+1)+xx] = new Vector4(1.0f,0.0f,0.0f);
 				{
 					float p = vertices[zz*(_divX+1)+xx].x*2.0f;
-					float r = (vertices[zz*(_divX+1)+xx].z+0.5f);
-					r = _bottomR + (_topR-_bottomR)*r;
+					float r = _cv.Evaluate(sttTime + (endTime - sttTime)*(1f-(float)zz/(float)_divZ));
 					vertices[zz*(_divX+1)+xx].x = Mathf.Cos (p * Mathf.PI)*r;
 					if(_type == AxisType.XY){
 						vertices[zz*(_divX+1)+xx].y = Mathf.Sin (p * Mathf.PI)*r;
@@ -304,13 +309,13 @@ public class TmMesh{
 		mesh.colors = colors;
 		mesh.normals = normals;
 		mesh.tangents = tangents;
+		mesh.Optimize();
 		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
-		mesh.Optimize();
 		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
 		return mesh;
 	}
-	
+
 	public static Mesh CreatePoly(int _vertNum, AxisType _type=AxisType.XY, float _ofsDeg=0.0f){
 		return CreatePoly(_vertNum,_type, new Color(0.5f,0.5f,0.5f,1.0f),_ofsDeg,0.0f);
 	}
