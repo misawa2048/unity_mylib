@@ -313,6 +313,15 @@ public class TmMesh{
 		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
+
+		normals = mesh.normals;
+		for(int zz = 0; zz < (_divZ+1); ++zz){
+			Vector3 nml = (normals[zz*(_divX+1)+0] + normals[zz*(_divX+1)+_divX]).normalized;
+			normals[zz*(_divX+1)+0] = nml;
+			normals[zz*(_divX+1)+_divX] = nml;
+		}
+		mesh.normals = normals;
+
 		return mesh;
 	}
 
