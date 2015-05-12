@@ -246,10 +246,11 @@ public class TmMesh{
 		return CreateTubeMesh(_divX, _divZ, curve, _type, new Color(0.5f,0.5f,0.5f,1.0f), _isInner);
 	}
 	public static Mesh CreateTubeMesh(int _divX, int _divZ, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner){
-		bool isKeyDiv = false;
-		if(_divZ<=0){
-			_divZ = _cv.length-1;
-			isKeyDiv = true;
+		bool isKeyDiv = true;
+		int nDiv = 1;
+		if(isKeyDiv){
+			nDiv = _divZ;
+			_divZ = (_cv.length-1)*nDiv;
 		}
 		float sttTime = _cv.keys[0].time;
 		float endTime = _cv.keys[_cv.length-1].time;
@@ -265,7 +266,16 @@ public class TmMesh{
 		
 		for(int zz = 0; zz < (_divZ+1); ++zz){
 			for(int xx = 0; xx < (_divX+1); ++xx){
-				float nz = (isKeyDiv) ? (_cv.keys[zz].time-sttTime)/ttlTIme : (float)zz/(float)_divZ;
+				float nz;
+				if(isKeyDiv){
+					float tt = _cv.keys[zz/nDiv].time;
+					if(zz < _divZ){
+						tt += (_cv.keys[(zz/nDiv)+1].time-tt) * ((float)(zz % nDiv) / (float)nDiv);
+					}
+					nz = (tt-sttTime)/ttlTIme;
+				}else{
+					nz = (float)zz/(float)_divZ;
+				}
 				Vector2 uvPos = new Vector2((float)xx/(float)_divX, nz/ttlTIme);
 				if(_type == AxisType.XY){
 					vertices[zz*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,0.0f,uvPos.y-0.5f);
