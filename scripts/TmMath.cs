@@ -191,6 +191,9 @@ public class TmMath {
 	//! 衝突時刻取得:q1+qSpd*retがhit場所(retがnullの場合はhitしない） 
 	//-----------------------------------------------------------------------
 	static public float[] CollideTime(Vector3 q1, Vector3 qSpd, Vector3 p1, float ps){
+		if (qSpd == Vector3.zero) {
+			return new float[1]{(p1-q1).magnitude/ps};
+		}
 		float[] ret = null;
 		Vector3 p0,q0;
 		float qs = qSpd.magnitude;
