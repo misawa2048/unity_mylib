@@ -242,15 +242,18 @@ public class TmMesh{
 	}
 	
 	public static Mesh CreateTubeMesh(int _divX, int _divZ, AxisType _type=AxisType.XY, bool _isInner=false){
-		return CreateTubeMesh(_divX, _divZ, _type, 0.5f, 0.5f, new Color(0.5f,0.5f,0.5f,1.0f),_isInner);
-	}
-	public static Mesh CreateTubeMesh(int _divX, int _divZ, AxisType _type, float _bottomR, float _topR, Color _vertCol, bool _isInner){
-		AnimationCurve curve = AnimationCurve.Linear(0f,_bottomR,1f,_topR);
-		return CreateTubeMesh(_divX, _divZ, curve, _type, _vertCol, _isInner);
+		AnimationCurve curve = AnimationCurve.Linear(0f,0.5f,1f,0.5f);
+		return CreateTubeMesh(_divX, _divZ, curve, _type, new Color(0.5f,0.5f,0.5f,1.0f), _isInner);
 	}
 	public static Mesh CreateTubeMesh(int _divX, int _divZ, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner){
+		bool isKeyDiv = false;
+		if(_divZ<=0){
+			_divZ = _cv.length-1;
+			isKeyDiv = true;
+		}
 		float sttTime = _cv.keys[0].time;
 		float endTime = _cv.keys[_cv.length-1].time;
+		float ttlTIme = endTime-sttTime;
 		int vertNum = (_divX+1)*(_divZ+1);
 		int quadNum = _divX*_divZ;
 		int[] triangles = new int[quadNum*6];
@@ -262,7 +265,8 @@ public class TmMesh{
 		
 		for(int zz = 0; zz < (_divZ+1); ++zz){
 			for(int xx = 0; xx < (_divX+1); ++xx){
-				Vector2 uvPos = new Vector2((float)xx/(float)_divX,(float)zz/(float)_divZ);
+				float nz = (isKeyDiv) ? (_cv.keys[zz].time-sttTime)/ttlTIme : (float)zz/(float)_divZ;
+				Vector2 uvPos = new Vector2((float)xx/(float)_divX, nz/ttlTIme);
 				if(_type == AxisType.XY){
 					vertices[zz*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,0.0f,uvPos.y-0.5f);
 				}else{
@@ -277,7 +281,7 @@ public class TmMesh{
 				tangents[zz*(_divX+1)+xx] = new Vector4(1.0f,0.0f,0.0f);
 				{
 					float p = vertices[zz*(_divX+1)+xx].x*2.0f;
-					float r = _cv.Evaluate(sttTime + (endTime - sttTime)*(1f-(float)zz/(float)_divZ));
+					float r = _cv.Evaluate(sttTime + ttlTIme*(nz/ttlTIme));
 					vertices[zz*(_divX+1)+xx].x = Mathf.Cos (p * Mathf.PI)*r;
 					if(_type == AxisType.XY){
 						vertices[zz*(_divX+1)+xx].y = Mathf.Sin (p * Mathf.PI)*r;
@@ -313,7 +317,7 @@ public class TmMesh{
 		mesh.RecalculateNormals ();
 		mesh.RecalculateBounds ();
 		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
-
+		
 		normals = mesh.normals;
 		for(int zz = 0; zz < (_divZ+1); ++zz){
 			Vector3 nml = (normals[zz*(_divX+1)+0] + normals[zz*(_divX+1)+_divX]).normalized;
@@ -321,10 +325,10 @@ public class TmMesh{
 			normals[zz*(_divX+1)+_divX] = nml;
 		}
 		mesh.normals = normals;
-
+		
 		return mesh;
 	}
-
+	
 	public static Mesh CreatePoly(int _vertNum, AxisType _type=AxisType.XY, float _ofsDeg=0.0f){
 		return CreatePoly(_vertNum,_type, new Color(0.5f,0.5f,0.5f,1.0f),_ofsDeg,0.0f);
 	}
