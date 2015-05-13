@@ -2,6 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 using System.Collections;
+using TmLib;
 
 public class CreateLineCircle : EditorWindow {
 	const string DEF_NAME_C = "LineCircle";

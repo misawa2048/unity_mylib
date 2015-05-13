@@ -2,6 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 using System.Collections;
+using TmLib;
 
 public class CreateCustomTube : EditorWindow {
 	const string DEF_NAME = "CustomTube";
