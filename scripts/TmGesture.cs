@@ -45,7 +45,7 @@ namespace TmLib{
 				}else if (Input.touches.Length > 1) {
 					mInetiaBreak = true;
 				}
-				#if UNITY_EDITOR
+				#if (!UNITY_ANDROID && !UNITY_IPHONE)
 				if(true){
 					#else
 					if((!mInetiaBreak)&&(Input.touches.Length == 1)){
