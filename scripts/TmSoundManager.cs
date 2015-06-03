@@ -9,15 +9,6 @@ namespace TmLib{
 		private const string TAG_EMPTY = "_empty_";
 		
 		[System.Serializable]
-		public class Track{
-			public string name;
-			public AudioSource source;
-			public float lifeTime;
-			public Order order;
-			public int priority;
-		}
-		
-		[System.Serializable]
 		public class AudioCtrl{
 			[HideInInspector]
 			public string name;
@@ -28,6 +19,29 @@ namespace TmLib{
 			//			[HideInInspector]
 			public Track[] track;
 			public AudioClip[] tmpAcArr;
+		}
+		
+		[System.Serializable]
+		public class Track{
+			public string name;
+			public AudioSource source;
+			public float lifeTime;
+			public Order order;
+			public int priority;
+			public Vector3 position;
+			public GameObject target;
+		}
+		
+		public class PlayInfo{
+			public Kind kind;
+			public string tag;
+			public AudioClip clip;
+			public float lifeTime;
+			public Order order;
+			public int maxTracks;
+			public int priority;
+			public Vector3 position;
+			public GameObject target;
 		}
 		
 		public AudioCtrl[] audioCtrl;
@@ -43,16 +57,30 @@ namespace TmLib{
 			}
 		}
 		
-		public bool Play(Kind _kind, AudioClip _clip, string _tag, int _maxNum, Order _order, int _priority){
+		//----------------------------
+		public bool Play(Kind _kind, string _tag, AudioClip _clip, int _maxTracks, Order _order, int _priority){
+			PlayInfo info = new PlayInfo();
+			info.kind = _kind;
+			info.tag = _tag;
+			info.clip = _clip;
+			info.lifeTime = (_clip!=null) ? _clip.length : 0;
+			info.order = _order;
+			info.maxTracks = _maxTracks;
+			info.priority = _priority;
+			info.position = gameObject.transform.position;
+			info.target = null;
+			return Play(info);
+		}
+		public bool Play(PlayInfo _info){
 			bool ret = false;
-			AudioCtrl ac = audioCtrl[(int)_kind];
+			AudioCtrl ac = audioCtrl[(int)_info.kind];
 			int playingTagNum=0;
 			for(int i = 0; i< ac.track.Length; ++i){
-				if(ac.track[i].name == _tag){
+				if(ac.track[i].name == _info.tag){
 					playingTagNum++;
 				}
 			}
-			if((playingTagNum>=_maxNum)&&(_order == Order.First)){
+			if((playingTagNum>=_info.maxTracks)&&(_info.order == Order.First)){
 				return false;
 			}
 			Track track = null;
@@ -60,23 +88,24 @@ namespace TmLib{
 				if(!ac.track[i].source.isPlaying){
 					track = ac.track[i];
 					break;
-				}else if((playingTagNum>=_maxNum)&&(ac.track[i].name == _tag)){
+				}else if((playingTagNum>=_info.maxTracks)&&(ac.track[i].name == _info.tag)){
 					track = ac.track[i];
 					break;
 				}
 			}
-			if((_clip!=null)&&(track!=null)){
-				track.name = _tag;
-				track.lifeTime = _clip.length;
-				track.order = _order;
-				track.priority = _priority;
-				track.source.clip = _clip;
+			if((_info.clip!=null)&&(track!=null)){
+				track.name = _info.tag;
+				track.lifeTime = _info.lifeTime;
+				track.order = _info.order;
+				track.priority = _info.priority;
+				track.source.clip = _info.clip;
 				track.source.Play();
 				ret = true;
 				//				Debug.Log("Play("+_tag+")");
 			}
 			return ret;
 		}
+		//----------------------------
 		
 		private void initAudioSource(){
 			for(int i=0; i<audioCtrl.Length;++i){
@@ -104,7 +133,7 @@ namespace TmLib{
 				if(_actrl.tmpAcArr.Length>0){
 					AudioClip ac = _actrl.tmpAcArr[Random.Range(0,_actrl.tmpAcArr.Length)];
 					if(ac!=null){
-						Play(_actrl.kind, ac, ac.name, 2, Order.Last, 0);
+						Play(_actrl.kind, ac.name, ac, 2, Order.Last, 0);
 					}
 				}
 			}
@@ -119,17 +148,23 @@ namespace TmLib{
 			int playingTrackNum=0;
 			_actrl.name = _actrl.kind.ToString();
 			for(int i = 0; i< _actrl.numSource; ++i){
-				Track track = _actrl.track[i];
-				if(track.source.clip!=null){
-					if(!track.source.isPlaying){
-						track.source.clip = null;
-						track.name = TAG_EMPTY;
-					}else{
-						playingTrackNum++;
-					}
+				if(updateTrack(_actrl.track[i])){
+					playingTrackNum++;
 				}
 			}
 			return playingTrackNum;
+		}
+		private bool updateTrack(Track _track){
+			bool ret = false;
+			if(_track.source.clip!=null){
+				if(!_track.source.isPlaying){
+					_track.source.clip = null;
+					_track.name = TAG_EMPTY;
+				}else{
+					ret = true;
+				}
+			}
+			return ret;
 		}
 		
 		private int debugPlay(){
@@ -139,7 +174,7 @@ namespace TmLib{
 					if(audioCtrl[j].tmpAcArr.Length>0){
 						AudioClip ac = audioCtrl[j].tmpAcArr[Random.Range(0,audioCtrl[j].tmpAcArr.Length)];
 						if(ac!=null){
-							if(Play(audioCtrl[j].kind, ac, ac.name, 2, Order.First, 0)){
+							if(Play(audioCtrl[j].kind, ac.name, ac, 2, Order.First, 0)){
 								num++;
 							}
 						}
