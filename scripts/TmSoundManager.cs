@@ -88,10 +88,13 @@ namespace TmLib{
 			_actrl.name = _actrl.kind.ToString();
 			_actrl.track = new Track[_actrl.numSource];
 			for(int i = 0; i< _actrl.numSource; ++i){
+				GameObject trackObj = new GameObject("Track_"+_actrl.name+"_"+i.ToString());
+				trackObj.transform.position = gameObject.transform.position;
+				trackObj.transform.parent = gameObject.transform;
 				_actrl.track[i] = new Track();
 				Track track = _actrl.track[i];
 				track.name = TAG_EMPTY;
-				track.source = gameObject.AddComponent<AudioSource>();
+				track.source = trackObj.AddComponent<AudioSource>();
 				track.source.outputAudioMixerGroup = _actrl.amGroup;
 				track.source.loop = false;
 				track.source.playOnAwake = false;
