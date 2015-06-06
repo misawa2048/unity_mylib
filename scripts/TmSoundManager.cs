@@ -7,12 +7,14 @@ namespace TmLib{
 		public enum Kind{ SE=0, BGM=1, Voice=2 }
 		public enum Order{ First=0, Last=1 }
 		private const string TAG_EMPTY = "_empty_";
+		private static TmSoundManager _instance = null;
+		public static TmSoundManager instance{ get{ return _instance; } }
 		
 		[System.Serializable]
 		public class AudioCtrl{
-			[HideInInspector]
+			//			[HideInInspector]
 			public string name;
-			[HideInInspector]
+			//			[HideInInspector]
 			public Kind kind;
 			public AudioMixerGroup amGroup;
 			public int numSource;
@@ -30,6 +32,16 @@ namespace TmLib{
 			public int priority;
 			public Vector3 position;
 			public GameObject target;
+			public void updatePos(){
+				if (source != null) {
+					Vector3 pos = position;
+					if (target != null) {
+						pos = target.transform.TransformDirection(pos);
+						pos += target.transform.position;
+					}
+					source.transform.position = pos;
+				}
+			}
 		}
 		
 		public class PlayInfo{
@@ -46,19 +58,20 @@ namespace TmLib{
 		
 		public AudioCtrl[] audioCtrl;
 		
-		void Start () {
+		void Awake(){
+			_instance = this;
 			initAudioSource();
+		}
+		void Start () {
 		}
 		
 		void Update () {
 			updateAudioSource ();
-			if(Input.GetMouseButtonDown(0)){
-				debugPlay();
-			}
+			//			if(Input.GetMouseButtonDown(0)){ debugPlay(); }
 		}
 		
 		//----------------------------
-		public bool Play(Kind _kind, string _tag, AudioClip _clip, int _maxTracks, Order _order, int _priority){
+		public Track Play(Kind _kind, string _tag, AudioClip _clip, int _maxTracks, Order _order, int _priority){
 			PlayInfo info = new PlayInfo();
 			info.kind = _kind;
 			info.tag = _tag;
@@ -71,8 +84,8 @@ namespace TmLib{
 			info.target = null;
 			return Play(info);
 		}
-		public bool Play(PlayInfo _info){
-			bool ret = false;
+		public Track Play(PlayInfo _info){
+			Track track = null;
 			AudioCtrl ac = audioCtrl[(int)_info.kind];
 			int playingTagNum=0;
 			for(int i = 0; i< ac.track.Length; ++i){
@@ -81,9 +94,8 @@ namespace TmLib{
 				}
 			}
 			if((playingTagNum>=_info.maxTracks)&&(_info.order == Order.First)){
-				return false;
+				return track;
 			}
-			Track track = null;
 			for(int i = 0; i< ac.track.Length; ++i){
 				if(!ac.track[i].source.isPlaying){
 					track = ac.track[i];
@@ -98,12 +110,14 @@ namespace TmLib{
 				track.lifeTime = _info.lifeTime;
 				track.order = _info.order;
 				track.priority = _info.priority;
+				track.position = _info.position;
+				track.target = _info.target;
 				track.source.clip = _info.clip;
+				track.updatePos();
 				track.source.Play();
-				ret = true;
 				//				Debug.Log("Play("+_tag+")");
 			}
-			return ret;
+			return track;
 		}
 		//----------------------------
 		
@@ -127,6 +141,7 @@ namespace TmLib{
 				track.source.outputAudioMixerGroup = _actrl.amGroup;
 				track.source.loop = false;
 				track.source.playOnAwake = false;
+				track.source.spatialBlend = 1.0f;
 			}
 			//test
 			for(int i = 0; i< _actrl.numSource; ++i){
@@ -161,10 +176,21 @@ namespace TmLib{
 					_track.source.clip = null;
 					_track.name = TAG_EMPTY;
 				}else{
+					_track.updatePos();
 					ret = true;
 				}
 			}
 			return ret;
+		}
+		private void updateTrackPos(Track _track){
+			if (_track != null){
+				Vector3 pos = _track.position;
+				if(_track.target != null) {
+					pos = _track.target.transform.TransformDirection(pos);
+					pos += _track.target.transform.position;
+				}
+				_track.source.transform.position = pos;
+			}
 		}
 		
 		private int debugPlay(){
@@ -174,7 +200,7 @@ namespace TmLib{
 					if(audioCtrl[j].tmpAcArr.Length>0){
 						AudioClip ac = audioCtrl[j].tmpAcArr[Random.Range(0,audioCtrl[j].tmpAcArr.Length)];
 						if(ac!=null){
-							if(Play(audioCtrl[j].kind, ac.name, ac, 2, Order.First, 0)){
+							if(Play(audioCtrl[j].kind, ac.name, ac, 2, Order.First, 0)!=null){
 								num++;
 							}
 						}
