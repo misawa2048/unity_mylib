@@ -37,7 +37,6 @@ namespace TmLib{
 			public GameObject trackPrefab;
 			//			[HideInInspector]
 			public Track[] track;
-			public AudioClip[] dbgAcArr;
 			public AudioCtrl(Kind _kind, int _num=1){
 				kind = _kind;
 				config = new Config();
@@ -49,7 +48,8 @@ namespace TmLib{
 		public class Track{
 			public string name = TAG_EMPTY;
 			public AudioSource source;
-			public float lifeTime;
+			//			public float unbarrageTime;
+			public float minLife;
 			public Order order;
 			public int priority;
 			public float directivity; //0f-1f
@@ -74,14 +74,15 @@ namespace TmLib{
 		}
 		
 		public class PlayInfo{
-			public Kind kind;
+			public Kind kind=Kind.SE;
 			public string tag;
 			public AudioClip clip;
-			public float lifeTime;
-			public Order order;
-			public int maxTracks;
-			public int priority;
-			public float directivity;
+			//			public float unbarrageTime=0.1f;
+			public float minLife=1f;
+			public Order order=Order.Last;
+			public int maxTracks=1;
+			public int priority=0;
+			public float directivity=0f;
 			public Vector3 offset;
 			public GameObject target;
 		}
@@ -100,7 +101,6 @@ namespace TmLib{
 		
 		void Update () {
 			updateAudioSource ();
-			//			if(Input.GetMouseButtonDown(0)){ debugPlay(); }
 		}
 		
 		//----------------------------
@@ -108,26 +108,36 @@ namespace TmLib{
 			Track track = null;
 			AudioCtrl ac = audioCtrl[(int)_info.kind];
 			int playingTagNum=0;
+			int overwritableTagNum = 0;
 			for(int i = 0; i< ac.track.Length; ++i){
 				if(ac.track[i].name == _info.tag){
 					playingTagNum++;
+					float old = ac.track[i].source.time / ac.track[i].source.clip.length;
+					if(old >= ac.track[i].minLife){
+						overwritableTagNum++;
+					}
 				}
 			}
-			if((playingTagNum>=_info.maxTracks)&&(_info.order == Order.First)){
+			if((_info.order == Order.First)&&((playingTagNum-overwritableTagNum)>=_info.maxTracks)){
 				return track;
 			}
 			for(int i = 0; i< ac.track.Length; ++i){
-				if(!ac.track[i].source.isPlaying){
+				if((playingTagNum<_info.maxTracks)&&(!ac.track[i].source.isPlaying)){
 					track = ac.track[i];
 					break;
-				}else if((playingTagNum>=_info.maxTracks)&&(ac.track[i].name == _info.tag)){
-					track = ac.track[i];
-					break;
+				}else {
+					float old = ac.track[i].source.time / ac.track[i].source.clip.length;
+					if(old >= ac.track[i].minLife){
+						Debug.Log(">>"+overwritableTagNum);
+						track = ac.track[i];
+						break;
+					}
 				}
 			}
 			if((_info.clip!=null)&&(track!=null)){
 				track.name = _info.tag;
-				track.lifeTime = _info.lifeTime;
+				//				track.unbarrageTime = _info.unbarrageTime;
+				track.minLife = _info.minLife;
 				track.order = _info.order;
 				track.priority = _info.priority;
 				track.directivity = _info.directivity;
@@ -212,30 +222,5 @@ namespace TmLib{
 			return ret;
 		}
 		
-		private int debugPlay(){
-			int num = 0;
-			for(int j=0; j<audioCtrl.Length;++j){
-				for(int i = 0; i< audioCtrl[j].track.Length; ++i){
-					if(audioCtrl[j].dbgAcArr.Length>0){
-						AudioClip ac = audioCtrl[j].dbgAcArr[Random.Range(0,audioCtrl[j].dbgAcArr.Length)];
-						if(ac!=null){
-							TmSoundManager.PlayInfo info = new TmSoundManager.PlayInfo();
-							info.clip = ac;
-							info.kind = audioCtrl[j].kind;
-							info.maxTracks = 2;
-							info.order = TmSoundManager.Order.First;
-							info.tag = ac.name;
-							info.target = this.gameObject;
-							info.offset = Vector3.zero;
-							if(Play(info)!=null){
-								num++;
-							}
-						}
-					}
-				}
-			}
-			Debug.Log("num="+num);
-			return num;
-		}
 	}
 }
