@@ -66,6 +66,11 @@ namespace TmLib{
 					source.transform.position = pos;
 				}
 			}
+			public void updateDirectivityVolume(Transform _camTr){
+				Vector3 dir = source.transform.position- -_camTr.position;
+				float d = Vector3.Dot(dir.normalized,_camTr.forward);
+				source.volume = Mathf.Lerp(1f,(d+1f)*0.5f,Mathf.Clamp01(directivity));
+			}
 		}
 		
 		public class PlayInfo{
@@ -199,10 +204,7 @@ namespace TmLib{
 				}else{
 					_track.updatePos();
 					if((_track.directivity>0f)&&(targetCam!=null)){
-						//						_track.updateDirectivityVolume(targetCam);
-						Vector3 dir = _track.source.transform.position- -targetCam.transform.position;
-						float d = Vector3.Dot(dir.normalized,targetCam.transform.forward);
-						_track.source.volume = Mathf.Lerp(1f,(d+1f)*0.5f,Mathf.Clamp01(_track.directivity));
+						_track.updateDirectivityVolume(targetCam.transform);
 					}
 					ret = true;
 				}
