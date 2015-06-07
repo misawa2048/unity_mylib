@@ -10,22 +10,43 @@ namespace TmLib{
 		private static TmSoundManager _instance = null;
 		public static TmSoundManager instance{ get{ return _instance; } }
 		
+		public TmSoundManager(){
+			audioCtrl = new AudioCtrl[3];
+			for (int i = 0; i < audioCtrl.Length; ++i) {
+				audioCtrl [i] = new AudioCtrl((Kind)i,((Kind)i == Kind.SE) ? 16:2);
+				audioCtrl [i].name = audioCtrl [i].kind.ToString ();
+			}
+			audioCtrl [1].config.loop=true;
+		}
+		
+		[System.Serializable]
+		public class Config{
+			public bool loop = false;
+			public float maxDistance=500f;
+			public float spatialBlend=1f; //0:2D - 3D:1
+		}
+		
 		[System.Serializable]
 		public class AudioCtrl{
-			//			[HideInInspector]
+			[HideInInspector]
 			public string name;
-			//			[HideInInspector]
+			[HideInInspector]
 			public Kind kind;
 			public AudioMixerGroup amGroup;
-			public int numSource;
+			public Config config;
 			//			[HideInInspector]
 			public Track[] track;
-			public AudioClip[] tmpAcArr;
+			public AudioClip[] dbgAcArr;
+			public AudioCtrl(Kind _kind, int _num=1){
+				kind = _kind;
+				config = new Config();
+				track = new Track[_num];
+			}
 		}
 		
 		[System.Serializable]
 		public class Track{
-			public string name;
+			public string name = TAG_EMPTY;
 			public AudioSource source;
 			public float lifeTime;
 			public Order order;
@@ -129,28 +150,20 @@ namespace TmLib{
 		
 		private void addAudioSource(AudioCtrl _actrl){
 			_actrl.name = _actrl.kind.ToString();
-			_actrl.track = new Track[_actrl.numSource];
-			for(int i = 0; i< _actrl.numSource; ++i){
+			//			_actrl.track = new Track[_actrl.numTrack];
+			for(int i = 0; i< _actrl.track.Length; ++i){
 				GameObject trackObj = new GameObject("Track_"+_actrl.name+"_"+i.ToString());
 				trackObj.transform.position = gameObject.transform.position;
 				trackObj.transform.parent = gameObject.transform;
-				_actrl.track[i] = new Track();
+				//				_actrl.track[i] = new Track();
 				Track track = _actrl.track[i];
-				track.name = TAG_EMPTY;
 				track.source = trackObj.AddComponent<AudioSource>();
 				track.source.outputAudioMixerGroup = _actrl.amGroup;
-				track.source.loop = false;
+				track.source.loop = _actrl.config.loop;
+				track.source.spatialBlend = _actrl.config.spatialBlend;
+				track.source.maxDistance = _actrl.config.spatialBlend;
 				track.source.playOnAwake = false;
-				track.source.spatialBlend = 1.0f;
-			}
-			//test
-			for(int i = 0; i< _actrl.numSource; ++i){
-				if(_actrl.tmpAcArr.Length>0){
-					AudioClip ac = _actrl.tmpAcArr[Random.Range(0,_actrl.tmpAcArr.Length)];
-					if(ac!=null){
-						Play(_actrl.kind, ac.name, ac, 2, Order.Last, 0);
-					}
-				}
+				track.source.dopplerLevel = 1f;
 			}
 		}
 		
@@ -162,7 +175,7 @@ namespace TmLib{
 		private int updateAudioSource(AudioCtrl _actrl){
 			int playingTrackNum=0;
 			_actrl.name = _actrl.kind.ToString();
-			for(int i = 0; i< _actrl.numSource; ++i){
+			for(int i = 0; i< _actrl.track.Length; ++i){
 				if(updateTrack(_actrl.track[i])){
 					playingTrackNum++;
 				}
@@ -196,9 +209,9 @@ namespace TmLib{
 		private int debugPlay(){
 			int num = 0;
 			for(int j=0; j<audioCtrl.Length;++j){
-				for(int i = 0; i< audioCtrl[j].numSource; ++i){
-					if(audioCtrl[j].tmpAcArr.Length>0){
-						AudioClip ac = audioCtrl[j].tmpAcArr[Random.Range(0,audioCtrl[j].tmpAcArr.Length)];
+				for(int i = 0; i< audioCtrl[j].track.Length; ++i){
+					if(audioCtrl[j].dbgAcArr.Length>0){
+						AudioClip ac = audioCtrl[j].dbgAcArr[Random.Range(0,audioCtrl[j].dbgAcArr.Length)];
 						if(ac!=null){
 							if(Play(audioCtrl[j].kind, ac.name, ac, 2, Order.First, 0)!=null){
 								num++;
