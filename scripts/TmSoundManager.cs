@@ -34,6 +34,7 @@ namespace TmLib{
 			public Kind kind;
 			public AudioMixerGroup amGroup;
 			public Config config;
+			public GameObject trackPrefab;
 			//			[HideInInspector]
 			public Track[] track;
 			public AudioClip[] dbgAcArr;
@@ -51,12 +52,14 @@ namespace TmLib{
 			public float lifeTime;
 			public Order order;
 			public int priority;
-			public Vector3 position;
+			public float directivity; //0f-1f
+			public Vector3 offset;
 			public GameObject target;
 			public void updatePos(){
 				if (source != null) {
-					Vector3 pos = position;
+					Vector3 pos = offset;
 					if (target != null) {
+						source.transform.rotation = target.transform.rotation;
 						pos = target.transform.TransformDirection(pos);
 						pos += target.transform.position;
 					}
@@ -73,12 +76,16 @@ namespace TmLib{
 			public Order order;
 			public int maxTracks;
 			public int priority;
-			public Vector3 position;
+			public float directivity;
+			public Vector3 offset;
 			public GameObject target;
 		}
 		
+		//----------------------------
+		public Camera targetCam;
 		public AudioCtrl[] audioCtrl;
 		
+		//----------------------------
 		void Awake(){
 			_instance = this;
 			initAudioSource();
@@ -92,19 +99,6 @@ namespace TmLib{
 		}
 		
 		//----------------------------
-		public Track Play(Kind _kind, string _tag, AudioClip _clip, int _maxTracks, Order _order, int _priority){
-			PlayInfo info = new PlayInfo();
-			info.kind = _kind;
-			info.tag = _tag;
-			info.clip = _clip;
-			info.lifeTime = (_clip!=null) ? _clip.length : 0;
-			info.order = _order;
-			info.maxTracks = _maxTracks;
-			info.priority = _priority;
-			info.position = gameObject.transform.position;
-			info.target = null;
-			return Play(info);
-		}
 		public Track Play(PlayInfo _info){
 			Track track = null;
 			AudioCtrl ac = audioCtrl[(int)_info.kind];
@@ -131,7 +125,8 @@ namespace TmLib{
 				track.lifeTime = _info.lifeTime;
 				track.order = _info.order;
 				track.priority = _info.priority;
-				track.position = _info.position;
+				track.directivity = _info.directivity;
+				track.offset = _info.offset;
 				track.target = _info.target;
 				track.source.clip = _info.clip;
 				track.updatePos();
@@ -152,18 +147,31 @@ namespace TmLib{
 			_actrl.name = _actrl.kind.ToString();
 			//			_actrl.track = new Track[_actrl.numTrack];
 			for(int i = 0; i< _actrl.track.Length; ++i){
-				GameObject trackObj = new GameObject("Track_"+_actrl.name+"_"+i.ToString());
+				GameObject trackObj;
+				AudioSource comAudioSource=null;
+				if(_actrl.trackPrefab!=null){
+					trackObj = GameObject.Instantiate(_actrl.trackPrefab);
+					comAudioSource = trackObj.GetComponent<AudioSource>();
+				}else{
+					trackObj = new GameObject();
+				}
+				if(comAudioSource==null){
+					comAudioSource = trackObj.AddComponent<AudioSource>();
+				}
+				trackObj.name = "Track_"+_actrl.name+"_"+i.ToString();
 				trackObj.transform.position = gameObject.transform.position;
 				trackObj.transform.parent = gameObject.transform;
 				//				_actrl.track[i] = new Track();
 				Track track = _actrl.track[i];
-				track.source = trackObj.AddComponent<AudioSource>();
+				track.source = comAudioSource;
 				track.source.outputAudioMixerGroup = _actrl.amGroup;
-				track.source.loop = _actrl.config.loop;
-				track.source.spatialBlend = _actrl.config.spatialBlend;
-				track.source.maxDistance = _actrl.config.spatialBlend;
 				track.source.playOnAwake = false;
 				track.source.dopplerLevel = 1f;
+				if(_actrl.trackPrefab==null){
+					track.source.loop = _actrl.config.loop;
+					track.source.spatialBlend = _actrl.config.spatialBlend;
+					track.source.maxDistance = _actrl.config.spatialBlend;
+				}
 			}
 		}
 		
@@ -190,20 +198,16 @@ namespace TmLib{
 					_track.name = TAG_EMPTY;
 				}else{
 					_track.updatePos();
+					if((_track.directivity>0f)&&(targetCam!=null)){
+						//						_track.updateDirectivityVolume(targetCam);
+						Vector3 dir = _track.source.transform.position- -targetCam.transform.position;
+						float d = Vector3.Dot(dir.normalized,targetCam.transform.forward);
+						_track.source.volume = Mathf.Lerp(1f,(d+1f)*0.5f,Mathf.Clamp01(_track.directivity));
+					}
 					ret = true;
 				}
 			}
 			return ret;
-		}
-		private void updateTrackPos(Track _track){
-			if (_track != null){
-				Vector3 pos = _track.position;
-				if(_track.target != null) {
-					pos = _track.target.transform.TransformDirection(pos);
-					pos += _track.target.transform.position;
-				}
-				_track.source.transform.position = pos;
-			}
 		}
 		
 		private int debugPlay(){
@@ -213,7 +217,15 @@ namespace TmLib{
 					if(audioCtrl[j].dbgAcArr.Length>0){
 						AudioClip ac = audioCtrl[j].dbgAcArr[Random.Range(0,audioCtrl[j].dbgAcArr.Length)];
 						if(ac!=null){
-							if(Play(audioCtrl[j].kind, ac.name, ac, 2, Order.First, 0)!=null){
+							TmSoundManager.PlayInfo info = new TmSoundManager.PlayInfo();
+							info.clip = ac;
+							info.kind = audioCtrl[j].kind;
+							info.maxTracks = 2;
+							info.order = TmSoundManager.Order.First;
+							info.tag = ac.name;
+							info.target = this.gameObject;
+							info.offset = Vector3.zero;
+							if(Play(info)!=null){
 								num++;
 							}
 						}
