@@ -12,7 +12,7 @@ namespace TmLib{
 		public static TmSoundManager instance{ get{ return _instance; } }
 		
 		//---option----
-		public enum OptionType{ Ramdom, Directivity, Spread  }
+		public enum OptionType{ Ramdom, Loop  }
 		
 		public TmSoundManager(){
 			audioCtrl = new AudioCtrl[3];
@@ -56,6 +56,7 @@ namespace TmLib{
 			public float minLife;
 			public Order order;
 			public int priority;
+			public float masterVolume;
 			public float directivity; //0f-1f
 			public Vector3 offset;
 			public GameObject target;
@@ -74,7 +75,7 @@ namespace TmLib{
 			public void updateDirectivityVolume(Transform _camTr){
 				Vector3 dir = source.transform.position- -_camTr.position;
 				float d = Vector3.Dot(dir.normalized,_camTr.forward);
-				source.volume = Mathf.Lerp(1f,(d+1f)*0.5f,Mathf.Clamp01(directivity));
+				source.volume = masterVolume * Mathf.Lerp(1f,(d+1f)*0.5f,Mathf.Clamp01(directivity));
 			}
 		}
 		
@@ -87,6 +88,7 @@ namespace TmLib{
 			public Order order=Order.Last;
 			public int maxTracks=1;
 			public int priority=0;
+			public float masterVolume=1f;
 			public float directivity=0f;
 			public Vector3 offset;
 			public GameObject target;
@@ -148,7 +150,7 @@ namespace TmLib{
 			if((_info.clip!=null)&&(track!=null)){
 				if(_info.option!=null){
 					track.option = _info.option;
-					analyzeOption (track.option);
+					analyzeOption (track);
 				}
 				
 				track.name = _info.tag;
@@ -156,11 +158,13 @@ namespace TmLib{
 				track.minLife = _info.minLife;
 				track.order = _info.order;
 				track.priority = _info.priority;
+				track.masterVolume = _info.masterVolume;
 				track.directivity = _info.directivity;
 				track.offset = _info.offset;
 				track.target = _info.target;
 				track.source.clip = _info.clip;
 				track.updatePos();
+				track.source.volume = _info.masterVolume;
 				track.source.Play();
 				//				Debug.Log("Play("+_tag+")");
 			}
@@ -236,37 +240,39 @@ namespace TmLib{
 				}
 			}
 			if(_track.option!=null){
-				updateOption (_track.option);
+				updateOption (_track);
 			}
 			
 			return ret;
 		}
 		
-		private int analyzeOption(Dictionary<OptionType, dynamic> _opt){
+		private int analyzeOption(Track _track){
+			// change _track.masterVolume value. 
+			// change _track.source.loop value. 
 			int retCnt = 0;
-			foreach(var v in _opt){
-				string log = "--";
+			Dictionary<OptionType, dynamic> opt = _track.option;
+			foreach(var v in opt){
 				switch(v.Key){
 				case OptionType.Ramdom : 
 					if( v.Value.GetType().Equals(typeof(Vector2))){
 						retCnt++;
 						Vector2 val = (Vector2)v.Value;
-						log = val.x.ToString();
+						_track.source.pitch = Random.Range(val.x,val.y);
+						_track.masterVolume *= Random.Range(0.8f,1.0f);
 					}
 					break;
-				case OptionType.Directivity :
-					if( v.Value.GetType().Equals(typeof(Vector3))){
+				case OptionType.Loop :
+					if( v.Value.GetType().Equals(typeof(bool))){
 						retCnt++;
-						Vector3 val = (Vector3)v.Value;
-						log = val.x.ToString();
+						_track.source.loop = (bool)v.Value;
 					}
 					break;
 				}
-				//				Debug.Log(log);
 			}
 			return retCnt;
 		}
-		private int updateOption(Dictionary<OptionType, dynamic> _opt){
+		private int updateOption(Track _track){
+			//			Dictionary<OptionType, dynamic> opt = _track.option;
 			return 0;
 		}
 		
