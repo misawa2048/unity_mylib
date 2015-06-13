@@ -1,14 +1,18 @@
 ﻿using UnityEngine;
 using UnityEngine.Audio;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace TmLib{
 	public class TmSoundManager : MonoBehaviour {
 		public enum Kind{ SE=0, BGM=1, Voice=2 }
 		public enum Order{ First=0, Last=1 }
-		private const string TAG_EMPTY = "_empty_";
+		private const string TAG_EMPTY = "_[empty]_";
 		private static TmSoundManager _instance = null;
 		public static TmSoundManager instance{ get{ return _instance; } }
+		
+		//---option----
+		public enum OptionType{ Ramdom, Directivity, Spread  }
 		
 		public TmSoundManager(){
 			audioCtrl = new AudioCtrl[3];
@@ -46,7 +50,7 @@ namespace TmLib{
 		
 		[System.Serializable]
 		public class Track{
-			public string name = TAG_EMPTY;
+			public string name=TAG_EMPTY;
 			public AudioSource source;
 			//			public float unbarrageTime;
 			public float minLife;
@@ -55,6 +59,7 @@ namespace TmLib{
 			public float directivity; //0f-1f
 			public Vector3 offset;
 			public GameObject target;
+			public Dictionary<OptionType, dynamic> option;
 			public void updatePos(){
 				if (source != null) {
 					Vector3 pos = offset;
@@ -85,6 +90,7 @@ namespace TmLib{
 			public float directivity=0f;
 			public Vector3 offset;
 			public GameObject target;
+			public Dictionary<OptionType, dynamic> option=null;
 		}
 		
 		//----------------------------
@@ -101,6 +107,9 @@ namespace TmLib{
 		
 		void Update () {
 			updateAudioSource ();
+			#if UNITY_EDITOR
+			debugInfo ();
+			#endif
 		}
 		
 		//----------------------------
@@ -126,15 +135,22 @@ namespace TmLib{
 					track = ac.track[i];
 					break;
 				}else {
-					float old = ac.track[i].source.time / ac.track[i].source.clip.length;
-					if(old >= ac.track[i].minLife){
-						Debug.Log(">>"+overwritableTagNum);
-						track = ac.track[i];
-						break;
+					if(ac.track[i].source!=null){
+						float old = ac.track[i].source.time / ac.track[i].source.clip.length;
+						if(old >= ac.track[i].minLife){
+							//							Debug.Log(">>"+overwritableTagNum);
+							track = ac.track[i];
+							break;
+						}
 					}
 				}
 			}
 			if((_info.clip!=null)&&(track!=null)){
+				if(_info.option!=null){
+					track.option = _info.option;
+					analyzeOption (track.option);
+				}
+				
 				track.name = _info.tag;
 				//				track.unbarrageTime = _info.unbarrageTime;
 				track.minLife = _info.minLife;
@@ -217,6 +233,59 @@ namespace TmLib{
 						_track.updateDirectivityVolume(targetCam.transform);
 					}
 					ret = true;
+				}
+			}
+			if(_track.option!=null){
+				updateOption (_track.option);
+			}
+			
+			return ret;
+		}
+		
+		private int analyzeOption(Dictionary<OptionType, dynamic> _opt){
+			int retCnt = 0;
+			foreach(var v in _opt){
+				string log = "--";
+				switch(v.Key){
+				case OptionType.Ramdom : 
+					if( v.Value.GetType().Equals(typeof(Vector2))){
+						retCnt++;
+						Vector2 val = (Vector2)v.Value;
+						log = val.x.ToString();
+					}
+					break;
+				case OptionType.Directivity :
+					if( v.Value.GetType().Equals(typeof(Vector3))){
+						retCnt++;
+						Vector3 val = (Vector3)v.Value;
+						log = val.x.ToString();
+					}
+					break;
+				}
+				//				Debug.Log(log);
+			}
+			return retCnt;
+		}
+		private int updateOption(Dictionary<OptionType, dynamic> _opt){
+			return 0;
+		}
+		
+		//---------------------------
+		private int debugInfo(){
+			int ret = 0;
+			foreach(AudioCtrl ac in audioCtrl){
+				int cnt = 0;
+				foreach(Track tr in ac.track){
+					string baseStr = "Track_"+ac.name+"_"+cnt.ToString("D2")+"_";
+					cnt++;
+					if(tr.source!=null){
+						if(tr.source.isPlaying){
+							ret++;
+							tr.source.gameObject.name=baseStr + tr.name;
+						}else{
+							tr.source.gameObject.name=baseStr + tr.name;
+						}
+					}
 				}
 			}
 			return ret;
