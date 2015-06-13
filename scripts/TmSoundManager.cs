@@ -12,7 +12,7 @@ namespace TmLib{
 		public static TmSoundManager instance{ get{ return _instance; } }
 		
 		//---option----
-		public enum OptionType{ Ramdom, Loop  }
+		public enum OptionType{ Ramdom, Loop, SpatialBlend, }
 		
 		public TmSoundManager(){
 			audioCtrl = new AudioCtrl[3];
@@ -20,11 +20,12 @@ namespace TmLib{
 				audioCtrl [i] = new AudioCtrl((Kind)i,((Kind)i == Kind.SE) ? 16:2);
 				audioCtrl [i].name = audioCtrl [i].kind.ToString ();
 			}
-			audioCtrl [1].config.loop=true;
+			audioCtrl [(int)Kind.BGM].config.loop=true;
 		}
 		
 		[System.Serializable]
 		public class Config{
+			public AudioMixerGroup amGroup;
 			public bool loop = false;
 			public float maxDistance=500f;
 			public float spatialBlend=1f; //0:2D - 3D:1
@@ -36,7 +37,6 @@ namespace TmLib{
 			public string name;
 			[HideInInspector]
 			public Kind kind;
-			public AudioMixerGroup amGroup;
 			public Config config;
 			public GameObject trackPrefab;
 			//			[HideInInspector]
@@ -45,6 +45,9 @@ namespace TmLib{
 				kind = _kind;
 				config = new Config();
 				track = new Track[_num];
+				for(int i = 0; i < track.Length; ++i){
+					track[i] = new Track();
+				}
 			}
 		}
 		
@@ -105,6 +108,9 @@ namespace TmLib{
 			initAudioSource();
 		}
 		void Start () {
+			if (targetCam == null) {
+				targetCam = Camera.main;
+			}
 		}
 		
 		void Update () {
@@ -148,6 +154,13 @@ namespace TmLib{
 				}
 			}
 			if((_info.clip!=null)&&(track!=null)){
+				//init
+				if(ac.trackPrefab==null){
+					track.source.loop = ac.config.loop;
+					track.source.spatialBlend = ac.config.spatialBlend;
+					track.source.maxDistance = ac.config.maxDistance;
+				}
+				
 				if(_info.option!=null){
 					track.option = _info.option;
 					analyzeOption (track);
@@ -186,12 +199,20 @@ namespace TmLib{
 				AudioSource comAudioSource=null;
 				if(_actrl.trackPrefab!=null){
 					trackObj = GameObject.Instantiate(_actrl.trackPrefab);
-					comAudioSource = trackObj.GetComponent<AudioSource>();
 				}else{
 					trackObj = new GameObject();
+					trackObj.AddComponent<AudioSource>();
 				}
+				comAudioSource = trackObj.GetComponent<AudioSource>();
 				if(comAudioSource==null){
-					comAudioSource = trackObj.AddComponent<AudioSource>();
+					Debug.Log("Warning. Track must have Audiosource.");
+				}else{
+					if(_actrl.trackPrefab!=null){
+						_actrl.config.amGroup = comAudioSource.outputAudioMixerGroup;
+						_actrl.config.loop = comAudioSource.loop;
+						_actrl.config.spatialBlend = comAudioSource.spatialBlend;
+						_actrl.config.maxDistance = comAudioSource.maxDistance;
+					}
 				}
 				trackObj.name = "Track_"+_actrl.name+"_"+i.ToString();
 				trackObj.transform.position = gameObject.transform.position;
@@ -199,14 +220,9 @@ namespace TmLib{
 				//				_actrl.track[i] = new Track();
 				Track track = _actrl.track[i];
 				track.source = comAudioSource;
-				track.source.outputAudioMixerGroup = _actrl.amGroup;
+				track.source.outputAudioMixerGroup = _actrl.config.amGroup;
 				track.source.playOnAwake = false;
 				track.source.dopplerLevel = 1f;
-				if(_actrl.trackPrefab==null){
-					track.source.loop = _actrl.config.loop;
-					track.source.spatialBlend = _actrl.config.spatialBlend;
-					track.source.maxDistance = _actrl.config.spatialBlend;
-				}
 			}
 		}
 		
@@ -265,6 +281,12 @@ namespace TmLib{
 					if( v.Value.GetType().Equals(typeof(bool))){
 						retCnt++;
 						_track.source.loop = (bool)v.Value;
+					}
+					break;
+				case OptionType.SpatialBlend :
+					if( v.Value.GetType().Equals(typeof(float))){
+						retCnt++;
+						_track.source.spatialBlend = (float)v.Value;
 					}
 					break;
 				}
