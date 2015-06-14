@@ -286,11 +286,14 @@ namespace TmLib{
 					}else{
 						vertices[zz*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,uvPos.y-0.5f,0.0f);
 					}
-					uvPos.x = _uvRect.x + (uvPos.x*_uvRect.width);
-					uvPos.y = _uvRect.y + (uvPos.y*_uvRect.height);
+					if(!_isInner){
+						uvPos.x = 1f- uvPos.x;
+					}
+					uvPos.x = _uvRect.x + (0.01f + uvPos.x*0.98f)*_uvRect.width;
+					uvPos.y = _uvRect.y + (0.01f + uvPos.y*0.98f)*_uvRect.height;
 					uv[zz*(_divX+1)+xx] = uvPos;
 					if(!_isInner){
-						uv[zz*(_divX+1)+xx].x = 1f-uv[zz*(_divX+1)+xx].x;
+						//						uv[zz*(_divX+1)+xx].x = 1f-uv[zz*(_divX+1)+xx].x;
 					}
 					colors[zz*(_divX+1)+xx] = _vertCol;
 					normals[zz*(_divX+1)+xx] = new Vector3(0.0f,0.0f,1.0f);
