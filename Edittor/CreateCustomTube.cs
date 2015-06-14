@@ -37,7 +37,7 @@ public class CreateCustomTube : EditorWindow {
 		MeshFilter meshFilter = newGameobject.AddComponent<MeshFilter> ();
 		float dd = (1f / (float)_UvDiv);
 		float dx = (float)(_UvDivId % (int)_UvDiv)*dd;
-		float dy = (float)(_UvDivId / (int)_UvDiv)*dd;
+		float dy = (float)((_UvDiv-1)-(_UvDivId / (int)_UvDiv))*dd;
 		Rect uvRect = new Rect (dx,dy,dd,dd);
 		meshFilter.mesh = TmMesh.CreateTubeMesh(_divNum,_cvdivNum,uvRect,_cv,_type,new Color(0.5f,0.5f,0.5f,1.0f), _isInv);
 		Mesh mesh = meshFilter.sharedMesh;
