@@ -247,6 +247,9 @@ namespace TmLib{
 			return CreateTubeMesh(_divX, _divZ, curve, _type, new Color(0.5f,0.5f,0.5f,1.0f), _isInner);
 		}
 		public static Mesh CreateTubeMesh(int _divX, int _divZ, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner){
+			return CreateTubeMesh(_divX, _divZ, new Rect(0,0,1,1), _cv, _type, _vertCol, _isInner);
+		}
+		public static Mesh CreateTubeMesh(int _divX, int _divZ, Rect _uvRect, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner){
 			bool isKeyDiv = true;
 			int nDiv = 1;
 			if(isKeyDiv){
@@ -283,6 +286,8 @@ namespace TmLib{
 					}else{
 						vertices[zz*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,uvPos.y-0.5f,0.0f);
 					}
+					uvPos.x = _uvRect.x + (uvPos.x*_uvRect.width);
+					uvPos.y = _uvRect.y + (uvPos.y*_uvRect.height);
 					uv[zz*(_divX+1)+xx] = uvPos;
 					if(!_isInner){
 						uv[zz*(_divX+1)+xx].x = 1f-uv[zz*(_divX+1)+xx].x;
@@ -671,4 +676,4 @@ namespace TmLib{
 			return _nowMesh;
 		}
 	}
-} //namespace TmLib
+} // namespace TmLib
