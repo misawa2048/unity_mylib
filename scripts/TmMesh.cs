@@ -293,7 +293,7 @@ namespace TmLib{
 					uvPos.y = _uvRect.y + (0.01f + uvPos.y*0.98f)*_uvRect.height;
 					uv[zz*(_divX+1)+xx] = uvPos;
 					if(!_isInner){
-						//						uv[zz*(_divX+1)+xx].x = 1f-uv[zz*(_divX+1)+xx].x;
+//						uv[zz*(_divX+1)+xx].x = 1f-uv[zz*(_divX+1)+xx].x;
 					}
 					colors[zz*(_divX+1)+xx] = _vertCol;
 					normals[zz*(_divX+1)+xx] = new Vector3(0.0f,0.0f,1.0f);

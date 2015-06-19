@@ -1,11 +1,13 @@
 ﻿#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
-using System.Collections;
+using System.IO;
 using TmLib;
 
 public class CreateCustomTube : EditorWindow {
 	const string DEF_NAME = "CustomTube";
+	const string DEF_FILE_DIR ="../";
+	const string FILE_EXT ="json";
 	public enum UvDiv{ Single=1, Div2x2=2, Div4x4=4, Div8x8=8 } 
 	static int mDivNum=32;
 	static int mCvDivNum=4;
@@ -16,7 +18,7 @@ public class CreateCustomTube : EditorWindow {
 	static AnimationCurve mCurve = AnimationCurve.Linear(0f,0f,1f,0.5f);
 	static UvDiv mUvDiv = UvDiv.Single;
 	static int mUvDivId = 0;
-	
+
 	[MenuItem ("GameObject/Create Other/ELIX/"+DEF_NAME)]
 	static void Init ()
 	{
@@ -42,12 +44,12 @@ public class CreateCustomTube : EditorWindow {
 		meshFilter.mesh = TmMesh.CreateTubeMesh(_divNum,_cvdivNum,uvRect,_cv,_type,new Color(0.5f,0.5f,0.5f,1.0f), _isInv);
 		Mesh mesh = meshFilter.sharedMesh;
 		mesh.name = name;
-		
+
 		string path = AssetDatabase.GenerateUniqueAssetPath("Assets/" + mesh.name + ".asset");
 		AssetDatabase.CreateAsset (mesh, path);
 		AssetDatabase.SaveAssets ();
 	}
-	
+
 	void OnGUI() {
 		GUILayout.Label("Base Settings", EditorStyles.boldLabel);
 		mName = EditorGUILayout.TextField ("name", mName);
@@ -58,10 +60,44 @@ public class CreateCustomTube : EditorWindow {
 		mUvDiv = (UvDiv)EditorGUILayout.EnumPopup ("uvDivNum", (System.Enum)mUvDiv);
 		mUvDivId = EditorGUILayout.IntSlider ("uvDivID", mUvDivId, 0, (int)mUvDiv*(int)mUvDiv-1);
 		mCurve = EditorGUILayout.CurveField("curve", mCurve);
+		GUILayout.BeginHorizontal ();
+		if(GUILayout.Button("LoadCurve")) {
+			string path = EditorUtility.OpenFilePanel("Overwrite",DEF_FILE_DIR,FILE_EXT);
+			if(path!=""){
+				string str = LoadFromFile(path);
+				if(str!=""){
+					mCurve = TmFileUtil.JsonToAnimCurve (str);
+				}
+			}
+		}
+		if(GUILayout.Button("SaveCurve")) {
+			string path = EditorUtility.SaveFilePanel("Save as AnimationCurve",DEF_FILE_DIR,mName + "."+FILE_EXT,FILE_EXT);
+			string str = TmFileUtil.AnimCurveToJson(mCurve);
+			SaveToFile(path,str);
+		}
+		GUILayout.EndHorizontal ();
 		if(GUILayout.Button("Create")) {
 			Create(mDivNum,mCvDivNum,mUvDiv,mUvDivId,mCurve,mAxisType,mIsInv);
 			mWindow.Close();
 		}
 	}
+	
+	//Save/Load
+	public static bool SaveToFile(string _path, string _str){
+		bool ret = false;
+		if (_path != "") {
+			ret = true;
+			File.WriteAllText (_path, _str, System.Text.Encoding.UTF8);
+		}
+		return ret;
+	}
+	public static string LoadFromFile(string _path){
+		string retStr = "";
+		if(File.Exists(_path)){
+			retStr = File.ReadAllText (_path);
+		}
+		return retStr;
+	}
+
 }
 #endif
