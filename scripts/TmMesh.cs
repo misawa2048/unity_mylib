@@ -250,17 +250,12 @@ namespace TmLib{
 			return CreateTubeMesh(_divX, _divZ, new Rect(0,0,1,1), _cv, _type, _vertCol, _isInner);
 		}
 		public static Mesh CreateTubeMesh(int _divX, int _divZ, Rect _uvRect, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner){
-			bool isKeyDiv = true;
-			int nDiv = 1;
-			if(isKeyDiv){
-				nDiv = _divZ;
-				_divZ = (_cv.length-1)*nDiv;
-			}
+			int nDiv = (_cv.length-1)*_divZ;
 			float sttTime = _cv.keys[0].time;
 			float endTime = _cv.keys[_cv.length-1].time;
 			float ttlTIme = endTime-sttTime;
-			int vertNum = (_divX+1)*(_divZ+1);
-			int quadNum = _divX*_divZ;
+			int vertNum = (_divX+1)*(nDiv+1);
+			int quadNum = _divX*nDiv;
 			int[] triangles = new int[quadNum*6];
 			Vector3[] vertices = new Vector3[vertNum];
 			Vector2[] uv = new Vector2[vertNum];
@@ -268,23 +263,18 @@ namespace TmLib{
 			Vector3[] normals = new Vector3[vertNum];
 			Vector4[] tangents = new Vector4[vertNum];
 			
-			for(int zz = 0; zz < (_divZ+1); ++zz){
+			for(int zz = 0; zz < (nDiv+1); ++zz){
 				for(int xx = 0; xx < (_divX+1); ++xx){
-					float nz;
-					if(isKeyDiv){
-						float tt = _cv.keys[zz/nDiv].time;
-						if(zz < _divZ){
-							tt += (_cv.keys[(zz/nDiv)+1].time-tt) * ((float)(zz % nDiv) / (float)nDiv);
-						}
-						nz = (tt-sttTime)/ttlTIme;
-					}else{
-						nz = (float)zz/(float)_divZ;
+					float tt = _cv.keys[zz/_divZ].time;
+					if(zz < nDiv){
+						tt += (_cv.keys[(zz/_divZ)+1].time-tt) * ((float)(zz % _divZ) / (float)_divZ);
 					}
-					Vector2 uvPos = new Vector2((float)xx/(float)_divX, nz/ttlTIme);
+					float nz = (tt-sttTime)/ttlTIme;
+					Vector2 uvPos = new Vector2((float)xx/(float)_divX, nz);
 					if(_type == AxisType.XY){
-						vertices[zz*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,0.0f,uvPos.y-0.5f);
+						vertices[zz*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,0.0f,tt-0.5f);
 					}else{
-						vertices[zz*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,uvPos.y-0.5f,0.0f);
+						vertices[zz*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,tt-0.5f,0.0f);
 					}
 					if(!_isInner){
 						uvPos.x = 1f- uvPos.x;
@@ -300,7 +290,8 @@ namespace TmLib{
 					tangents[zz*(_divX+1)+xx] = new Vector4(1.0f,0.0f,0.0f);
 					{
 						float p = vertices[zz*(_divX+1)+xx].x*2.0f;
-						float r = _cv.Evaluate(sttTime + ttlTIme*(nz/ttlTIme));
+//						float r = _cv.Evaluate(sttTime + ttlTIme*(nz/ttlTIme));
+						float r = _cv.Evaluate(tt);
 						vertices[zz*(_divX+1)+xx].x = Mathf.Cos (p * Mathf.PI)*r;
 						if(_type == AxisType.XY){
 							vertices[zz*(_divX+1)+xx].y = Mathf.Sin (p * Mathf.PI)*r;
@@ -312,7 +303,7 @@ namespace TmLib{
 							normals[zz*(_divX+1)+xx] *= -1f;
 						}
 					}
-					if((xx<_divX)&&(zz<_divZ)){
+					if((xx<_divX)&&(zz<nDiv)){
 						int[] sw={0,0,1,1,1,0,1,1,0,0,0,1};
 						for(int ii = 0; ii < 6; ++ii){
 							if(!_isInner){
