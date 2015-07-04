@@ -43,19 +43,20 @@ namespace TmLib{
 		private IEnumerator initCo(){
 			mGyroRot = updateRot ();
 			
+			#if (UNITY_IPHONE||UNITY_ANDROID) && (!UNITY_EDITOR)
 			float waitTime = mReloadTime;
 			while(waitTime>=0f){
 				waitTime -= Time.deltaTime;
 				defDirY = -mGyroRot.eulerAngles.y;
 				yield return null;
 			}
-			#if (UNITY_IPHONE||UNITY_ANDROID) && (!UNITY_EDITOR)
 			#else
+			defDirY = transform.rotation.eulerAngles.y;
 			mEuler = Vector3.zero;
 			#endif
 			yield break;
 		}
-		
+
 		private Vector3 updateBaseRot(){
 			Vector3 ret = mBaseDir;
 			if(Input.GetMouseButtonDown(0)){
