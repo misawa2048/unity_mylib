@@ -10,10 +10,10 @@ namespace TmLib{
 		private const string TAG_EMPTY = "_[empty]_";
 		private static TmSoundManager _instance = null;
 		public static TmSoundManager instance{ get{ return _instance; } }
-		
+
 		//---option----
 		public enum OptionType{ Ramdom, Loop, SpatialBlend, }
-		
+
 		public TmSoundManager(){
 			audioCtrl = new AudioCtrl[3];
 			for (int i = 0; i < audioCtrl.Length; ++i) {
@@ -57,6 +57,7 @@ namespace TmLib{
 			public AudioSource source;
 			//			public float unbarrageTime;
 			public float minLife;
+			public float fadeTime;
 			public Order order;
 			public int priority;
 			public float masterVolume;
@@ -64,7 +65,15 @@ namespace TmLib{
 			public Vector3 offset;
 			public GameObject target;
 			public Dictionary<OptionType, dynamic> option;
-			public void updatePos(){
+			public void update(AudioListener _listener=null){
+				updatePos (_listener);
+				float tmpVol = updateFadeVolume();
+				if((directivity>0f)&&(_listener!=null)){
+					tmpVol *= updateDirectivityVolume(_listener.transform);
+				}
+				source.volume = masterVolume * tmpVol;
+			}
+			private void updatePos(AudioListener _listener=null){
 				if (source != null) {
 					Vector3 pos = offset;
 					if (target != null) {
@@ -75,10 +84,21 @@ namespace TmLib{
 					source.transform.position = pos;
 				}
 			}
-			public void updateDirectivityVolume(Transform _camTr){
-				Vector3 dir = source.transform.position- -_camTr.position;
-				float d = Vector3.Dot(dir.normalized,_camTr.forward);
-				source.volume = masterVolume * Mathf.Lerp(1f,(d+1f)*0.5f,Mathf.Clamp01(directivity));
+			private float updateFadeVolume(){
+				float ret = 1.0f;
+				if ((source != null) &&(source.clip!=null)){
+					if(source.time < fadeTime){
+						ret = (source.time/fadeTime);
+					}else if(source.clip.length-source.time < fadeTime){
+						ret = ((source.clip.length-source.time)/fadeTime);
+					}
+				}
+				return ret;
+			}
+			private float updateDirectivityVolume(Transform _hearTr){
+				Vector3 dir = source.transform.position- -_hearTr.position;
+				float d = Vector3.Dot(dir.normalized,_hearTr.forward);
+				return Mathf.Lerp(1f,(d+1f)*0.5f,Mathf.Clamp01(directivity));
 			}
 		}
 		
@@ -88,6 +108,7 @@ namespace TmLib{
 			public AudioClip clip;
 			//			public float unbarrageTime=0.1f;
 			public float minLife=1f;
+			public float fadeTime=0f;
 			public Order order=Order.Last;
 			public int maxTracks=1;
 			public int priority=0;
@@ -99,7 +120,7 @@ namespace TmLib{
 		}
 		
 		//----------------------------
-		public Camera targetCam;
+		public AudioListener listener;
 		public AudioCtrl[] audioCtrl;
 		
 		//----------------------------
@@ -108,16 +129,16 @@ namespace TmLib{
 			initAudioSource();
 		}
 		void Start () {
-			if (targetCam == null) {
-				targetCam = Camera.main;
+			if (listener == null) {
+				listener = Camera.main.GetComponent<AudioListener>();
 			}
 		}
 		
 		void Update () {
 			updateAudioSource ();
-			#if UNITY_EDITOR
+#if UNITY_EDITOR
 			debugInfo ();
-			#endif
+#endif
 		}
 		
 		//----------------------------
@@ -146,7 +167,7 @@ namespace TmLib{
 					if(ac.track[i].source!=null){
 						float old = ac.track[i].source.time / ac.track[i].source.clip.length;
 						if(old >= ac.track[i].minLife){
-							//							Debug.Log(">>"+overwritableTagNum);
+//							Debug.Log(">>"+overwritableTagNum);
 							track = ac.track[i];
 							break;
 						}
@@ -160,15 +181,16 @@ namespace TmLib{
 					track.source.spatialBlend = ac.config.spatialBlend;
 					track.source.maxDistance = ac.config.maxDistance;
 				}
-				
+
 				if(_info.option!=null){
 					track.option = _info.option;
 					analyzeOption (track);
 				}
-				
+
 				track.name = _info.tag;
 				//				track.unbarrageTime = _info.unbarrageTime;
 				track.minLife = _info.minLife;
+				track.fadeTime = _info.fadeTime;
 				track.order = _info.order;
 				track.priority = _info.priority;
 				track.masterVolume = _info.masterVolume;
@@ -176,13 +198,26 @@ namespace TmLib{
 				track.offset = _info.offset;
 				track.target = _info.target;
 				track.source.clip = _info.clip;
-				track.updatePos();
+				track.update();
 				track.source.volume = _info.masterVolume;
 				track.source.Play();
 				//				Debug.Log("Play("+_tag+")");
 			}
 			return track;
 		}
+
+		//  fade track from nowSouece to newSource
+		public bool Fade(PlayInfo _info, Track _track, float _time){
+			bool ret = false;
+			if (_track != null) {
+				if(_track.source!=null){
+					if(_track.source.isPlaying){
+					}
+				}
+			}
+			return ret;
+		}
+
 		//----------------------------
 		
 		private void initAudioSource(){
@@ -248,20 +283,17 @@ namespace TmLib{
 					_track.source.clip = null;
 					_track.name = TAG_EMPTY;
 				}else{
-					_track.updatePos();
-					if((_track.directivity>0f)&&(targetCam!=null)){
-						_track.updateDirectivityVolume(targetCam.transform);
-					}
+					_track.update(listener);
 					ret = true;
 				}
 			}
 			if(_track.option!=null){
 				updateOption (_track);
 			}
-			
+
 			return ret;
 		}
-		
+
 		private int analyzeOption(Track _track){
 			// change _track.masterVolume value. 
 			// change _track.source.loop value. 
@@ -294,10 +326,10 @@ namespace TmLib{
 			return retCnt;
 		}
 		private int updateOption(Track _track){
-			//			Dictionary<OptionType, dynamic> opt = _track.option;
+//			Dictionary<OptionType, dynamic> opt = _track.option;
 			return 0;
 		}
-		
+
 		//---------------------------
 		private int debugInfo(){
 			int ret = 0;
