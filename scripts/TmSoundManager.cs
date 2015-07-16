@@ -53,6 +53,7 @@ namespace TmLib{
 		
 		[System.Serializable]
 		public class Track{
+			public enum FadeState{ Min,In, Max,Out }
 			public string name=TAG_EMPTY;
 			public AudioSource source;
 			//			public float unbarrageTime;
@@ -65,6 +66,10 @@ namespace TmLib{
 			public Vector3 offset;
 			public GameObject target;
 			public Dictionary<OptionType, dynamic> option;
+			private FadeState mFadeState;
+			public FadeState fadeState { get { return mFadeState; } }
+			private float mFadeRate;
+			public float fadeRate { get{ return mFadeRate; } }
 			public void update(AudioListener _listener=null){
 				updatePos (_listener);
 				float tmpVol = updateFadeVolume();
@@ -85,15 +90,21 @@ namespace TmLib{
 				}
 			}
 			private float updateFadeVolume(){
-				float ret = 1.0f;
-				if ((source != null) &&(source.clip!=null)){
+				mFadeState = FadeState.Min;
+				mFadeRate = 0f;
+				if ((source != null) && (source.isPlaying)){
 					if(source.time < fadeTime){
-						ret = (source.time/fadeTime);
+						mFadeState = FadeState.In;
+						mFadeRate = (source.time/fadeTime);
 					}else if(source.clip.length-source.time < fadeTime){
-						ret = ((source.clip.length-source.time)/fadeTime);
+						mFadeState = FadeState.Out;
+						mFadeRate = ((source.clip.length-source.time)/fadeTime);
+					}else{
+						mFadeState = FadeState.Max;
+						mFadeRate = 1.0f;
 					}
 				}
-				return ret;
+				return mFadeRate;
 			}
 			private float updateDirectivityVolume(Transform _hearTr){
 				Vector3 dir = source.transform.position- -_hearTr.position;
