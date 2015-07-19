@@ -71,14 +71,24 @@ namespace TmLib{
 			public FadeState fadeState { get { return mFadeState; } }
 			private float mFadeRate;
 			public float fadeRate { get{ return mFadeRate; } }
+			private float mFadeOutSttTime;
 			public void init(){
 				mPlayingTime = 0f;
 				mFadeRate = 0f;
+				mFadeOutSttTime = source.loop ? float.MaxValue : (source.clip.length - fadeTime);
 			}
 			public void play(AudioListener _listener=null){
 				init ();
 				updateVolume (_listener);
 				source.Play();
+			}
+			public void stop (float _fadeTime=-1f){
+				if (mPlayingTime < mFadeOutSttTime) {
+					mFadeOutSttTime = mPlayingTime;
+				}
+				if (_fadeTime >= 0f) {
+					fadeTime = _fadeTime;
+				}
 			}
 			public void update(AudioListener _listener=null){
 				mPlayingTime += Time.deltaTime;
@@ -110,9 +120,12 @@ namespace TmLib{
 					if(mPlayingTime < fadeTime){
 						mFadeState = FadeState.In;
 						mFadeRate = (source.time/fadeTime);
-					}else if((!source.loop)&&(source.clip.length-source.time < fadeTime)){
+					}else if(mPlayingTime > mFadeOutSttTime){
 						mFadeState = FadeState.Out;
-						mFadeRate = ((source.clip.length-source.time)/fadeTime);
+						mFadeRate = Mathf.Clamp01(1f-((mPlayingTime-mFadeOutSttTime)/fadeTime));
+						if(mFadeRate<=0f){
+							source.Stop();
+						}
 					}else{
 						mFadeState = FadeState.Max;
 						mFadeRate = 1.0f;
