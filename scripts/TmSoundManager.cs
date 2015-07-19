@@ -66,12 +66,26 @@ namespace TmLib{
 			public Vector3 offset;
 			public GameObject target;
 			public Dictionary<OptionType, dynamic> option;
+			private float mPlayingTime;
 			private FadeState mFadeState;
 			public FadeState fadeState { get { return mFadeState; } }
 			private float mFadeRate;
 			public float fadeRate { get{ return mFadeRate; } }
+			public void init(){
+				mPlayingTime = 0f;
+				mFadeRate = 0f;
+			}
+			public void play(AudioListener _listener=null){
+				init ();
+				updateVolume (_listener);
+				source.Play();
+			}
 			public void update(AudioListener _listener=null){
+				mPlayingTime += Time.deltaTime;
 				updatePos (_listener);
+				updateVolume (_listener);
+			}
+			private void updateVolume(AudioListener _listener=null){
 				float tmpVol = updateFadeVolume();
 				if((directivity>0f)&&(_listener!=null)){
 					tmpVol *= updateDirectivityVolume(_listener.transform);
@@ -93,10 +107,10 @@ namespace TmLib{
 				mFadeState = FadeState.Min;
 				mFadeRate = 0f;
 				if ((source != null) && (source.isPlaying)){
-					if(source.time < fadeTime){
+					if(mPlayingTime < fadeTime){
 						mFadeState = FadeState.In;
 						mFadeRate = (source.time/fadeTime);
-					}else if(source.clip.length-source.time < fadeTime){
+					}else if((!source.loop)&&(source.clip.length-source.time < fadeTime)){
 						mFadeState = FadeState.Out;
 						mFadeRate = ((source.clip.length-source.time)/fadeTime);
 					}else{
@@ -209,9 +223,7 @@ namespace TmLib{
 				track.offset = _info.offset;
 				track.target = _info.target;
 				track.source.clip = _info.clip;
-				track.update();
-				track.source.volume = _info.masterVolume;
-				track.source.Play();
+				track.play(listener);
 				//				Debug.Log("Play("+_tag+")");
 			}
 			return track;
