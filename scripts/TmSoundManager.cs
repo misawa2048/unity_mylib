@@ -6,13 +6,13 @@ using System.Collections.Generic;
 namespace TmLib{
 	public class TmSoundManager : MonoBehaviour {
 		public enum Kind{ SE=0, BGM=1, Voice=2 }
-		public enum Order{ First=0, Last=1 }
+		public enum Order{ Last=0, First=1 }
 		private const string TAG_EMPTY = "_[empty]_";
 		private static TmSoundManager _instance = null;
 		public static TmSoundManager instance{ get{ return _instance; } }
 
 		//---option----
-		public enum OptionType{ Ramdom, Loop, SpatialBlend, }
+		public enum OptionType{ Ramdom, Loop, SpatialBlend, Priority }
 
 		public TmSoundManager(){
 			audioCtrl = new AudioCtrl[3];
@@ -59,7 +59,7 @@ namespace TmLib{
 			//			public float unbarrageTime;
 			public float minLife;
 			public float fadeTime;
-			public Order order;
+			public Order order = Order.Last;
 			public int priority;
 			public float masterVolume;
 			public float directivity; //0f-1f
@@ -72,6 +72,15 @@ namespace TmLib{
 			private float mFadeRate;
 			public float fadeRate { get{ return mFadeRate; } }
 			private float mFadeOutSttTime;
+			public Vector3 getPosition() {
+				Vector3 pos = offset;
+				if (target != null) {
+					source.transform.rotation = target.transform.rotation;
+					pos = target.transform.TransformDirection(pos);
+					pos += target.transform.position;
+				}
+				return pos;
+			}
 			public void init(){
 				mPlayingTime = 0f;
 				mFadeRate = 0f;
@@ -104,28 +113,22 @@ namespace TmLib{
 			}
 			private void updatePos(AudioListener _listener=null){
 				if (source != null) {
-					Vector3 pos = offset;
-					if (target != null) {
-						source.transform.rotation = target.transform.rotation;
-						pos = target.transform.TransformDirection(pos);
-						pos += target.transform.position;
-					}
-					source.transform.position = pos;
+					source.transform.position = getPosition();
 				}
 			}
 			private float updateFadeVolume(){
+				float fadeDiff = (fadeTime>0) ? Mathf.Clamp01(Time.deltaTime/fadeTime) : 1f;
 				mFadeState = FadeState.Min;
-				mFadeRate = 0f;
 				if ((source != null) && (source.isPlaying)){
-					if(mPlayingTime < fadeTime){
-						mFadeState = FadeState.In;
-						mFadeRate = (source.time/fadeTime);
-					}else if(mPlayingTime > mFadeOutSttTime){
+					if(mPlayingTime > mFadeOutSttTime){
 						mFadeState = FadeState.Out;
-						mFadeRate = Mathf.Clamp01(1f-((mPlayingTime-mFadeOutSttTime)/fadeTime));
+						mFadeRate = Mathf.Clamp01(mFadeRate - fadeDiff);
 						if(mFadeRate<=0f){
 							source.Stop();
 						}
+					}else if(mPlayingTime < fadeTime){
+						mFadeState = FadeState.In;
+						mFadeRate = Mathf.Clamp01(mFadeRate + fadeDiff);
 					}else{
 						mFadeState = FadeState.Max;
 						mFadeRate = 1.0f;
@@ -148,12 +151,12 @@ namespace TmLib{
 			public float minLife=1f;
 			public float fadeTime=0f;
 			public Order order=Order.Last;
-			public int maxTracks=1;
+			public int maxTracks=16;
 			public int priority=0;
 			public float masterVolume=1f;
 			public float directivity=0f;
-			public Vector3 offset;
-			public GameObject target;
+			public Vector3 offset=Vector3.zero;
+			public GameObject target=null;
 			public Dictionary<OptionType, dynamic> option=null;
 		}
 		
@@ -180,6 +183,15 @@ namespace TmLib{
 		}
 		
 		//----------------------------
+		public Track Play(AudioClip _clip, Vector3 _pos, Kind _kind=Kind.SE){
+			PlayInfo info = new PlayInfo ();
+			info.kind =_kind;
+			info.tag = _clip.name;
+			info.clip = _clip;
+			info.offset = _pos;
+			return Play (info);
+		}
+
 		public Track Play(PlayInfo _info){
 			Track track = null;
 			AudioCtrl ac = audioCtrl[(int)_info.kind];
@@ -202,7 +214,7 @@ namespace TmLib{
 					track = ac.track[i];
 					break;
 				}else {
-					if(ac.track[i].source!=null){
+					if((ac.track[i].source!=null)&&(ac.track[i].source.clip!=null)){
 						float old = ac.track[i].source.time / ac.track[i].source.clip.length;
 						if(old >= ac.track[i].minLife){
 //							Debug.Log(">>"+overwritableTagNum);
@@ -357,6 +369,12 @@ namespace TmLib{
 						_track.source.spatialBlend = (float)v.Value;
 					}
 					break;
+				case OptionType.Priority :
+					if( v.Value.GetType().Equals(typeof(int))){
+						retCnt++;
+						_track.source.priority = (int)v.Value;
+					}
+					break;
 				}
 			}
 			return retCnt;
@@ -378,6 +396,7 @@ namespace TmLib{
 						if(tr.source.isPlaying){
 							ret++;
 							tr.source.gameObject.name=baseStr + tr.name;
+							Debug.DrawLine(tr.getPosition()-Vector3.up,tr.getPosition()+Vector3.up,Color.yellow);
 						}else{
 							tr.source.gameObject.name=baseStr + tr.name;
 						}
