@@ -12,7 +12,7 @@ namespace TmLib{
 		public static TmSoundManager instance{ get{ return _instance; } }
 
 		//---option----
-		public enum OptionType{ Ramdom, Loop, SpatialBlend, Priority }
+		public enum OptionType{ Ramdom, Loop, SpatialBlend, Priority, Spread, }
 
 		public TmSoundManager(){
 			audioCtrl = new AudioCtrl[3];
@@ -373,6 +373,12 @@ namespace TmLib{
 					if( v.Value.GetType().Equals(typeof(int))){
 						retCnt++;
 						_track.source.priority = (int)v.Value;
+					}
+					break;
+				case OptionType.Spread:
+					if( v.Value.GetType().Equals(typeof(float))){
+						retCnt++;
+						_track.source.spread = (float)v.Value;
 					}
 					break;
 				}
