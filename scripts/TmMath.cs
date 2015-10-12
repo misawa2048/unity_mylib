@@ -232,7 +232,7 @@ namespace TmLib{
 		//-----------------------------------------------------------------------
 		static public float ParabolicSpeed(float _t, float _h, float _g){
 			// h=v0*t+1/2*g*t^2; v0=(-0.5*g*t^2+h)/t
-			return -0.5f*_g*_t+_h/_t;
+			return _h/_t-0.5f*_g*_t;
 		}
 		
 		//-----------------------------------------------------------------------
@@ -260,21 +260,21 @@ namespace TmLib{
 		}
 		
 		//-----------------------------------------------------------------------
-		//! 重力g力vで距離sに物体を投げるときの角度 (retがマイナスの場合は届かない）
+		//! 重力g力vで距離sに物体を投げるときの角度 (retがnullの場合は届かない）
 		//! //http://www.sousakuba.com/Programming/algo_dandoukeisan2.html
 		//! _g = Physics.gravity.y
 		//-----------------------------------------------------------------------
-		static public float ParabolicRad(float _v, float _s, float _g){
-			float ret = -0.1f;
+		static public float[] ParabolicRad(float _v, float _s, float _g){
+			float[] ret = null;
 			float a = (_g*_s*_s)/(2*_v*_v);
 			float d = (_s/a)*(_s/a)-4.0f;
 			if(d>=0){
 				float sd = Mathf.Sqrt(d);
-				ret = Mathf.Atan(Mathf.Max((-(_s/a)+sd),(-(_s/a)-sd))/2.0f);
+				ret = new float[2]{Mathf.Atan((-_s/a-sd)/2.0f),Mathf.Atan((-_s/a+sd)/2.0f)};
 			}
 			return ret;
 		}
-		
+
 		//-----------------------------------------------------------------------
 		//! 2D版LookRotation
 		//-----------------------------------------------------------------------
