@@ -276,6 +276,32 @@ namespace TmLib{
 		}
 
 		//-----------------------------------------------------------------------
+		//! 重力g力vで距離distに物体を投げるときのVec (retがnullの場合は届かない）
+		//! //http://www.sousakuba.com/Programming/algo_dandoukeisan3.html
+		//! _g = Physics.gravity.y
+		//-----------------------------------------------------------------------
+		static public Vector3[] ParabolicVec(float _v, Vector3 _dist, float _g){
+			Vector3[] ret = null;
+			Vector3 distXZ = new Vector3 (_dist.x, 0f, _dist.z);
+			float dist_x = distXZ.magnitude;
+			float dist_y = _dist.y;
+			float a = (_g * dist_x * dist_x) /  ( 2f * _v * _v );
+			float b = dist_x / a;
+			float c = ( a - dist_y ) / a;			
+			float ts = (b*b/4f) - c;
+			if ( ts >= 0.0 ) {
+				float rt = Mathf.Sqrt( -c + ( b * b ) / 4f);
+				float[] agl = new float[2]{Mathf.Atan( ( -b / 2f ) + rt ),Mathf.Atan( ( -b / 2f ) - rt )};
+				ret = new Vector3[2];
+				for ( int i = 0; i < 2; i++ ){
+					ret[i] = distXZ.normalized * _v * Mathf.Cos(agl[i]);
+					ret[i].y = _v * Mathf.Sin(agl[i]);
+				}
+			}
+			return ret;
+		}
+
+		//-----------------------------------------------------------------------
 		//! 2D版LookRotation
 		//-----------------------------------------------------------------------
 		static public Quaternion LookRotation2D(Vector2 _vec,Vector2 _up){
