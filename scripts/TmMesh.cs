@@ -394,10 +394,10 @@ namespace TmLib{
 			return mesh;
 		}
 		
-		public static Mesh CreatePolyRing(int _vertNum, float _minRad, float _maxRad){
-			return CreatePolyRing(_vertNum, _minRad, _maxRad, new Color(0.5f,0.5f,0.5f,1.0f));
+		public static Mesh CreatePolyRing(int _vertNum, AxisType _type, float _minRad, float _maxRad){
+			return CreatePolyRing(_vertNum, _type, _minRad, _maxRad, new Color(0.5f,0.5f,0.5f,1.0f));
 		}
-		public static Mesh CreatePolyRing(int _vertNum, float _minRad, float _maxRad, Color _color){
+		public static Mesh CreatePolyRing(int _vertNum, AxisType _type, float _minRad, float _maxRad, Color _color){
 			Vector3[] vertices = new Vector3[(_vertNum+1)*2];
 			int[] triangles = new int[(_vertNum+1)*6];
 			Vector2[] uv = new Vector2[(_vertNum+1)*2];
@@ -409,8 +409,15 @@ namespace TmLib{
 			for(int ii = 0; ii <= _vertNum; ++ii){
 				float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)_vertNum));
 				float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)_vertNum));
-				vertices[cnt*2+0] = new Vector3(fx*_maxRad*0.5f,fy*_maxRad*0.5f,0.0f);
-				vertices[cnt*2+1] = new Vector3(fx*_minRad*0.5f,fy*_minRad*0.5f,0.0f);
+
+				if(_type == AxisType.XY){
+					vertices[cnt*2+0] = new Vector3(fx*_maxRad*0.5f,fy*_maxRad*0.5f,0.0f);
+					vertices[cnt*2+1] = new Vector3(fx*_minRad*0.5f,fy*_minRad*0.5f,0.0f);
+				}else{ // XZ
+					vertices[cnt*2+0] = new Vector3(fx*_maxRad*0.5f,0.0f,fy*_maxRad*0.5f);
+					vertices[cnt*2+1] = new Vector3(fx*_minRad*0.5f,0.0f,fy*_minRad*0.5f);
+				}
+
 				triangles[cnt*6+0] = cnt*2+0;
 				triangles[cnt*6+1] = cnt*2+1;
 				triangles[cnt*6+2] = (ii<(_vertNum)) ? (cnt*2+2) : 0;

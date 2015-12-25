@@ -7,7 +7,9 @@ namespace TmLib{
 		private const float BASE_MOVE_Y = 0.2f;
 		public float defDirY;
 		public GameObject targetRotOb;
+		#if (UNITY_IPHONE||UNITY_ANDROID) && (!UNITY_EDITOR)
 		private float mReloadTime;
+		#endif
 		private Quaternion mGyroRot;
 		private Vector3 mBaseDir;
 		private Vector3 mDragSttPos;
@@ -25,7 +27,9 @@ namespace TmLib{
 				targetRotOb = gameObject;
 			}
 			if(SystemInfo.supportsGyroscope){
+				#if (UNITY_IPHONE||UNITY_ANDROID) && (!UNITY_EDITOR)
 				mReloadTime = (Input.gyro.enabled) ? 0.2f : 1f;
+				#endif
 				Input.gyro.enabled=true;
 			}
 			StartCoroutine(initCo());

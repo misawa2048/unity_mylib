@@ -2,18 +2,28 @@
 using UnityEditor;
 using UnityEngine;
 using System.Collections;
+using TmLib;
 
-public class CreateRing : MonoBehaviour
+public class CreateRing : EditorWindow
 {
+	static int mDivNum=256;
+	static float mMaxRad = 1.0f;
+	static float mMinRad = 0.5f;
+	static Color mColor = new Color(0.5f,0.5f,0.5f,1f);
+	static TmMesh.AxisType mAxisType = TmMesh.AxisType.XY;
+	static CreateRing mWindow;
 
 	[MenuItem ("GameObject/Create Other/ELIX/Ring")]
-	static void Create ()
+	static void Init ()
 	{
-		const int DEG_NUM=256;
-		const float MAX_RAD = 1.0f;
-		const float MIN_RAD = 0.5f;
-//		const int UV_DEG_NUM = 1; //DEG_NUM;
-		GameObject newGameobject = new GameObject ("Ring"+DEG_NUM.ToString()+"XY");
+		mWindow = (CreateRing)EditorWindow.GetWindow(typeof(CreateRing));
+		mWindow.Show();
+	}
+
+	static void Create (int _divNum, float _maxRad, float _minRad, TmMesh.AxisType _type, Color _color)
+	{
+		string name = "Ring" + _divNum.ToString () + ((_type == TmMesh.AxisType.XY) ? "XY" : "XZ");
+		GameObject newGameobject = new GameObject (name);
 		
 		MeshRenderer meshRenderer = newGameobject.AddComponent<MeshRenderer> ();
 		meshRenderer.material = new Material (Shader.Find ("Diffuse"));
@@ -22,47 +32,24 @@ public class CreateRing : MonoBehaviour
 			
 		MeshFilter meshFilter = newGameobject.AddComponent<MeshFilter> ();
 		
-		meshFilter.mesh = new Mesh ();
+		meshFilter.mesh = TmMesh.CreatePolyRing(_divNum, _type, _minRad, _maxRad, _color);
 		Mesh mesh = meshFilter.sharedMesh;
-		mesh.name = "Ring"+DEG_NUM.ToString()+"XY";
-		
-		Vector3[] vertices = new Vector3[(DEG_NUM+1)*2];
-		int[] triangles = new int[(DEG_NUM+1)*6];
-		Vector2[] uv = new Vector2[(DEG_NUM+1)*2];
-		Color[] colors = new Color[(DEG_NUM+1)*2];
-		Vector3[] normals = new Vector3[(DEG_NUM+1)*2];
-
-		int cnt = 0;
-		for(int ii = 0; ii <= DEG_NUM; ++ii){
-			float fx = Mathf.Cos(Mathf.PI*2.0f * ((float)ii / (float)DEG_NUM));
-			float fy = Mathf.Sin(Mathf.PI*2.0f * ((float)ii / (float)DEG_NUM));
-			vertices[cnt*2+0] = new Vector3(fx*MAX_RAD*0.5f,fy*MAX_RAD*0.5f,0.0f);
-			vertices[cnt*2+1] = new Vector3(fx*MIN_RAD*0.5f,fy*MIN_RAD*0.5f,0.0f);
-			triangles[cnt*6+0] = cnt*2+0;
-			triangles[cnt*6+1] = cnt*2+1;
-			triangles[cnt*6+2] = (ii<(DEG_NUM)) ? (cnt*2+2) : 0;
-			triangles[cnt*6+3] = cnt*2+0;
-			triangles[cnt*6+4] = (ii>0) ? (cnt*2-1) : 0;
-			triangles[cnt*6+5] = cnt*2+1;
-//			uv[cnt*2+0] = new Vector2(vertices[cnt*2+0].x+0.5f,vertices[cnt*2+0].y+0.5f);
-//			uv[cnt*2+1] = new Vector2(vertices[cnt*2+1].x+0.5f,vertices[cnt*2+1].y+0.5f);
-			uv[cnt*2+0] = new Vector2((float)ii/(float)DEG_NUM,0.0f);
-			uv[cnt*2+1] = new Vector2((float)ii/(float)DEG_NUM,1.0f);
-			colors[cnt*2+0] = colors[cnt*2+1] = new Color(0.5f,0.5f,0.5f,1.0f);
-			cnt++;
-		}
-		mesh.vertices = vertices;
-		mesh.triangles = triangles;
-		mesh.uv = uv;
-		mesh.colors = colors;
-		mesh.normals = normals;
-		mesh.RecalculateNormals ();
-		mesh.RecalculateBounds ();
-		mesh.Optimize();
-		mesh.SetIndices(mesh.GetIndices(0),MeshTopology.Triangles,0);
+		mesh.name = name;
 
 		AssetDatabase.CreateAsset (mesh, "Assets/" + mesh.name + ".asset");
 		AssetDatabase.SaveAssets ();
+	}
+
+	void OnGUI() {
+		GUILayout.Label("Base Settings", EditorStyles.boldLabel);
+		mDivNum = EditorGUILayout.IntField ("div num", mDivNum);
+		mMaxRad = EditorGUILayout.FloatField ("max rad", mMaxRad);
+		mMinRad = EditorGUILayout.FloatField ("min rad", mMinRad);
+		mAxisType = (TmMesh.AxisType)EditorGUILayout.EnumPopup("type",(System.Enum)mAxisType);
+		if(GUILayout.Button("Create")) {
+			Create(mDivNum,mMaxRad,mMinRad,mAxisType,mColor);
+			mWindow.Close();
+		}
 	}
 }
 #endif
