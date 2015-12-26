@@ -29,7 +29,7 @@ public class CreateHemisphere : EditorWindow
         name += "_" + Mathf.Floor(_sttH) + "_" + Mathf.Floor(_sizeH);
         name += "_" + Mathf.Floor(_sttV) + "_" + Mathf.Floor(_sizeV);
 
-        AnimationCurve cv = createLatSphereCv(_divV, _sttV, _sizeV);
+        AnimationCurve cv = createLatSphereCv(4*_divV, _sttV, _sizeV);
 
         GameObject newGameobject = new GameObject (name);
 		
@@ -65,15 +65,18 @@ public class CreateHemisphere : EditorWindow
     {
         float sttRate = Mathf.Clamp01(_sttLatDeg / 180f);
         float sizeRate = Mathf.Clamp01(_sizeLatDeg / 180f);
-        AnimationCurve cv = AnimationCurve.Linear(-_scale * 0.5f,0f,_scale * 0.5f,0f);
-		for(int ii = 1; ii < _div; ++ii){
+
+        Keyframe[] keys = new Keyframe[_div];
+		for(int ii = 0; ii < _div; ++ii){
             float rate = (float)ii / (float)(_div - 1);
             float nowRate = (sttRate + rate * sizeRate);
-            float c = Mathf.Cos(Mathf.PI * nowRate);
-            float t = Mathf.Lerp(-0.5f, 0.5f, nowRate);
-			cv.AddKey(t*_scale,Mathf.Sqrt(1f-(c*c))*0.5f*_scale);
+            float t = Mathf.Lerp(0.5f, -0.5f, nowRate);
+            float tan = Mathf.Lerp(-1f, 1f, nowRate);
+            keys[ii] = new Keyframe((t+0.5f) * _scale, Mathf.Sqrt(_scale * _scale * 0.25f -t * t),tan,tan);
+            keys[ii].tangentMode = 21; // Liner
 		}
-		return cv;
+        AnimationCurve cv = new AnimationCurve(keys);
+        return cv;
 	}
 }
 #endif
