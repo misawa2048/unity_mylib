@@ -54,15 +54,17 @@ public class CreateCustomTube : EditorWindow {
 		GUILayout.Label("Base Settings", EditorStyles.boldLabel);
 		mName = EditorGUILayout.TextField ("name", mName);
 		mDivNum = EditorGUILayout.IntField ("divNum", mDivNum);
-		mIsInv = EditorGUILayout.Toggle ("isInverse", mIsInv);
+        mCvDivNum = EditorGUILayout.IntField("curveDivNum", mCvDivNum);
+        mIsInv = EditorGUILayout.Toggle ("isInverse", mIsInv);
 		mAxisType = (TmMesh.AxisType)EditorGUILayout.EnumPopup("type",(System.Enum)mAxisType);
-		mCvDivNum = EditorGUILayout.IntField ("curveDivNum", mCvDivNum);
 		mUvDiv = (UvDiv)EditorGUILayout.EnumPopup ("uvDivNum", (System.Enum)mUvDiv);
 		mUvDivId = EditorGUILayout.IntSlider ("uvDivID", mUvDivId, 0, (int)mUvDiv*(int)mUvDiv-1);
 		mCurve = EditorGUILayout.CurveField("curve", mCurve);
 		GUILayout.BeginHorizontal ();
-		if(GUILayout.Button("LoadCurve")) {
-			string path = EditorUtility.OpenFilePanel("Overwrite",DEF_FILE_DIR,FILE_EXT);
+#if UNITY_EDITOR
+#if (!UNITY_WEBPLAYER)
+        if (GUILayout.Button("LoadCurve")) {
+			string path = EditorUtility.OpenFilePanel("Load curve",DEF_FILE_DIR,FILE_EXT);
 			if(path!=""){
 				string str = LoadFromFile(path);
 				if(str!=""){
@@ -71,11 +73,17 @@ public class CreateCustomTube : EditorWindow {
 			}
 		}
 		if(GUILayout.Button("SaveCurve")) {
-			string path = EditorUtility.SaveFilePanel("Save as AnimationCurve",DEF_FILE_DIR,mName + "."+FILE_EXT,FILE_EXT);
+			string path = EditorUtility.SaveFilePanel("Save curve",DEF_FILE_DIR,mName + "."+FILE_EXT,FILE_EXT);
 			string str = TmFileUtil.AnimCurveToJson(mCurve);
 			SaveToFile(path,str);
 		}
-		GUILayout.EndHorizontal ();
+#else
+        GUIStyle style = new GUIStyle();
+        style.normal.textColor = new Color(0.7f,0f,0f);
+        GUILayout.TextField(" * Can't Load/Save on this plstform. Change plstform to 'PC'.", style);
+#endif
+#endif
+        GUILayout.EndHorizontal ();
 		if(GUILayout.Button("Create")) {
 			Create(mDivNum,mCvDivNum,mUvDiv,mUvDivId,mCurve,mAxisType,mIsInv);
 			mWindow.Close();
@@ -87,16 +95,20 @@ public class CreateCustomTube : EditorWindow {
 		bool ret = false;
 		if (_path != "") {
 			ret = true;
-			File.WriteAllText (_path, _str, System.Text.Encoding.UTF8);
+#if UNITY_EDITOR && (!UNITY_WEBPLAYER)
+            File.WriteAllText (_path, _str, System.Text.Encoding.UTF8);
+#endif
 		}
 		return ret;
 	}
 	public static string LoadFromFile(string _path){
 		string retStr = "";
+#if UNITY_EDITOR && (!UNITY_WEBPLAYER)
 		if(File.Exists(_path)){
 			retStr = File.ReadAllText (_path);
 		}
-		return retStr;
+#endif
+        return retStr;
 	}
 
 }
