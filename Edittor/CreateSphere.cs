@@ -7,8 +7,8 @@ using TmLib;
 public class CreateSphere : EditorWindow 
 {
 	const string DEF_NAME = "Sphere";
-	static int mDivV=16;
-	static int mDivH=8;
+    static int mDivH = 16;
+    static int mDivV=8;
 	static Color mColor = new Color(0.5f,0.5f,0.5f,1f);
 	static CreateSphere mWindow;
 	
@@ -36,11 +36,11 @@ public class CreateSphere : EditorWindow
 	
 	void OnGUI() {
 		GUILayout.Label("Base Settings", EditorStyles.boldLabel);
-		mDivV = EditorGUILayout.IntField ("DivV", mDivV);
-		mDivH = EditorGUILayout.IntField ("DivH", mDivH);
+        mDivH = EditorGUILayout.IntField("DivH", mDivH);
+        mDivV = EditorGUILayout.IntField ("DivV", mDivV);
 		mColor = EditorGUILayout.ColorField("vertexColor",mColor);
 		if(GUILayout.Button("Create")) {
-			Create(mDivV,mDivH,mColor);
+			Create(mDivH,mDivV,mColor);
 			mWindow.Close();
 		}
 	}

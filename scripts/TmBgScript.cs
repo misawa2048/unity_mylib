@@ -18,12 +18,12 @@ public class TmBgScript : MonoBehaviour {
 	
 	// Use this for initialization
 	void Start () {
-		ofs = renderer.material.GetTextureOffset(texPropertyName);
+		ofs = GetComponent<Renderer>().material.GetTextureOffset(texPropertyName);
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		ofs += spd * Time.deltaTime;
-		renderer.material.SetTextureOffset (texPropertyName, ofs);
+		GetComponent<Renderer>().material.SetTextureOffset (texPropertyName, ofs);
 	}
 }

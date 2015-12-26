@@ -249,12 +249,22 @@ namespace TmLib{
 		public static Mesh CreateTubeMesh(int _divX, int _divZ, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner){
 			return CreateTubeMesh(_divX, _divZ, new Rect(0,0,1,1), _cv, _type, _vertCol, _isInner);
 		}
-		public static Mesh CreateTubeMesh(int _divX, int _divZ, Rect _uvRect, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner){
+        public static Mesh CreateTubeMesh(int _divX, int _divZ, float _sttDeg, float _sizeDeg, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner)
+        {
+            return CreateTubeMesh(_divX, _divZ, _sttDeg, _sizeDeg, new Rect(0, 0, 1, 1), _cv, _type, _vertCol, _isInner);
+        }
+        public static Mesh CreateTubeMesh(int _divX, int _divZ, Rect _uvRect, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner)
+        {
+            return CreateTubeMesh(_divX, _divZ, 0f, 360f, _uvRect, _cv, _type, _vertCol, _isInner);
+        }
+        public static Mesh CreateTubeMesh(int _divX, int _divZ, float _sttDeg, float _sizeDeg, Rect _uvRect, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner){
 			int nDiv = (_cv.length-1)*_divZ;
 			float sttTime = _cv.keys[0].time;
 			float endTime = _cv.keys[_cv.length-1].time;
 			float ttlTIme = endTime-sttTime;
-			int vertNum = (_divX+1)*(nDiv+1);
+            float sttRad = _sttDeg * Mathf.PI * 2f;
+            float sizeRadRate = _sizeDeg / 360f;
+            int vertNum = (_divX+1)*(nDiv+1);
 			int quadNum = _divX*nDiv;
 			int[] triangles = new int[quadNum*6];
 			Vector3[] vertices = new Vector3[vertNum];
@@ -289,14 +299,15 @@ namespace TmLib{
 					normals[zz*(_divX+1)+xx] = new Vector3(0.0f,0.0f,1.0f);
 					tangents[zz*(_divX+1)+xx] = new Vector4(1.0f,0.0f,0.0f);
 					{
-						float p = vertices[zz*(_divX+1)+xx].x*2.0f;
+						float p = vertices[zz*(_divX+1)+xx].x* 2.0f * Mathf.PI;
+                        float nowRad = sttRad + p * sizeRadRate;
 //						float r = _cv.Evaluate(sttTime + ttlTIme*(nz/ttlTIme));
-						float r = _cv.Evaluate(tt);
-						vertices[zz*(_divX+1)+xx].x = Mathf.Cos (p * Mathf.PI)*r;
+                        float r = _cv.Evaluate(tt);
+                        vertices[zz*(_divX+1)+xx].x = Mathf.Cos (nowRad) *r;
 						if(_type == AxisType.XY){
-							vertices[zz*(_divX+1)+xx].y = Mathf.Sin (p * Mathf.PI)*r;
+							vertices[zz*(_divX+1)+xx].y = Mathf.Sin (nowRad) *r;
 						}else{
-							vertices[zz*(_divX+1)+xx].z = -Mathf.Sin (p * Mathf.PI)*r;
+							vertices[zz*(_divX+1)+xx].z = -Mathf.Sin (nowRad) *r;
 						}
 						normals[zz*(_divX+1)+xx] = vertices[zz*(_divX+1)+xx].normalized;
 						if(!_isInner){
@@ -510,21 +521,22 @@ namespace TmLib{
 			Vector3[] vertices = new Vector3[(nbLong+1) * nbLat + 2];
 			int _vertNum = vertices.Length;
 			Color[] cols = new Color[_vertNum];
-			float _pi = Mathf.PI;
-			float _2pi = _pi * 2f;
+			float _piLat = Mathf.PI;
+			float _piLong = Mathf.PI;
 			
 			vertices[0] = Vector3.up * radius;
 			for( int lat = 0; lat < nbLat; lat++ )
 			{
-				float a1 = _pi * (float)(lat+1) / (nbLat+1);
+				float a1 = _piLat * (float)(lat+1) / (nbLat+1);
 				float sin1 = Mathf.Sin(a1);
 				float cos1 = Mathf.Cos(a1);
 				
 				for( int lon = 0; lon <= nbLong; lon++ )
 				{
-					float a2 = _2pi * (float)(lon == nbLong ? 0 : lon) / nbLong;
-					float sin2 = Mathf.Sin(a2+_pi);
-					float cos2 = Mathf.Cos(a2+_pi);
+					float a2 = _piLong * 2f * (float)(lon == nbLong ? 0 : lon) / nbLong;
+//                    float a2 = _piLong * 2f * (float)lon / nbLong;
+                    float sin2 = Mathf.Sin(a2+ _piLong);
+					float cos2 = Mathf.Cos(a2+ _piLong);
 					
 					vertices[ lon + lat * (nbLong + 1) + 1] = new Vector3( sin1 * cos2, cos1, sin1 * sin2 ) * radius;
 				}
