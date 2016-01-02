@@ -306,11 +306,12 @@ namespace TmLib{
 		// TextAsset関係 
 		// ----------------
 		// csvファイルを2次元配列に格納(_commentで始まる行はコメント) 
-		public static string[,] CsvToMap(TextAsset _csvData, string _comment="//"){
+		public static string[,] CsvToMap(TextAsset _csvData, string _comment="//", int _maxLines=int.MaxValue){
 			List<List<string>> dataListArr = new List<List<string>>();
 			string[] lines = _csvData.text.Split("\n"[0]);
 			int maxLength = 0;
 			if(lines.Length>0){
+				int lineCnt=0;
 				foreach( string line in lines){
 					if((_comment!="")&&(!line.StartsWith(_comment))){
 						List<string> dataList = new List<string>();
@@ -320,6 +321,10 @@ namespace TmLib{
 							dataList.Add(data);
 						}
 						dataListArr.Add(dataList);
+						lineCnt++;
+						if(lineCnt>=_maxLines){
+							break;
+						}
 					}
 				}
 			}
@@ -336,7 +341,7 @@ namespace TmLib{
 			}
 			return retMap;
 		}
-		
+
 		// xmlファイルをXmlDocumentに格納 
 		public static XmlDocument XmlToDoc(TextAsset _xmlData){
 			XmlDocument doc = new XmlDocument();
