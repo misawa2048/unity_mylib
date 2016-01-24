@@ -306,16 +306,25 @@ namespace TmLib{
 		//! 重力gで距離distに最小エネルギーで物体を投げるときのVec(ts==0:b*b=4*c)
 		//! _g = Physics.gravity.y
 		//-----------------------------------------------------------------------
-		static public Vector3 ParabolicVec(Vector3 _dist, float _g){
-			Vector3 ret = Vector3.zero;
+		static public Vector3[] ParabolicVec(Vector3 _dist, float _g){
+			Vector3[] ret = null;
 			float x = Mathf.Sqrt (_dist.x * _dist.x + _dist.z * _dist.z);
 			if (x > 0f) {
 				float y = _dist.y;
-				float a0 = (y - Mathf.Sqrt (y * y + x * x)) / 2f;
-				//				float a1 = (y + Mathf.Sqrt (y * y + x * x)) / 2f;
-				float v0 = Mathf.Sqrt (_g * x * x / (2f * a0));
-				//				float v1 = Mathf.Sqrt (_g * x * x / (2f * a1));
-				ret = new Vector3 (_dist.x, x, _dist.z).normalized * v0;
+				float dd = Mathf.Sqrt (y * y + x * x);
+				float e0 = _g * x * x / (y - dd);
+				float e1 = _g * x * x / (y + dd);
+				if ((e0 > 0f) || (e1 > 0f)) {
+					Vector3 nmlVec = new Vector3 (_dist.x, x, _dist.z).normalized;
+					List<Vector3> retList = new List<Vector3> ();
+					if (e0 > 0f) {
+						retList.Add(nmlVec * Mathf.Sqrt (e0));
+					}
+					if (e1 > 0f) {
+						retList.Add(nmlVec * Mathf.Sqrt (e1));
+					}
+					ret = retList.ToArray ();
+				}
 			}
 			return ret;
 		}
