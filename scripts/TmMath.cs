@@ -278,6 +278,7 @@ namespace TmLib{
 		//-----------------------------------------------------------------------
 		//! 重力g力vで距離distに物体を投げるときのVec (retがnullの場合は届かない）
 		//! //http://www.sousakuba.com/Programming/algo_dandoukeisan3.html
+		//! //http://www.kumamoto-nct.ac.jp/file/knct-kiyou-2013/pdf/no18.pdf
 		//! _g = Physics.gravity.y
 		//-----------------------------------------------------------------------
 		static public Vector3[] ParabolicVec(float _v, Vector3 _dist, float _g){
@@ -297,6 +298,24 @@ namespace TmLib{
 					ret[i] = distXZ.normalized * _v * Mathf.Cos(agl[i]);
 					ret[i].y = _v * Mathf.Sin(agl[i]);
 				}
+			}
+			return ret;
+		}
+
+		//-----------------------------------------------------------------------
+		//! 重力gで距離distに最小エネルギーで物体を投げるときのVec(ts==0:b*b=4*c)
+		//! _g = Physics.gravity.y
+		//-----------------------------------------------------------------------
+		static public Vector3 ParabolicVec(Vector3 _dist, float _g){
+			Vector3 ret = Vector3.zero;
+			float x = Mathf.Sqrt (_dist.x * _dist.x + _dist.z * _dist.z);
+			if (x > 0f) {
+				float y = _dist.y;
+				float a0 = (y - Mathf.Sqrt (y * y + x * x)) / 2f;
+				//				float a1 = (y + Mathf.Sqrt (y * y + x * x)) / 2f;
+				float v0 = Mathf.Sqrt (_g * x * x / (2f * a0));
+				//				float v1 = Mathf.Sqrt (_g * x * x / (2f * a1));
+				ret = new Vector3 (_dist.x, x, _dist.z).normalized * v0;
 			}
 			return ret;
 		}
