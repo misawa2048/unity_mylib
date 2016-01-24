@@ -308,23 +308,22 @@ namespace TmLib{
 		//-----------------------------------------------------------------------
 		static public Vector3[] ParabolicVec(Vector3 _dist, float _g){
 			Vector3[] ret = null;
-			float x = Mathf.Sqrt (_dist.x * _dist.x + _dist.z * _dist.z);
-			if (x > 0f) {
-				float y = _dist.y;
-				float dd = Mathf.Sqrt (y * y + x * x);
-				float e0 = _g * x * x / (y - dd);
-				float e1 = _g * x * x / (y + dd);
-				if ((e0 > 0f) || (e1 > 0f)) {
-					Vector3 nmlVec = new Vector3 (_dist.x, x, _dist.z).normalized;
-					List<Vector3> retList = new List<Vector3> ();
-					if (e0 > 0f) {
-						retList.Add(nmlVec * Mathf.Sqrt (e0));
-					}
-					if (e1 > 0f) {
-						retList.Add(nmlVec * Mathf.Sqrt (e1));
-					}
-					ret = retList.ToArray ();
+			float x2 = _dist.x * _dist.x + _dist.z * _dist.z;
+			float y = _dist.y;
+			float dd = _dist.magnitude; // Mathf.Sqrt (y * y + x2);
+			float e0 = (_g * x2) / (y - dd);
+			float e1 = (_g * x2) / (y + dd);
+			if ((e0 > 0f) || (e1 > 0f)) {
+				float x = Mathf.Sqrt (x2);
+				Vector3 nmlVec = new Vector3 (_dist.x, x, _dist.z).normalized; //45[deg]
+				List<Vector3> retList = new List<Vector3> ();
+				if (e0 > 0f) {
+					retList.Add(nmlVec * Mathf.Sqrt (e0));
 				}
+				if (e1 > 0f) {
+					retList.Add(nmlVec * Mathf.Sqrt (e1));
+				}
+				ret = retList.ToArray ();
 			}
 			return ret;
 		}
