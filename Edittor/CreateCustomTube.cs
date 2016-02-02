@@ -21,6 +21,8 @@ public class CreateCustomTube : EditorWindow {
 	static AnimationCurve mCurve = AnimationCurve.Linear(0f,0f,1f,0.5f);
 	static UvDiv mUvDiv = UvDiv.Single;
 	static int mUvDivId = 0;
+	static bool mUseBone = false;
+	static int mBoneNum = 0;
 
 	[MenuItem ("GameObject/Create Other/ELIX/"+DEF_NAME)]
 	static void Init ()
@@ -37,18 +39,36 @@ public class CreateCustomTube : EditorWindow {
 		}
 		name += ((_type==TmMesh.AxisType.XY)?"XY":"XZ");
 		GameObject newGameobject = new GameObject (name);
-		MeshRenderer meshRenderer = newGameobject.AddComponent<MeshRenderer> ();
-		meshRenderer.material = new Material (Shader.Find ("Diffuse"));
-		MeshFilter meshFilter = newGameobject.AddComponent<MeshFilter> ();
 		float dd = (1f / (float)_UvDiv);
-		float dx = (float)(_UvDivId % (int)_UvDiv)*dd;
-		float dy = (float)((_UvDiv-1)-(_UvDivId / (int)_UvDiv))*dd;
-		Rect uvRect = new Rect (dx,dy,dd,dd);
-		meshFilter.mesh = TmMesh.CreateTubeMesh(_divNum,_cvdivNum,uvRect,_cv,_type,new Color(0.5f,0.5f,0.5f,1.0f), _isInv);
-		Mesh mesh = meshFilter.sharedMesh;
-		mesh.name = name;
+		float dx = (float)(_UvDivId % (int)_UvDiv) * dd;
+		float dy = (float)((_UvDiv - 1) - (_UvDivId / (int)_UvDiv)) * dd;
+		Rect uvRect = new Rect (dx, dy, dd, dd);
+		Mesh mesh;
+		if (!mUseBone) {
+			MeshRenderer meshRenderer = newGameobject.AddComponent<MeshRenderer> ();
+			meshRenderer.material = new Material (Shader.Find ("Diffuse"));
+			MeshFilter meshFilter = newGameobject.AddComponent<MeshFilter> ();
+			mesh = TmMesh.CreateTubeMesh (_divNum, _cvdivNum, uvRect, _cv, _type, new Color (0.5f, 0.5f, 0.5f, 1.0f), _isInv);
+			meshFilter.sharedMesh = mesh;
+			mesh.name = name;
+		} else {
+			SkinnedMeshRenderer meshRenderer = newGameobject.AddComponent<SkinnedMeshRenderer> ();
+			meshRenderer.material = new Material (Shader.Find ("Diffuse"));
+			Transform[] boneTr = new Transform[mBoneNum];
+			for (int i = 0; i < mBoneNum; ++i) {
+				GameObject boneObj = new GameObject ("bone"+i);
+				boneObj.transform.parent = newGameobject.transform;
+				boneObj.transform.localPosition = Vector3.zero;
+				boneTr [i] = boneObj.transform;
+			}
+			meshRenderer.bones = boneTr;
+			meshRenderer.rootBone = boneTr [0];
+			mesh = TmMesh.CreateTubeMesh (_divNum, _cvdivNum, uvRect, _cv, _type, new Color (0.5f, 0.5f, 0.5f, 1.0f), _isInv, 2);
+			meshRenderer.sharedMesh = mesh;
+			meshRenderer.name = name;
+		}
 
-		string path = AssetDatabase.GenerateUniqueAssetPath("Assets/" + mesh.name + ".asset");
+		string path = AssetDatabase.GenerateUniqueAssetPath("Assets/" + name + ".asset");
 		AssetDatabase.CreateAsset (mesh, path);
 		AssetDatabase.SaveAssets ();
 	}
@@ -65,6 +85,10 @@ public class CreateCustomTube : EditorWindow {
         {
             mUvDivId = EditorGUILayout.IntSlider("uvDivID", mUvDivId, 0, (int)mUvDiv * (int)mUvDiv - 1);
         }
+		mUseBone = EditorGUILayout.Toggle ("useBone", mUseBone);
+		if (mUseBone) {
+			mBoneNum = Mathf.Max(EditorGUILayout.IntField ("boneNum", mBoneNum),2);
+		}
         mCurve = EditorGUILayout.CurveField("curve", mCurve);
 		GUILayout.BeginHorizontal ();
 #if TM_USE_FILE

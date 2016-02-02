@@ -249,13 +249,13 @@ namespace TmLib{
 		public static Mesh CreateTubeMesh(int _divX, int _divZ, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner){
 			return CreateTubeMesh(_divX, _divZ, new Rect(0,0,1,1), _cv, _type, _vertCol, _isInner);
 		}
-        public static Mesh CreateTubeMesh(int _divX, int _divZ, float _sttDeg, float _sizeDeg, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner)
+		public static Mesh CreateTubeMesh(int _divX, int _divZ, float _sttDeg, float _sizeDeg, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner, int _boneNum=0)
         {
-            return CreateTubeMesh(_divX, _divZ, _sttDeg, _sizeDeg, new Rect(0, 0, 1, 1), _cv, _type, _vertCol, _isInner,0);
+			return CreateTubeMesh(_divX, _divZ, _sttDeg, _sizeDeg, new Rect(0, 0, 1, 1), _cv, _type, _vertCol, _isInner,_boneNum);
         }
-        public static Mesh CreateTubeMesh(int _divX, int _divZ, Rect _uvRect, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner)
+		public static Mesh CreateTubeMesh(int _divX, int _divZ, Rect _uvRect, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner, int _boneNum=0)
         {
-            return CreateTubeMesh(_divX, _divZ, 0f, 360f, _uvRect, _cv, _type, _vertCol, _isInner,0);
+			return CreateTubeMesh(_divX, _divZ, 0f, 360f, _uvRect, _cv, _type, _vertCol, _isInner,_boneNum);
         }
         public static Mesh CreateTubeMesh(int _divX, int _divZ, float _sttDeg, float _sizeDeg, Rect _uvRect, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner, int _boneNum){
 			int nDiv = (_cv.length-1)*_divZ;
@@ -288,20 +288,6 @@ namespace TmLib{
 					}else{
 						vertices[zz*(_divX+1)+xx] = new Vector3(uvPos.x-0.5f,tt-0.5f,0.0f);
 					}
-                    {
-                        BoneWeight wt = new BoneWeight();
-                        if (true) // (_boneNum > 1)
-                        {
-                            wt.boneIndex0 = 0;
-                            wt.boneIndex1 = 1;
-                            wt.boneIndex2 = 0;
-                            wt.boneIndex3 = 0;
-                            wt.weight0 = tt;
-                            wt.weight1 = 1 - tt;
-                            wt.weight2 = 0f;
-                            wt.weight3 = 0f;
-                        }
-                    }
                     if (!_isInner){
 						uvPos.x = 1f- uvPos.x;
 					}
@@ -339,6 +325,17 @@ namespace TmLib{
 								triangles[(zz*_divX+xx)*6+ii] = (zz+sw[ii*2+1])*(_divX+1)+(xx+sw[ii*2+0]);
 							}
 						}
+					}
+					{
+						BoneWeight wt = new BoneWeight();
+						if (_boneNum > 1)
+						{
+							wt.boneIndex0 = 1;
+							wt.boneIndex1 = 0;
+							wt.weight0 = uvPos.y;
+							wt.weight1 = 1 - uvPos.y;
+						}
+						weights[zz*(_divX+1)+xx]= wt;
 					}
 				}
 			}
