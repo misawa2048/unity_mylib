@@ -5,7 +5,10 @@ using System.IO;
 using TmLib;
 
 public class CreateCustomTube : EditorWindow {
-	const string DEF_NAME = "CustomTube";
+    //-------------------------------------------------------------------
+    // PlayerSettings>OtherSettings>ScriptingDefineSymbols : TM_USE_FILE
+    //-------------------------------------------------------------------
+    const string DEF_NAME = "CustomTube";
 	const string DEF_FILE_DIR ="../";
 	const string FILE_EXT ="json";
 	public enum UvDiv{ Single=1, Div2x2=2, Div4x4=4, Div8x8=8 } 
@@ -58,11 +61,14 @@ public class CreateCustomTube : EditorWindow {
         mIsInv = EditorGUILayout.Toggle ("isInverse", mIsInv);
 		mAxisType = (TmMesh.AxisType)EditorGUILayout.EnumPopup("type",(System.Enum)mAxisType);
 		mUvDiv = (UvDiv)EditorGUILayout.EnumPopup ("uvDivNum", (System.Enum)mUvDiv);
-		mUvDivId = EditorGUILayout.IntSlider ("uvDivID", mUvDivId, 0, (int)mUvDiv*(int)mUvDiv-1);
-		mCurve = EditorGUILayout.CurveField("curve", mCurve);
+        if(mUvDiv != UvDiv.Single)
+        {
+            mUvDivId = EditorGUILayout.IntSlider("uvDivID", mUvDivId, 0, (int)mUvDiv * (int)mUvDiv - 1);
+        }
+        mCurve = EditorGUILayout.CurveField("curve", mCurve);
 		GUILayout.BeginHorizontal ();
-#if UNITY_EDITOR
-#if (!UNITY_WEBPLAYER)
+#if TM_USE_FILE
+  #if (!UNITY_WEBPLAYER)
         if (GUILayout.Button("LoadCurve")) {
 			string path = EditorUtility.OpenFilePanel("Load curve",DEF_FILE_DIR,FILE_EXT);
 			if(path!=""){
@@ -77,11 +83,11 @@ public class CreateCustomTube : EditorWindow {
 			string str = TmFileUtil.AnimCurveToJson(mCurve);
 			SaveToFile(path,str);
 		}
-#else
+  #else
         GUIStyle style = new GUIStyle();
         style.normal.textColor = new Color(0.7f,0f,0f);
         GUILayout.TextField(" * Can't Load/Save on this plstform. Change plstform to 'PC'.", style);
-#endif
+  #endif
 #endif
         GUILayout.EndHorizontal ();
 		if(GUILayout.Button("Create")) {
@@ -89,27 +95,26 @@ public class CreateCustomTube : EditorWindow {
 			mWindow.Close();
 		}
 	}
-	
+
+#if TM_USE_FILE && (!UNITY_WEBPLAYER)
 	//Save/Load
 	public static bool SaveToFile(string _path, string _str){
 		bool ret = false;
 		if (_path != "") {
 			ret = true;
-#if UNITY_EDITOR && (!UNITY_WEBPLAYER)
             File.WriteAllText (_path, _str, System.Text.Encoding.UTF8);
-#endif
-		}
-		return ret;
+        }
+        return ret;
 	}
+
 	public static string LoadFromFile(string _path){
 		string retStr = "";
-#if UNITY_EDITOR && (!UNITY_WEBPLAYER)
 		if(File.Exists(_path)){
 			retStr = File.ReadAllText (_path);
 		}
-#endif
         return retStr;
 	}
+#endif
 
 }
 #endif
