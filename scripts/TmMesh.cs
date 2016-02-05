@@ -389,12 +389,15 @@ namespace TmLib
 					BoneWeight wt = new BoneWeight();
 					if (boneNum > 1)
 					{
-						wt.boneIndex0 = 1;
-						wt.boneIndex1 = 0;
-						wt.weight0 = uvPos.y;
-						wt.weight1 = 1 - uvPos.y;
-					}
-					weights[zz * (_divX + 1) + xx] = wt;
+                        float boneRate = (float)(boneNum - 1) * uvPos.y; //0f - (boneNum-1)
+                        float boneId = Mathf.Min(Mathf.Floor(boneRate), (boneNum - 2)); //0,1,,(boneNum-2)
+                        float rate = (boneRate - boneId); // 0,,1,0,,1, (boneNum-1 times)
+                        wt.boneIndex0 = (int)boneId;
+                        wt.boneIndex1 = (int)boneId + 1;
+                        wt.weight0 = rate;
+                        wt.weight1 = 1 - rate;
+                    }
+                    weights[zz * (_divX + 1) + xx] = wt;
 				}
 			}
 
