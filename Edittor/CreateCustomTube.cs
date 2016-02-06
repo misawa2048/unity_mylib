@@ -65,8 +65,9 @@ public class CreateCustomTube : EditorWindow
 			for (int i = 0; i < mBoneNum; ++i)
 			{
 				GameObject boneObj = new GameObject("bone" + i);
-				float wtRate = ((float)(i + 1) / (float)(mBoneNum + 1));
-				float tl = (mCurve.keys [mCurve.keys.Length - 1].time - mCurve.keys [0].time);
+				float fBoneI = 1f/(float)(mBoneNum);
+				float wtRate = fBoneI * (float)i + fBoneI*0.5f; //[.][.][.]
+				float tl = (mCurve.keys [mCurve.keys.Length - 1].time - mCurve.keys [0].time); // full length
 				float tn = mCurve.keys [0].time + tl * wtRate;
 				boneObj.transform.localPosition = ((_type == TmMesh.AxisType.XY) ? Vector3.forward: Vector3.up)*tn;
 				boneObj.transform.parent = preTr;
