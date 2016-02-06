@@ -283,7 +283,7 @@ namespace TmLib
 
 		public static Mesh CreateTubeMesh(int _divX, int _divZ, AxisType _type = AxisType.XY, bool _isInner = false)
 		{
-			AnimationCurve curve = AnimationCurve.Linear(0f, 0.5f, 1f, 0.5f);
+			AnimationCurve curve = AnimationCurve.Linear(-0.5f, 0.5f, 0.5f, 0.5f);
 			return CreateTubeMesh(_divX, _divZ, curve, _type, new Color(0.5f, 0.5f, 0.5f, 1.0f), _isInner);
 		}
 		public static Mesh CreateTubeMesh(int _divX, int _divZ, AnimationCurve _cv, AxisType _type, Color _vertCol, bool _isInner)
@@ -331,11 +331,11 @@ namespace TmLib
 
 					if (_type == AxisType.XY)
 					{
-						vertices[zz * (_divX + 1) + xx] = new Vector3(uvPos.x - 0.5f, 0.0f, tt - 0.5f);
+						vertices[zz * (_divX + 1) + xx] = new Vector3(uvPos.x - 0.5f, 0.0f, tt);
 					}
 					else
 					{
-						vertices[zz * (_divX + 1) + xx] = new Vector3(uvPos.x - 0.5f, tt - 0.5f, 0.0f);
+						vertices[zz * (_divX + 1) + xx] = new Vector3(uvPos.x - 0.5f, tt, 0.0f);
 					}
 					if (!_isInner)
 					{
@@ -389,13 +389,13 @@ namespace TmLib
 					BoneWeight wt = new BoneWeight();
 					if (boneNum > 1)
 					{
-                        float boneRate = (float)(boneNum - 1) * uvPos.y; //0f - (boneNum-1)
+						float boneRate = (float)(boneNum - 1) * nz; //0f - (boneNum-1)
                         float boneId = Mathf.Min(Mathf.Floor(boneRate), (boneNum - 2)); //0,1,,(boneNum-2)
                         float rate = (boneRate - boneId); // 0,,1,0,,1, (boneNum-1 times)
                         wt.boneIndex0 = (int)boneId;
                         wt.boneIndex1 = (int)boneId + 1;
-                        wt.weight0 = rate;
-                        wt.weight1 = 1 - rate;
+						wt.weight0 = (1 - rate); //Mathf.Clamp01((1-rate)*2f-0.5f);
+						wt.weight1 = rate; //Mathf.Clamp01(rate*2f-0.5f);
                     }
                     weights[zz * (_divX + 1) + xx] = wt;
 				}

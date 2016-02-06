@@ -19,7 +19,7 @@ public class CreateCustomTube : EditorWindow
 	static bool mIsInv = false;
 	static TmMesh.AxisType mAxisType = TmMesh.AxisType.XY;
 	static CreateCustomTube mWindow;
-	static AnimationCurve mCurve = AnimationCurve.Linear(0f, 0f, 1f, 0.5f);
+	static AnimationCurve mCurve = AnimationCurve.Linear(0f, 0.5f, 2f, 0f);
 	static UvDiv mUvDiv = UvDiv.Single;
 	static int mUvDivId = 0;
 	static bool mUseBone = false;
@@ -40,12 +40,12 @@ public class CreateCustomTube : EditorWindow
 			name += "UV" + ((int)_UvDiv).ToString() + "_" + _UvDivId.ToString("D2");
 		}
 		name += ((_type == TmMesh.AxisType.XY) ? "XY" : "XZ");
-		GameObject newGameobject = new GameObject(name);
 		float dd = (1f / (float)_UvDiv);
 		float dx = (float)(_UvDivId % (int)_UvDiv) * dd;
 		float dy = (float)((_UvDiv - 1) - (_UvDivId / (int)_UvDiv)) * dd;
 		Rect uvRect = new Rect(dx, dy, dd, dd);
 		Mesh mesh;
+		GameObject newGameobject = new GameObject(name);
 		if (!mUseBone)
 		{
 			MeshRenderer meshRenderer = newGameobject.AddComponent<MeshRenderer>();
@@ -59,13 +59,19 @@ public class CreateCustomTube : EditorWindow
 		{
 			SkinnedMeshRenderer meshRenderer = newGameobject.AddComponent<SkinnedMeshRenderer>();
 			meshRenderer.material = new Material(Shader.Find("Diffuse"));
-			Transform[] boneTr = new Transform[mBoneNum];
+			Transform[] boneTr = new Transform[mBoneNum+1];
+			boneTr [0] = newGameobject.transform;
+			Transform preTr = newGameobject.transform;
 			for (int i = 0; i < mBoneNum; ++i)
 			{
 				GameObject boneObj = new GameObject("bone" + i);
-				boneObj.transform.parent = newGameobject.transform;
-				boneObj.transform.localPosition = Vector3.zero;
-				boneTr[i] = boneObj.transform;
+				float wtRate = ((float)(i + 1) / (float)(mBoneNum + 1));
+				float tl = (mCurve.keys [mCurve.keys.Length - 1].time - mCurve.keys [0].time);
+				float tn = mCurve.keys [0].time + tl * wtRate;
+				boneObj.transform.localPosition = ((_type == TmMesh.AxisType.XY) ? Vector3.forward: Vector3.up)*tn;
+				boneObj.transform.parent = preTr;
+				boneTr[i+1] = boneObj.transform;
+				preTr = boneObj.transform;
 			}
 			meshRenderer.bones = boneTr;
 			meshRenderer.rootBone = boneTr[0];
@@ -95,11 +101,11 @@ public class CreateCustomTube : EditorWindow
 		mUseBone = EditorGUILayout.Toggle("useBone", mUseBone);
 		if (mUseBone)
 		{
-			mBoneNum = Mathf.Max(EditorGUILayout.IntField("boneNum", mBoneNum), 2);
+			mBoneNum = Mathf.Max(EditorGUILayout.IntField("boneNum", mBoneNum), 1);
 		}
 		mCurve = EditorGUILayout.CurveField("curve", mCurve);
 		GUILayout.BeginHorizontal();
-#if TM_USE_FILE
+#if true //TM_USE_FILE
 #if (!UNITY_WEBPLAYER)
 if (GUILayout.Button("LoadCurve")) {
 string path = EditorUtility.OpenFilePanel("Load curve",DEF_FILE_DIR,FILE_EXT);
@@ -129,7 +135,7 @@ GUILayout.TextField(" * Can't Load/Save on this plstform. Change plstform to 'PC
 		}
 	}
 
-#if TM_USE_FILE && (!UNITY_WEBPLAYER)
+#if true //TM_USE_FILE && (!UNITY_WEBPLAYER)
 //Save/Load
 public static bool SaveToFile(string _path, string _str){
 bool ret = false;
