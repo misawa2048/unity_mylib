@@ -3,7 +3,8 @@
 	Properties
 	{
 		_MainTex ("Texture", 2D) = "white" {}
-		_Color ("Main Color", Color) = (1,1,1,0)
+		_Color ("Main Color", Color) = (1,1,1,1)
+		_BaseColor ("Base Color", Color) = (0,0,0,1)
 		_Scale ("Scale", Vector) = (10,10,10,0)
 	}
 	SubShader
@@ -41,6 +42,7 @@
 
 			float fade(float t) { return t * t * t * (t * (t * 6.0 - 15.0) + 10.0); }
    			float lerp(float t, float a, float b) { return a + t * (b - a); }
+   			float4 lerp(float t, float4 a, float4 b) { return a + t * (b-a); }
 		    float grad(int hash, float x, float y, float z) {
 		      int h = hash & 15;                      // CONVERT LO 4 BITS OF HASH CODE
 		      float u = h<8 ? x : y,                 // INTO 12 GRADIENT DIRECTIONS.
@@ -87,6 +89,7 @@
 			sampler2D _MainTex;
 			float4 _MainTex_ST;
 			float4 _Color;
+			float4 _BaseColor;
 			float4 _Scale;
 			
 			v2f vert (appdata v)
@@ -102,7 +105,7 @@
 			{
 				// sample the texture
 				float3 ixyz = float3(i.uv*_Scale.xy,_Scale.z*(_SinTime.x*0.5+0.5));
-				fixed4 col = tex2D(_MainTex, i.uv) * _Color * noise(ixyz.x,ixyz.y,ixyz.z);
+				fixed4 col = tex2D(_MainTex, i.uv) * lerp(noise(ixyz.x,ixyz.y,ixyz.z),_BaseColor,_Color);
 				// apply fog
 				UNITY_APPLY_FOG(i.fogCoord, col);
 				return col;
