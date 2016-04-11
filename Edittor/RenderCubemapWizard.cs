@@ -3,34 +3,27 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections;
+using System.Linq;
 using System.IO;
 
 public class RenderCubemapWizard : ScriptableWizard {
 
-	public Transform renderFromPosition;
+	public Camera camera;
 	public Cubemap cubemap;
 
 	void OnWizardUpdate () {
 		string helpString = "Select transform to render from and cubemap to render into";
-		bool isValid = (renderFromPosition != null) && (cubemap != null);
+		bool isValid = (camera != null) && (cubemap != null);
 	}
 
 	void OnWizardCreate () {
-		if (renderFromPosition == null) {
-			renderFromPosition = Camera.main.transform;
+		if (camera == null) {
+			camera = Camera.main;
 		}
-		// create temporary camera for rendering
-		GameObject go = new GameObject( "CubemapCamera");
-		go.AddComponent<Camera>();
-		// place it on the object
-		go.transform.position = renderFromPosition.position;
-		go.transform.rotation = Quaternion.identity;
 		// render into cubemap		
-		go.GetComponent<Camera>().RenderToCubemap( cubemap );
+		camera.RenderToCubemap( cubemap );
 		cubemap.Apply ();
 		ConvertToPng ();
-		// destroy temporary camera
-		DestroyImmediate( go );
 	}
 
 	[MenuItem("GameObject/Render into Cubemap")]
@@ -43,32 +36,36 @@ public class RenderCubemapWizard : ScriptableWizard {
 	{
 		Debug.Log(Application.dataPath + "/" +cubemap.name +"_PositiveX.png");
 		var tex = new Texture2D (cubemap.width, cubemap.height, TextureFormat.RGB24, false);
-		// Read screen contents into the texture        
-		tex.SetPixels(cubemap.GetPixels(CubemapFace.PositiveX));        
-		// Encode texture into PNG
-		var bytes = tex.EncodeToPNG();      
+		var bytes = getPlanePixels(tex,CubemapFace.PositiveX);      
 		File.WriteAllBytes(Application.dataPath + "/"  + cubemap.name +"_PositiveX.png", bytes);       
 
-		tex.SetPixels(cubemap.GetPixels(CubemapFace.NegativeX));
-		bytes = tex.EncodeToPNG();     
+		bytes = getPlanePixels(tex,CubemapFace.NegativeX);     
 		File.WriteAllBytes(Application.dataPath + "/"  + cubemap.name +"_NegativeX.png", bytes);       
 
-		tex.SetPixels(cubemap.GetPixels(CubemapFace.PositiveY));
-		bytes = tex.EncodeToPNG();     
+		bytes = getPlanePixels(tex,CubemapFace.PositiveY);     
 		File.WriteAllBytes(Application.dataPath + "/"  + cubemap.name +"_PositiveY.png", bytes);       
 
-		tex.SetPixels(cubemap.GetPixels(CubemapFace.NegativeY));
-		bytes = tex.EncodeToPNG();     
+		bytes = getPlanePixels(tex,CubemapFace.NegativeY);     
 		File.WriteAllBytes(Application.dataPath + "/"  + cubemap.name +"_NegativeY.png", bytes);       
 
-		tex.SetPixels(cubemap.GetPixels(CubemapFace.PositiveZ));
-		bytes = tex.EncodeToPNG();     
+		bytes = getPlanePixels(tex,CubemapFace.PositiveZ);     
 		File.WriteAllBytes(Application.dataPath + "/"  + cubemap.name +"_PositiveZ.png", bytes);       
 
-		tex.SetPixels(cubemap.GetPixels(CubemapFace.NegativeZ));
-		bytes = tex.EncodeToPNG();     
+		bytes = getPlanePixels(tex,CubemapFace.NegativeZ);     
 		File.WriteAllBytes(Application.dataPath + "/"  + cubemap.name   +"_NegativeZ.png", bytes);       
 		DestroyImmediate(tex);
 
 	}
+
+	byte[] getPlanePixels(Texture2D _tex, CubemapFace _face){
+		Texture2D tmpTex = new Texture2D (cubemap.width, cubemap.height, TextureFormat.RGB24, false);
+		tmpTex.SetPixels(cubemap.GetPixels(_face));
+		Color[] vline;
+		for (int x = 0; x < cubemap.width; ++x) {
+			vline = tmpTex.GetPixels (x, 0, 1, cubemap.height);
+			_tex.SetPixels (x, 0, 1, cubemap.height,vline.Reverse().ToArray());
+		}
+		return _tex.EncodeToPNG();     
+	}
+
 }
