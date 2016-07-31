@@ -7,6 +7,7 @@ namespace TmLib
     {
         public Transform targetJoint;
         public Transform eyeJoint;
+        public Vector3 eyeForward = Vector3.forward;
         public float rotateLimit = 90f;
         [Range(0, 1)]
         public float blendRate = 1f;
@@ -39,10 +40,7 @@ namespace TmLib
         // Update is called once per frame
         void Update()
         {
-            if (targetJoint)
-            {
-                Debug.DrawLine(eyeJoint.position, targetJoint.position, Color.red);
-            }
+            //            if (targetJoint){ Debug.DrawLine(eyeJoint.position, targetJoint.position, Color.red); }
         }
 
         void LateUpdate()
@@ -65,13 +63,12 @@ namespace TmLib
                     }
                 }
 
-                Quaternion neckRot = NeckCtrl(controlJoints, targetJoint, eyeJoint, rotateLimit);
+                Quaternion neckRot = NeckCtrl(controlJoints, targetJoint, eyeJoint, eyeForward.normalized, rotateLimit);
                 neckRot = Quaternion.Lerp(Quaternion.identity, neckRot, blendRate);
                 Quaternion subRot = Quaternion.Slerp(Quaternion.identity, neckRot, 1f / (float)controlJoints.Length);
                 for (int i = 0; i < controlJoints.Length; ++i)
                 {
-                    Quaternion invRot = Quaternion.identity; // Quaternion.Inverse(controlJoints[i].localRotation);
-                    controlJoints[i].localRotation = invRot * subRot * controlJoints[i].localRotation;
+                    controlJoints[i].localRotation = subRot * controlJoints[i].localRotation;
                 }
             }
         }
@@ -80,12 +77,12 @@ namespace TmLib
         {
         }
 
-        static public Quaternion NeckCtrl(Transform[] _controlJoints, Transform _targetJnt, Transform _eyeJnt, float _limitAng)
+        static public Quaternion NeckCtrl(Transform[] _controlJoints, Transform _targetJnt, Transform _eyeJnt, Vector3 _eyeForward, float _limitAng)
         {
             Vector3 dirVec = (_targetJnt.position - _eyeJnt.position).normalized;
             dirVec = Quaternion.Inverse(_eyeJnt.rotation) * dirVec;
-            Quaternion neckRot = Quaternion.FromToRotation(Vector3.forward, dirVec);
-            float ang = Vector3.Angle(Vector3.forward, dirVec);
+            Quaternion neckRot = Quaternion.FromToRotation(_eyeForward, dirVec);
+            float ang = Vector3.Angle(_eyeForward, dirVec);
             if (ang > _limitAng)
             {
                 float rate = (180f - ang) / (180f - _limitAng);
