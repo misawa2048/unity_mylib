@@ -9,7 +9,6 @@ namespace TmLib
         public Transform eyeJoint;
         public Vector3 eyeForward = Vector3.forward;
         public float rotateLimit = 90f;
-        public bool mulAfter = false;
         [Range(0, 1)]
         public float blendRate = 1f;
 
@@ -21,10 +20,9 @@ namespace TmLib
         void Start()
         {
             baseRotDic = new Dictionary<Transform, Quaternion>();
-            Transform[] childs = transform.GetComponentsInChildren<Transform>();
-            for (int i = 0; i < childs.Length; ++i)
+            for (int i = 0; i < controlJoints.Length; ++i)
             {
-                baseRotDic.Add(childs[i], childs[i].localRotation);
+                baseRotDic.Add(controlJoints[i], controlJoints[i].localRotation);
             }
 
             if (targetJoint == null)
@@ -50,35 +48,34 @@ namespace TmLib
         {
             if ((controlJoints != null) && (controlJoints.Length > 0))
             {
-                Animator anm = GetComponent<Animator>();
                 for (int i = 0; i < controlJoints.Length; ++i)
                 {
                     if (baseRotDic.ContainsKey(controlJoints[i]))
                     {
-                        if ((anm != null) && (!anm.isActiveAndEnabled))
-                        {
-                            controlJoints[i].localRotation = baseRotDic[controlJoints[i]];
-                        }
-                        else
-                        {
-                            baseRotDic[controlJoints[i]] = controlJoints[i].localRotation;
-                        }
+                        controlJoints[i].localRotation = baseRotDic[controlJoints[i]];
                     }
                 }
-                if (targetJoint) { Debug.DrawLine(eyeJoint.position, targetJoint.position, Color.red); }
+                if (eyeJoint && targetJoint) { Debug.DrawLine(eyeJoint.position, targetJoint.position, Color.red); }
 
                 Quaternion neckRot = NeckCtrl(controlJoints, targetJoint, eyeJoint, eyeForward.normalized, rotateLimit);
                 neckRot = Quaternion.Lerp(Quaternion.identity, neckRot, blendRate);
                 Quaternion subRot = Quaternion.Slerp(Quaternion.identity, neckRot, 1f / (float)controlJoints.Length);
                 for (int i = 0; i < controlJoints.Length; ++i)
                 {
-                    controlJoints[i].localRotation = mulAfter ? (controlJoints[i].localRotation * subRot) : (subRot * controlJoints[i].localRotation);
+                    controlJoints[i].localRotation = subRot * controlJoints[i].localRotation;
                 }
             }
         }
 
         void OnAnimatorMove()
         {
+            for (int i = 0; i < controlJoints.Length; ++i)
+            {
+                if (baseRotDic.ContainsKey(controlJoints[i]))
+                {
+                    baseRotDic[controlJoints[i]] = controlJoints[i].localRotation;
+                }
+            }
         }
 
         static public Quaternion NeckCtrl(Transform[] _controlJoints, Transform _targetJnt, Transform _eyeJnt, Vector3 _eyeForward, float _limitAng)
