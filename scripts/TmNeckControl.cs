@@ -9,6 +9,7 @@ namespace TmLib
         public Transform eyeJoint;
         public Vector3 eyeForward = Vector3.forward;
         public float rotateLimit = 90f;
+        public bool mulAfter = false;
         [Range(0, 1)]
         public float blendRate = 1f;
 
@@ -26,21 +27,23 @@ namespace TmLib
                 baseRotDic.Add(childs[i], childs[i].localRotation);
             }
 
-            if (gameObject.name.StartsWith(@"^[0-9]{3}_[0-9]{2}"))
+            if (targetJoint == null)
             {
-                string idStr = gameObject.name.Substring(6, 2);
-                int id;
-                if (int.TryParse(idStr, out id))
-                {
-                    Debug.Log("id=" + id);
-                }
+                targetJoint = Camera.main.transform;
+            }
+            if (eyeJoint == null)
+            {
+                eyeJoint = transform;
+            }
+            if (controlJoints.Length == 0)
+            {
+                controlJoints = new Transform[] { eyeJoint };
             }
         }
 
         // Update is called once per frame
         void Update()
         {
-            //            if (targetJoint){ Debug.DrawLine(eyeJoint.position, targetJoint.position, Color.red); }
         }
 
         void LateUpdate()
@@ -62,13 +65,14 @@ namespace TmLib
                         }
                     }
                 }
+                if (targetJoint) { Debug.DrawLine(eyeJoint.position, targetJoint.position, Color.red); }
 
                 Quaternion neckRot = NeckCtrl(controlJoints, targetJoint, eyeJoint, eyeForward.normalized, rotateLimit);
                 neckRot = Quaternion.Lerp(Quaternion.identity, neckRot, blendRate);
                 Quaternion subRot = Quaternion.Slerp(Quaternion.identity, neckRot, 1f / (float)controlJoints.Length);
                 for (int i = 0; i < controlJoints.Length; ++i)
                 {
-                    controlJoints[i].localRotation = subRot * controlJoints[i].localRotation;
+                    controlJoints[i].localRotation = mulAfter ? (controlJoints[i].localRotation * subRot) : (subRot * controlJoints[i].localRotation);
                 }
             }
         }
