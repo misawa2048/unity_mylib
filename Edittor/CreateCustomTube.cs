@@ -104,8 +104,14 @@ public class CreateCustomTube : EditorWindow
 		{
 			mBoneNum = Mathf.Max(EditorGUILayout.IntField("boneNum", mBoneNum), 1);
 		}
-		mCurve = EditorGUILayout.CurveField("curve", mCurve);
-		GUILayout.BeginHorizontal();
+        GUILayout.BeginHorizontal();
+        mCurve = EditorGUILayout.CurveField("curve", mCurve);
+        if (GUILayout.Button("SemiCircleCurve"))
+        {
+            mCurve = createSphereCv(mDivNum);
+        }
+        GUILayout.EndHorizontal();
+        GUILayout.BeginHorizontal();
 #if true //TM_USE_FILE
 #if (!UNITY_WEBPLAYER)
 if (GUILayout.Button("LoadCurve")) {
@@ -155,6 +161,17 @@ retStr = File.ReadAllText (_path);
 return retStr;
 }
 #endif
+
+private AnimationCurve createSphereCv(int _div)
+{
+    AnimationCurve cv = AnimationCurve.Linear(0f, 0f, 1f, 0f);
+    for (int ii = 1; ii < _div; ++ii)
+    {
+        float c = Mathf.Cos(Mathf.PI * ((float)ii / (float)(_div - 1)));
+        cv.AddKey((c + 1f) * 0.5f, Mathf.Sqrt(1f - (c * c)) * 0.5f);
+    }
+    return cv;
+}
 
 }
 #endif
