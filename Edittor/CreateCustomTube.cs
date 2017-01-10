@@ -164,11 +164,11 @@ return retStr;
 
 private AnimationCurve createSphereCv(int _div)
 {
-    AnimationCurve cv = AnimationCurve.Linear(0f, 0f, 1f, 0f);
+    AnimationCurve cv = AnimationCurve.Linear(-0.5f, 0f, 0.5f, 0f);
     for (int ii = 1; ii < _div; ++ii)
     {
         float c = Mathf.Cos(Mathf.PI * ((float)ii / (float)(_div - 1)));
-        cv.AddKey((c + 1f) * 0.5f, Mathf.Sqrt(1f - (c * c)) * 0.5f);
+        cv.AddKey(-0.5f+(c + 1f) * 0.5f, Mathf.Sqrt(1f - (c * c)) * 0.5f);
     }
     return cv;
 }
