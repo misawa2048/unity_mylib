@@ -804,6 +804,43 @@ namespace TmLib
 			}
 			return _nowMesh;
 		}
-	}
+
+        public static Mesh MeshInvert(Mesh _nowMesh)
+        {
+            if (_nowMesh != null)
+            {
+                for (int s = 0; s < _nowMesh.subMeshCount; ++s)
+                {
+#if false
+                    int[] tris = _nowMesh.GetTriangles(s);
+                    for (int i = 0; i < tris.Length / 3; ++i)
+                    {
+                        int idx = tris[i * 3 + 1];
+                        tris[i * 3 + 1] = tris[i * 3 + 2];
+                        tris[i * 3 + 2] = idx;
+                    }
+                    _nowMesh.SetTriangles(tris, s);
+#else
+                    int[] idcs = _nowMesh.GetIndices(s);
+                    for (int i = 0; i < idcs.Length / 3; ++i)
+                    {
+                        int idx = idcs[i * 3 + 1];
+                        idcs[i * 3 + 1] = idcs[i * 3 + 2];
+                        idcs[i * 3 + 2] = idx;
+                    }
+                    _nowMesh.SetIndices(idcs, _nowMesh.GetTopology(s), s);
+#endif
+                }
+                // _nowMesh.RecalculateNormals();
+                Vector3[] invNml = _nowMesh.normals.Clone() as Vector3[];
+                for (int i = 0; i < invNml.Length; ++i)
+                {
+                    invNml[i] *= -1f;
+                }
+                _nowMesh.normals = invNml;
+            }
+            return _nowMesh;
+        }
+    }
 } // namespace TmLib
 
