@@ -12,7 +12,7 @@ public class WaterHeight : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		mat = targetMr.material;
+		mat = targetMr.sharedMaterial;
 	}
 	
 	// Update is called once per frame
