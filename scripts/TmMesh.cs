@@ -76,7 +76,7 @@ namespace TmLib
 			mesh.tangents = tangents;
 			//		mesh.RecalculateNormals ();
 			mesh.RecalculateBounds();
-			mesh.Optimize();
+			;
 			return mesh;
 		}
 
@@ -125,7 +125,7 @@ namespace TmLib
 			mesh.normals = normals;
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
-			mesh.Optimize();
+			;
 			return mesh;
 		}
 
@@ -218,7 +218,7 @@ namespace TmLib
 			mesh.tangents = tangents;
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
-			mesh.Optimize();
+			;
 			mesh.SetIndices(mesh.GetIndices(0), MeshTopology.Triangles, 0);
 			return mesh;
 		}
@@ -276,7 +276,7 @@ namespace TmLib
 			mesh.tangents = tangents;
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
-			mesh.Optimize();
+			;
 			mesh.SetIndices(mesh.GetIndices(0), MeshTopology.Triangles, 0);
 			return mesh;
 		}
@@ -352,20 +352,21 @@ namespace TmLib
 					normals[zz * (_divX + 1) + xx] = new Vector3(0.0f, 0.0f, 1.0f);
 					tangents[zz * (_divX + 1) + xx] = new Vector4(1.0f, 0.0f, 0.0f);
 					{
-						float p = vertices[zz * (_divX + 1) + xx].x * 2.0f * Mathf.PI;
+						int axx = (xx==_divX) ? 0 : xx;
+						float p = vertices[zz * (_divX + 1) + axx].x * 2.0f * Mathf.PI;
 						float nowRad = sttRad + p * sizeRadRate;
 						//						float r = _cv.Evaluate(sttTime + ttlTIme*(nz/ttlTIme));
 						float r = _cv.Evaluate(tt);
-						vertices[zz * (_divX + 1) + xx].x = Mathf.Cos(nowRad) * r;
+						vertices[zz * (_divX + 1) + axx].x = Mathf.Cos(nowRad) * r;
 						if (_type == AxisType.XY)
 						{
-							vertices[zz * (_divX + 1) + xx].y = Mathf.Sin(nowRad) * r;
+							vertices[zz * (_divX + 1) + axx].y = Mathf.Sin(nowRad) * r;
 						}
 						else
 						{
-							vertices[zz * (_divX + 1) + xx].z = -Mathf.Sin(nowRad) * r;
+							vertices[zz * (_divX + 1) + axx].z = -Mathf.Sin(nowRad) * r;
 						}
-						normals[zz * (_divX + 1) + xx] = vertices[zz * (_divX + 1) + xx].normalized;
+						normals[zz * (_divX + 1) + xx] = vertices[zz * (_divX + 1) + axx].normalized;
 						if (!_isInner)
 						{
 							normals[zz * (_divX + 1) + xx] *= -1f;
@@ -374,15 +375,17 @@ namespace TmLib
 					if ((xx < _divX) && (zz < nDiv))
 					{
 						int[] sw = { 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1 };
+						int[] sw0 = { 0, 0, -_divX+1, 1, -_divX+1, 0, -_divX+1, 1, 0, 0, 0, 1 };
 						for (int ii = 0; ii < 6; ++ii)
 						{
+							int[] osw = (xx==_divX-1) ? sw0 : sw;
 							if (!_isInner)
 							{
-								triangles[(zz * _divX + xx) * 6 + ii] = (zz + sw[ii * 2 + 0]) * (_divX + 1) + (xx + sw[ii * 2 + 1]);
+								triangles[(zz * _divX + xx) * 6 + ii] = (zz + osw[ii * 2 + 0]) * (_divX + 1) + (xx + osw[ii * 2 + 1]);
 							}
 							else
 							{
-								triangles[(zz * _divX + xx) * 6 + ii] = (zz + sw[ii * 2 + 1]) * (_divX + 1) + (xx + sw[ii * 2 + 0]);
+								triangles[(zz * _divX + xx) * 6 + ii] = (zz + osw[ii * 2 + 1]) * (_divX + 1) + (xx + osw[ii * 2 + 0]);
 							}
 						}
 					}
@@ -421,7 +424,7 @@ namespace TmLib
 			}
 
 			mesh.SetIndices(mesh.GetIndices(0), MeshTopology.Triangles, 0);
-			mesh.Optimize();
+			;
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
 
@@ -496,7 +499,7 @@ namespace TmLib
 			mesh.tangents = tgts;
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
-			mesh.Optimize();
+			;
 			return mesh;
 		}
 
@@ -553,7 +556,7 @@ namespace TmLib
 			mesh.tangents = tangents;
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
-			mesh.Optimize();
+			;
 			return mesh;
 		}
 
@@ -610,7 +613,7 @@ namespace TmLib
 			mesh.tangents = tgts;
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
-			mesh.Optimize();
+			;
 			return mesh;
 		}
 
@@ -723,7 +726,7 @@ namespace TmLib
 
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
-			mesh.Optimize();
+			;
 
 			return mesh;
 		}
