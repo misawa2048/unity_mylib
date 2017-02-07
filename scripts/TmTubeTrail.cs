@@ -62,7 +62,7 @@ namespace TmLib
 				circleBuff[i] = new Vector3(Mathf.Sin(nowRad) * 0.5f,-Mathf.Cos(nowRad) * 0.5f,0f);
 			}
 			for (int zz = 0; zz < (divZ + 1); ++zz) {
-				for (int xx = 0; xx < (divX + 1); ++xx) {
+				for (int xx = 0; xx < (divX + 0); ++xx) { // 0:現時点（TubeNomalBugFix）時点ではdivX + 1の頂点は未使用なので
 					Vector3 tmpPos = circleBuff[xx % divX];
 					tmpPos.x *= (float)zz / (float)(divZ);
 					tmpPos.y *= (float)zz / (float)(divZ);
