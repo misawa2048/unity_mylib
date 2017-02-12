@@ -5,6 +5,7 @@
 		_Color ("MainColor", Color) = (1,1,1,1)
 		_RimColor ("RimColor", Color) = (0.5,0.5,0.5,1)
 		_MainTex ("Texture", 2D) = "white" {}
+		_AlphaMin ("alpha min", float) = 0
 	}
 	SubShader
 	{
@@ -43,13 +44,15 @@
 			float4 _MainTex_ST;
 			float4 _Color;
 			float4 _RimColor;
-			
+			float _AlphaMin;
+
 			v2f vert (appdata v)
 			{
 				v2f o;
-//    UNITY_INITIALIZE_OUTPUT(Input,v);
-    float3 wNormal = normalize(WorldSpaceViewDir(v.vertex));
-    o.dotL = pow((0.5+dot (wNormal, v.normal)*0.5),2);
+	float3 viewDir = normalize(UNITY_MATRIX_IT_MV[2].xyz);
+    o.dotL = 0.5+dot (viewDir, v.normal*0.5);
+    o.dotL = pow(o.dotL,4);
+    o.dotL = o.dotL * (1-_AlphaMin);
 				o.vertex = UnityObjectToClipPos(v.vertex);
 				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 				UNITY_TRANSFER_FOG(o,o.vertex);
@@ -59,8 +62,8 @@
 			fixed4 frag (v2f i) : SV_Target
 			{
 				// sample the texture
-				fixed4 col = tex2D(_MainTex, i.uv) * (_Color*i.dotL + (1-i.dotL)*_RimColor);
-				col.a *= i.dotL;
+				fixed4 col = tex2D(_MainTex, i.uv) * (_Color*i.dotL + _RimColor*(1-i.dotL));
+//				col.a = 1-i.dotL;
 				// apply fog
 				UNITY_APPLY_FOG(i.fogCoord, col);
 				return col;
