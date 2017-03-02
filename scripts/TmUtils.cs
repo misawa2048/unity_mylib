@@ -10,10 +10,14 @@ namespace TmLib{
 		// Time関係 
 		// ----------------
 		public static float TotalHours{ get{ return (float)(System.DateTime.Now.TimeOfDay.TotalHours); } }
-		public static float TotalHoursToHourAng(float _hour){ return(_hour * 30.0f); }
-		public static float TotalHoursToMinuteAng(float _hour){ return(_hour * 360.0f); }
-		public static float TotalHoursToSecondAng(float _hour){ return(_hour * 360.0f * 60.0f); }
-		
+		public static float TotalHoursToHourAng(float _hour){ return(_hour * -30.0f); }
+		public static float TotalHoursToMinuteAng(float _hour){ return(_hour * -360.0f); }
+		public static float TotalHoursToSecondAng(float _hour){ return(_hour * -360.0f * 60.0f); }
+
+		public static float DateTimeToHourAng(System.DateTime _dt){ return TotalHoursToHourAng ((float)_dt.TimeOfDay.TotalHours); }
+		public static float DateTimeToMinuteAng(System.DateTime _dt){ return TotalHoursToMinuteAng((float)_dt.TimeOfDay.TotalHours); }
+		public static float DateTimeToSecondAng(System.DateTime _dt){ return TotalHoursToSecondAng((float)_dt.TimeOfDay.TotalHours); }
+
 		public static int AngToHour(float _ang){ return(((int)(_ang/30.0f))%12); }
 		public static int AngToMinute(float _ang){ return(((int)(_ang*2.0f))%60); }
 		public static int AngToSecond(float _ang){ return(((int)(_ang*120.0f))%60); }
@@ -245,7 +249,7 @@ namespace TmLib{
 		// ----------------
 		// float[,]のメッシュを再分割/統合 
 		public static float[,] DivHeightMapArr(float[,] _heightArr, float _hRate, bool _isUnite=false, int _rndSeed=0){
-			if(_rndSeed!=0){ Random.seed = _rndSeed; }
+			if(_rndSeed!=0){ Random.InitState(_rndSeed); }
 			
 			float[,] retArr = _heightArr;
 			int srcDivX=_heightArr.GetLength(0);
