@@ -7,6 +7,7 @@
 		_MainTex("Fallback texture", 2D) = "black" {}
 		_BumpMap("Normals ", 2D) = "bump" {}
 		_WaterScale ("WaterScale", Range (0.01, 1.0)) = 0.1
+		_GerstnerIntensity("Per vertex displacement", Float) = 1.0 // for WaterInclude
 		_GSteepness("Wave Steepness", Vector) = (1.0, 1.0, 1.0, 1.0)
 		_GAmplitude("Wave Amplitude", Vector) = (0.3 ,0.35, 0.25, 0.25)
 		_GFrequency("Wave Frequency", Vector) = (1.3, 1.35, 1.25, 1.25)
@@ -82,7 +83,7 @@
 //			o.vertex = UnityObjectToClipPos(v.vertex);
 			o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
 
-			float d = abs(sin(_Time.x));
+			float d = sin(_Time.y)*0.5+0.5;
 			o.uv = float3((worldSpaceVertex.xz+ worldSpaceVertex.yy)*_WaterScale,d); // TRANSFORM_TEX(v.uv, _MainTex);
 
 			o.viewInterpolator.xyz = worldSpaceVertex - _WorldSpaceCameraPos;
@@ -96,14 +97,14 @@
 		fixed4 frag(v2f i) : SV_Target
 		{
 			/*
+			*/
 			half3 worldNormal = PerPixelNormal(_BumpMap, i.bumpCoords, VERTEX_WORLD_NORMAL, PER_PIXEL_DISPLACE);
 			half3 viewVector = normalize(i.viewInterpolator.xyz);
-			fixed4 bunpCol = tex2D(_BumpMap, i.bumpCoords.xy * 10);
-			bunpCol.rgb *= abs(dot(worldNormal, viewVector));
-			*/
+			half nmlCol = abs(dot(worldNormal, viewVector));
 
 			// sample the texture
 			fixed4 col = tex2D(_MainTex, i.uv.xy) * i.uv.z + tex2D(_MainTex, 1-i.uv.xy) * (1-i.uv.z); //tex2D(_BumpMap, i.bumpCoords);
+			col.rgb *= (1-nmlCol);
 			col.rgb = col.rgb * _BubbleColor.rgb + (1 - col.rgb)*_WaterColor.rgb;
 
 			// apply fog
