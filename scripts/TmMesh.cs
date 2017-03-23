@@ -89,43 +89,49 @@ namespace TmLib
 			return CreateLineGrid(_width, _height, AxisType.XY, new Color(0.5f, 0.5f, 0.5f, 1.0f), false);
 		}
 
+		public enum LineMeshType{
+			LineStrip,
+			Ring,
+			Lines
+		};
 		public static Mesh CreateLine(Vector3[] _vertices, bool _isRing)
 		{
 			return CreateLine(_vertices, _isRing, new Color(0.5f, 0.5f, 0.5f, 1.0f));
 		}
-		public static Mesh CreateLine(Vector3[] _vertices, bool _isRing, Color _color)
+		public static Mesh CreateLine (Vector3[] _vertices, LineMeshType _lineMeshType, Color _color)
 		{
+			bool isRing = (_lineMeshType == LineMeshType.Ring);
+			MeshTopology topology = (_lineMeshType == LineMeshType.Lines) ? MeshTopology.Lines : MeshTopology.LineStrip;
 			int vertNum = _vertices.Length;
-			int[] incides = new int[_isRing ? (vertNum * 2) : (vertNum - 1) * 2];
+			int[] incides = new int[isRing ? vertNum+1 : vertNum];
 			Vector2[] uv = new Vector2[vertNum];
 			Color[] colors = new Color[vertNum];
 			Vector3[] normals = new Vector3[vertNum];
 
-			for (int ii = 0; ii < vertNum; ++ii)
+			for (int ii = 0; ii < _vertices.Length; ++ii)
 			{
-				if (ii < (vertNum - 1))
+				Vector3 normal = new Vector3(0.0f, 1.0f, 0.0f);
+				if (ii < (_vertices.Length - 1))
 				{
-					incides[ii * 2 + 0] = ii;
-					incides[ii * 2 + 1] = ii + 1;
+					normal = _vertices [ii + 1] - _vertices [ii];
 				}
+				incides[ii] = ii;
 				uv[ii] = new Vector2(_vertices[ii].x + 0.5f, _vertices[ii].y + 0.5f);
 				colors[ii] = _color;
-				normals[ii] = new Vector3(0.0f, 1.0f, 0.0f);
+				normals[ii] = normal;
 			}
-			if (_isRing)
+			if (isRing)
 			{
-				incides[(vertNum - 1) * 2 + 0] = (vertNum - 1);
-				incides[(vertNum - 1) * 2 + 1] = 0;
+				incides[vertNum] = 0;
 			}
 			Mesh mesh = new Mesh();
 			mesh.vertices = _vertices;
-			mesh.SetIndices(incides, MeshTopology.Lines, 0);
 			mesh.uv = uv;
 			mesh.colors = colors;
 			mesh.normals = normals;
 			mesh.RecalculateNormals();
 			mesh.RecalculateBounds();
-			;
+			mesh.SetIndices(incides, topology, 0);
 			return mesh;
 		}
 
@@ -154,7 +160,7 @@ namespace TmLib
 				case AxisType.XZ: vertices[ii] = new Vector3(fx, 0.0f, fy); break;
 				}
 			}
-			return CreateLine(vertices, true, _color);
+			return CreateLine(vertices, LineMeshType.Ring, _color);
 		}
 
 		public static Mesh CreateTileMesh(int _divX, int _divY, AxisType _type = AxisType.XY)
