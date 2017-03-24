@@ -17,7 +17,8 @@
 	}
 		CGINCLUDE
 #include "UnityCG.cginc"
-#include "WaterInclude.cginc"
+//#include "WaterInclude.cginc"
+			#include "Assets/Standard Assets/Environment/Water/Water4/Shaders/WaterInclude.cginc"
 
 		struct appdata
 		{
@@ -31,7 +32,7 @@
 		float4 _MainTex_ST;
 		sampler2D _BumpMap;
 		float4 _BumpMap_ST;
-		float _WaterScale;
+		half4 _WaterScale;
 		
 		uniform float4 _GAmplitude;
 		uniform float4 _GFrequency;
@@ -96,8 +97,6 @@
 
 		fixed4 frag(v2f i) : SV_Target
 		{
-			/*
-			*/
 			half3 worldNormal = PerPixelNormal(_BumpMap, i.bumpCoords, VERTEX_WORLD_NORMAL, PER_PIXEL_DISPLACE);
 			half3 viewVector = normalize(i.viewInterpolator.xyz);
 			half nmlCol = abs(dot(worldNormal, viewVector));
@@ -116,7 +115,7 @@
 
 		SubShader
 		{
-			Tags{ "RenderType" = "Opaque" }
+			Tags{ "RenderType" = "Opaque" "Queue"="Geometry+10"}
 			LOD 100
 
 			Pass

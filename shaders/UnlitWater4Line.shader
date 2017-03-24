@@ -4,9 +4,9 @@
 	{
 		_Color("MainColor", Color) = (1,1,1,1)
 		_SurfaceHeight("water surface height", float) = 0
-		_Freq("Wave Freq", float) = 1
-		_WaveWidth("Wave Width", float) = 1
-		_WaveAmp("Wave Amp", float) = 5
+		_LineFreq("Line Freq", float) = 1
+		_LineWidth("Line Width", float) = 1
+		_LineAmp("Line Amp", float) = 5
 		_GSteepness("Wave Steepness", Vector) = (1.0, 1.0, 1.0, 1.0)
 		_GAmplitude("Wave Amplitude", Vector) = (0.3 ,0.35, 0.25, 0.25)
 		_GFrequency("Wave Frequency", Vector) = (1.3, 1.35, 1.25, 1.25)
@@ -33,7 +33,8 @@
 #pragma multi_compile WATER_VERTEX_DISPLACEMENT_ON WATER_VERTEX_DISPLACEMENT_ON
 
 			#include "UnityCG.cginc"
-			#include "WaterInclude.cginc"
+//			#include "WaterInclude.cginc"
+			#include "Assets/Standard Assets/Environment/Water/Water4/Shaders/WaterInclude.cginc"
 
 			struct appdata
 			{
@@ -52,9 +53,9 @@
 
 			float4 _Color;
 			float _SurfaceHeight;
-			float _Freq;
-			float _WaveWidth;
-			float _WaveAmp;
+			float _LineFreq;
+			float _LineWidth;
+			float _LineAmp;
 			uniform float4 _GAmplitude;
 			uniform float4 _GFrequency;
 			uniform float4 _GSteepness;
@@ -70,8 +71,7 @@
 				o.vertex = UnityWorldToClipPos(wPos.xyz);
 
 				// for wave
-				half3 worldSpaceVertex = mul(unity_ObjectToWorld, v.vertex).xyz;
-				half3 vtxForAni = (worldSpaceVertex).xzz;
+				half3 vtxForAni = wPos.xzz;
 				half3 nrml;
 				half3 offsets;
 				Gerstner(
@@ -83,10 +83,10 @@
 					_GDirectionAB,												// direction # 1, 2
 					_GDirectionCD												// direction # 3, 4
 				);
-				o.surfHeight = _SurfaceHeight + offsets.y*0.5;
+				o.surfHeight = _SurfaceHeight + offsets.y;
 
-				half4 COS = cos(_Time.yzyz*_Freq + wPos.xxzz*_WaveWidth);
-				o.ofsHeight = ((COS.x + COS.z)-1)*_WaveAmp;
+				half4 COS = cos((_Time.yzyz+wPos)*_LineFreq);
+				o.ofsHeight = ((COS.x + COS.z)+2)*_LineAmp;
 
 				UNITY_TRANSFER_FOG(o,o.vertex);
 				return o;
@@ -94,8 +94,9 @@
 			
 			fixed4 frag (v2f i) : SV_Target
 			{
-				clip( 0.5+i.wPos.y - i.surfHeight);
-				clip(-i.wPos.y + i.surfHeight + _WaveAmp - i.ofsHeight);
+				clip( -(i.wPos.y - i.surfHeight)+_LineWidth+i.ofsHeight);
+				clip( i.wPos.y - i.surfHeight+0.1+_LineWidth);
+//				clip(-i.wPos.y + i.surfHeight + _LineAmp - i.ofsHeight);
 
 			// sample the texture
 				fixed4 col = _Color;
