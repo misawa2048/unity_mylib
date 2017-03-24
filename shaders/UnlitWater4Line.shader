@@ -7,6 +7,7 @@
 		_LineFreq("Line Freq", float) = 1
 		_LineWidth("Line Width", float) = 1
 		_LineAmp("Line Amp", float) = 5
+		_LineFade("Line fade", Range(0,1)) = 0
 		_GSteepness("Wave Steepness", Vector) = (1.0, 1.0, 1.0, 1.0)
 		_GAmplitude("Wave Amplitude", Vector) = (0.3 ,0.35, 0.25, 0.25)
 		_GFrequency("Wave Frequency", Vector) = (1.3, 1.35, 1.25, 1.25)
@@ -20,7 +21,7 @@
 		LOD 100
 		ZTest LEqual
 		Offset 0,-10
-		Blend ONE One //SrcAlpha OneMinusSrcAlpha
+		Blend SrcAlpha OneMinusSrcAlpha
 		ZWrite OFF
 
 		Pass
@@ -51,11 +52,12 @@
 				float surfHeight : WAVE_H;
 			};
 
-			float4 _Color;
-			float _SurfaceHeight;
-			float _LineFreq;
-			float _LineWidth;
-			float _LineAmp;
+			half4 _Color;
+			half _SurfaceHeight;
+			half _LineFreq;
+			half _LineWidth;
+			half _LineAmp;
+			half _LineFade;
 			uniform float4 _GAmplitude;
 			uniform float4 _GFrequency;
 			uniform float4 _GSteepness;
@@ -94,12 +96,16 @@
 			
 			fixed4 frag (v2f i) : SV_Target
 			{
-				clip( -(i.wPos.y - i.surfHeight)+_LineWidth+i.ofsHeight);
-				clip( i.wPos.y - i.surfHeight+0.1+_LineWidth);
-//				clip(-i.wPos.y + i.surfHeight + _LineAmp - i.ofsHeight);
+				float top = -(i.wPos.y - i.surfHeight) + _LineWidth + i.ofsHeight;
+				float bottom = i.wPos.y - i.surfHeight + _LineWidth + _GAmplitude.y;
+				clip(top);
+				clip(bottom);
+
+				float r = min(top / bottom+(1-_LineFade),1);
 
 			// sample the texture
 				fixed4 col = _Color;
+				col.a *= r;
 				// apply fog
 				UNITY_APPLY_FOG(i.fogCoord, col);
 				return col;

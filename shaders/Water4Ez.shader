@@ -32,7 +32,7 @@
 		float4 _MainTex_ST;
 		sampler2D _BumpMap;
 		float4 _BumpMap_ST;
-		half4 _WaterScale;
+		half _WaterScale;
 		
 		uniform float4 _GAmplitude;
 		uniform float4 _GFrequency;
