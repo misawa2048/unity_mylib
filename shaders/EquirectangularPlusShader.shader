@@ -1,4 +1,6 @@
-﻿Shader "Hidden/EquirectangularPlusShader"
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "Hidden/EquirectangularPlusShader"
 {
 	Properties
 	{
@@ -14,6 +16,7 @@
 		CGINCLUDE
 		#pragma multi_compile _ USE_HFLIP
 		#pragma multi_compile _ USE_DOMEMODE
+		#pragma multi_compile _ IS_SQUARE
 
 		#include "UnityCG.cginc"
 
@@ -40,8 +43,20 @@
 			v2f vert (appdata v)
 			{
 				v2f o;
-				o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
-				o.uv = v.uv;
+				o.vertex = UnityObjectToClipPos(v.vertex);
+				#ifdef IS_SQUARE
+					float rate = _ScreenParams.x/_ScreenParams.y;
+					if(rate>1){
+						o.uv.x = (1-rate)*0.5+ v.uv.x*rate;
+						o.uv.y = v.uv.y;
+					}else{
+						rate = 1/rate;
+						o.uv.x = v.uv.x;
+						o.uv.y = (1-rate)*0.5+ v.uv.y*rate;
+					}
+				#else
+					o.uv = v.uv;
+				#endif
 				return o;
 			}
 

@@ -71,6 +71,8 @@ namespace QTools {
 		public Mode mode;
 		[TooltipAttribute("左右反転したい場合はON")]
 		public bool hFlip;
+		[TooltipAttribute("正方形に投影したい場合はON")]
+		public bool isSquare;
 
 
 		Camera cubeCam;
@@ -95,6 +97,7 @@ namespace QTools {
 				} else {
 					cubeCam = GetComponent<Camera>();
 				}
+				cubeCam.orthographic = false;
 			}
 
 			// CubeMapのサイズを2の累乗に合わせる（最小256, 最大4096）
@@ -138,6 +141,11 @@ namespace QTools {
 			else
 				equirectangularMaterial.DisableKeyword("USE_DOMEMODE");
 
+			if (isSquare)
+				equirectangularMaterial.EnableKeyword ("IS_SQUARE");
+			else
+				equirectangularMaterial.DisableKeyword("IS_SQUARE");
+			
 			// CubeMapをレンダリングする
 			_on_cube_render = true;
 			cubeCam.RenderToCubemap(cubeTexture, 63);
