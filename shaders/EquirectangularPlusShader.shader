@@ -7,6 +7,7 @@ Shader "Hidden/EquirectangularPlusShader"
 		_MainTex ("CubeMap", CUBE) = "white" {}
 		_Rotarion ("Rotation", Vector) = (1, 0, 0, 0)
 		_Mode ("Mode", Int) = 0
+		_Zoom ("Zoom", Float) = 0
 	}
 	SubShader
 	{
@@ -28,6 +29,11 @@ Shader "Hidden/EquirectangularPlusShader"
 			#pragma vertex vert
 			#pragma fragment frag
 			
+			samplerCUBE _MainTex;
+			float4 _Rotation;
+			int _Mode;
+			float _Zoom;
+
 			struct appdata
 			{
 				float4 vertex : POSITION;
@@ -57,6 +63,9 @@ Shader "Hidden/EquirectangularPlusShader"
 				#else
 					o.uv = v.uv;
 				#endif
+				#ifdef USE_DOMEMODE
+				o.uv = o.uv*(1-_Zoom)+_Zoom*0.5;
+				#endif
 				return o;
 			}
 
@@ -65,14 +74,20 @@ Shader "Hidden/EquirectangularPlusShader"
 				return 2.0 * dot(q.xyz, vec) * q.xyz + (q.w*q.w - dot(q.xyz, q.xyz)) * vec + 2.0 * q.w * cross(q.xyz, vec);
 			}
 			
-			samplerCUBE _MainTex;
-			float4 _Rotation;
-			int _Mode;
-
 			fixed4 frag (v2f i) : SV_Target
 			{
 				float2 coord;
 				float3 pos;
+
+				#ifdef IS_SQUARE
+				#ifdef USE_DOMEMODE
+				if(i.uv.x<_Zoom*0.5){ return fixed4(0, 0, 0, 1); }
+				if(i.uv.x>(1-_Zoom*0.5)){ return fixed4(0, 0, 0, 1); }
+				#else
+				if(i.uv.x<0){ return fixed4(0, 0, 0, 1); }
+				if(i.uv.x>1){ return fixed4(0, 0, 0, 1); }
+				#endif
+				#endif
 
 				#ifdef USE_HFLIP
 					i.uv.x = 1-i.uv.x;
@@ -87,6 +102,8 @@ Shader "Hidden/EquirectangularPlusShader"
 				#else
 				// Dome Master Mode
 					coord.y = (0.5 - distance(i.uv, 0.5)) * UNITY_PI;
+//					clip(coord.y < 0); // いらない部分をクリップ
+					if(coord.y < _Zoom*3.14*0.5){ return fixed4(0, 0, 0, 1); } // _Zoom
 					pos = float3(-0.5+i.uv.x, sin(coord.y), 0.5-i.uv.y);
 					pos.xz *= sqrt(1 - pos.y * pos.y) / distance(pos.xz, 0);
 				#endif
@@ -95,12 +112,6 @@ Shader "Hidden/EquirectangularPlusShader"
 				pos = rotation(_Rotation, pos);
 
 				fixed4 col = texCUBE(_MainTex, pos);
-
-				#ifdef USE_DOMEMODE
-				// add black mask when DomeMaster mode.
-//				if (_Mode == 1 && coord.y < 0) col = fixed4(0, 0, 0, 1);
-				if (coord.y < 0) col = fixed4(0, 0, 0, 1);
-				#endif
 
 				return col;
 			}
