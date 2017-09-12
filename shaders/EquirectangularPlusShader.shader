@@ -69,11 +69,6 @@ Shader "Hidden/EquirectangularPlusShader"
 				return o;
 			}
 
-			float3 rotation(float4 q, float3 vec)
-			{
-				return 2.0 * dot(q.xyz, vec) * q.xyz + (q.w*q.w - dot(q.xyz, q.xyz)) * vec + 2.0 * q.w * cross(q.xyz, vec);
-			}
-			
 			fixed4 frag (v2f i) : SV_Target
 			{
 				float2 coord;
@@ -108,8 +103,8 @@ Shader "Hidden/EquirectangularPlusShader"
 					pos.xz *= sqrt(1 - pos.y * pos.y) / distance(pos.xz, 0);
 				#endif
 
-				// apply camera rotation
-				pos = rotation(_Rotation, pos);
+				// apply camera rot (http://www.geeks3d.com/20141201/how-to-rotate-a-vertex-by-a-quaternion-in-glsl/)
+				pos = pos + 2.0 * cross(_Rotation.xyz, cross(_Rotation.xyz, pos) + _Rotation.w * pos);
 
 				fixed4 col = texCUBE(_MainTex, pos);
 
