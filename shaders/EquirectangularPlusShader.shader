@@ -8,6 +8,7 @@ Shader "Hidden/EquirectangularPlusShader"
 		_Rotarion ("Rotation", Vector) = (1, 0, 0, 0)
 		_Mode ("Mode", Int) = 0
 		_Zoom ("Zoom", Float) = 0
+		_Brightness ("Brightness", Float) = 1
 	}
 	SubShader
 	{
@@ -33,6 +34,7 @@ Shader "Hidden/EquirectangularPlusShader"
 			float4 _Rotation;
 			int _Mode;
 			float _Zoom;
+			float _Brightness;
 
 			struct appdata
 			{
@@ -106,7 +108,7 @@ Shader "Hidden/EquirectangularPlusShader"
 				// apply camera rot (http://www.geeks3d.com/20141201/how-to-rotate-a-vertex-by-a-quaternion-in-glsl/)
 				pos = pos + 2.0 * cross(_Rotation.xyz, cross(_Rotation.xyz, pos) + _Rotation.w * pos);
 
-				fixed4 col = texCUBE(_MainTex, pos);
+				fixed4 col = texCUBE(_MainTex, pos)*_Brightness;
 
 				return col;
 			}

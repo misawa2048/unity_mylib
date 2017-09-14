@@ -5,14 +5,13 @@ using UnityEngine.Rendering;
 !!Forked from base script&shader(this script and EquirectangularPlusShader)
 !!左右反転を追加しました。
 !!シェーダーマルチコンパイル対応しました
+!!正方形出力対応しました
 
 EquirectangularCamera: Cameraを中心とした全球を正距円筒図法やドームマスターにレンダリングするスクリプト
 
 【使い方】
 ・このスクリプトをCameraオブジェクトにアタッチすると、Cameraを中心とした全球の正距円筒図法
 　　（モードによってはドームマスター）でレンダリングされます。
-・実際に生成される画像のサイズ（ピクセル数）は画面サイズに依存します。そのため、実際には正距円筒図法
-　　（やドームマスター）で生成された画像が、画面サイズに応じて（縦横比を保たず）拡縮されて表示されます。
 ・このスクリプトはエディターモードでも動作するので、編集中もリアルタイムに表示を確認することができます。
 
 正距円筒図法での表示：
@@ -27,7 +26,6 @@ EquirectangularCamera: Cameraを中心とした全球を正距円筒図法やド
 
 
 【パラメータ】
-cubeResolution：　全球を描画するCubeMapの一辺のピクセル数です。2の累乗（256〜4096）に指定する必要があります。
 antiAliasing：　CubeMapに描画する際にアンチエイリアシングをかけるピクセル数を指定します。
 mode：　生成するイメージの種類を、正距円筒図法かドームマスターが選択できます。
 
@@ -50,22 +48,32 @@ namespace QTools {
 	// このコンポーネントはひとつしかアタッチできません。
 	[DisallowMultipleComponent]
 	public class EquirectangularCamera : MonoBehaviour {
+		public enum QubeResolution{
+			VeryLow = 256,
+			Low = 512,
+			Middle = 1024,
+			High = 2048,
+//			VeryHigh = 4096,
+		}
 
 		[TooltipAttribute("内部で確保するCubeMapの解像度を一辺のピクセル数で指定してください")]
-		public int cubeResolution = 512;
+		public QubeResolution resolution = QubeResolution.Middle;
+		[HideInInspector]
+		public int cubeResolution;
 
 		public enum Antialias {
 			None = 1,
 			Two = 2,
 			Four = 4,
-			Eight = 8
+			Eight = 8,
 		}
+
 		[TooltipAttribute("レンダリング時にアンチエイリアスをかけるピクセル数")]
 		public Antialias antiAliasing = Antialias.None;
 
 		public enum Mode {
 			Equirectangular = 0,
-			DomeMaster = 1
+			DomeMaster = 1,
 		}
 		[TooltipAttribute("レンダリングする図法を正距円筒図法かドームマスターから選択してください")]
 		public Mode mode;
@@ -73,7 +81,10 @@ namespace QTools {
 		public bool hFlip;
 		[TooltipAttribute("正方形に投影したい場合はON")]
 		public bool isSquare;
-
+		[Range(-0.99f,0.5f)]
+		public float zoom=1;
+		[Range(0.5f,4.0f)]
+		public float brightness=1.0f;
 
 		Camera cubeCam;
 		RenderTexture cubeTexture;
@@ -101,8 +112,9 @@ namespace QTools {
 			}
 
 			// CubeMapのサイズを2の累乗に合わせる（最小256, 最大4096）
-			if (_cube_resolution != cubeResolution) {
-				_cube_resolution = cubeResolution = Mathf.Clamp(Mathf.NextPowerOfTwo(cubeResolution), 256, 4096);
+			var cuveRes = (int)resolution;
+			if (_cube_resolution != (int)resolution) {
+				_cube_resolution = (int)resolution;
 			}
 			// 現在のCubeMapのサイズ、アンチエイリアスの値が合わなくなっていたらCubeMapを破棄する。
 			if (cubeTexture && cubeTexture.width != _cube_resolution || _antiAliasing != (int)antiAliasing) {
@@ -116,7 +128,7 @@ namespace QTools {
 			_antiAliasing = (int)antiAliasing;
 			// CubeMapが無ければ生成する。
 			if (! cubeTexture) {
-				cubeTexture = new RenderTexture(_cube_resolution, _cube_resolution, 24);
+				cubeTexture = new RenderTexture(_cube_resolution, _cube_resolution, 0,RenderTextureFormat.ARGB32);
 				cubeTexture.antiAliasing = _antiAliasing;
 				cubeTexture.dimension = UnityEngine.Rendering.TextureDimension.Cube;
 				cubeTexture.hideFlags = HideFlags.HideAndDontSave;
@@ -131,6 +143,8 @@ namespace QTools {
 			// カメラの回転をシェーダーの変数に設定する。
 			Quaternion rot = transform.rotation;
 			equirectangularMaterial.SetVector("_Rotation", new Vector4(rot.x, rot.y, rot.z, rot.w));
+			equirectangularMaterial.SetFloat ("_Zoom", zoom);
+			equirectangularMaterial.SetFloat("_Brightness", brightness);
 			if (hFlip)
 				equirectangularMaterial.EnableKeyword ("USE_HFLIP");
 			else
@@ -145,10 +159,11 @@ namespace QTools {
 				equirectangularMaterial.EnableKeyword ("IS_SQUARE");
 			else
 				equirectangularMaterial.DisableKeyword("IS_SQUARE");
-			
+
 			// CubeMapをレンダリングする
 			_on_cube_render = true;
-			cubeCam.RenderToCubemap(cubeTexture, 63);
+			int cubeMask = 63; //(mode == Mode.DomeMaster) ? (63 - 8) : 63; //zoomがあるので下面もいる
+			cubeCam.RenderToCubemap(cubeTexture, cubeMask);
 			_on_cube_render = false;
 		}
 
@@ -168,7 +183,7 @@ namespace QTools {
 
 		void OnRenderImage(RenderTexture src, RenderTexture dest)
 		{
-			if (_on_cube_render || ! cubeTexture)
+			if (_on_cube_render || !cubeTexture)
 				Graphics.Blit(src, dest);
 			else
 				Graphics.Blit(cubeTexture, dest, equirectangularMaterial); //, (int)mode);
