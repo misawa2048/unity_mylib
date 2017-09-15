@@ -15,9 +15,6 @@ EquirectangularCamera: Cameraを中心とした全球を正距円筒図法やド
 ・このスクリプトはエディターモードでも動作するので、編集中もリアルタイムに表示を確認することができます。
 
 正距円筒図法での表示：
-・球面上に表示するコンテンツを作成しやすくするために、（カメラは中心にあっても）外側から見た様子が
-　　レンダリングされます。ただし、カメラから見たオブジェクトの前後関係が逆転するため、表面に見せたい
-　　オブジェクトは中心に近い側に配置してください。
 ・生成される画面の中心はCameraの背面（-Z方向）になります。
 
 ドームマスターでの表示：
@@ -81,10 +78,13 @@ namespace QTools {
 		public bool hFlip;
 		[TooltipAttribute("正方形に投影したい場合はON")]
 		public bool isSquare;
-		[Range(-0.99f,0.5f)]
-		public float zoom=1;
+		[Range(-179f,90f)]
+		public float displacement = 0;
 		[Range(0.5f,4.0f)]
 		public float brightness=1.0f;
+
+		//Capture tool の　OnRenderImageで使用
+		public bool isCaptureImage { get { return !(_on_cube_render || !cubeTexture); } }
 
 		Camera cubeCam;
 		RenderTexture cubeTexture;
@@ -143,7 +143,7 @@ namespace QTools {
 			// カメラの回転をシェーダーの変数に設定する。
 			Quaternion rot = transform.rotation;
 			equirectangularMaterial.SetVector("_Rotation", new Vector4(rot.x, rot.y, rot.z, rot.w));
-			equirectangularMaterial.SetFloat ("_Zoom", zoom);
+			equirectangularMaterial.SetFloat ("_Zoom", displacement/180f);
 			equirectangularMaterial.SetFloat("_Brightness", brightness);
 			if (hFlip)
 				equirectangularMaterial.EnableKeyword ("USE_HFLIP");
@@ -183,7 +183,7 @@ namespace QTools {
 
 		void OnRenderImage(RenderTexture src, RenderTexture dest)
 		{
-			if (_on_cube_render || !cubeTexture)
+			if (!isCaptureImage)
 				Graphics.Blit(src, dest);
 			else
 				Graphics.Blit(cubeTexture, dest, equirectangularMaterial); //, (int)mode);

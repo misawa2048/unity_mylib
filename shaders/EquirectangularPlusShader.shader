@@ -67,6 +67,8 @@ Shader "Hidden/EquirectangularPlusShader"
 				#endif
 				#ifdef USE_DOMEMODE
 				o.uv = o.uv*(1-_Zoom)+_Zoom*0.5;
+				#else
+				o.uv.y -= _Zoom;
 				#endif
 				return o;
 			}
@@ -75,6 +77,11 @@ Shader "Hidden/EquirectangularPlusShader"
 			{
 				float2 coord;
 				float3 pos;
+
+				#ifndef USE_DOMEMODE
+				if(i.uv.y<0){ return fixed4(0, 0, 0, 1); }
+				if(i.uv.y>1){ return fixed4(0, 0, 0, 1); }
+				#endif
 
 				#ifdef IS_SQUARE
 				#ifdef USE_DOMEMODE
