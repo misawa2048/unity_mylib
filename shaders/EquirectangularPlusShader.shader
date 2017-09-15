@@ -116,6 +116,8 @@ Shader "Hidden/EquirectangularPlusShader"
 				pos = pos + 2.0 * cross(_Rotation.xyz, cross(_Rotation.xyz, pos) + _Rotation.w * pos);
 
 				fixed4 col = texCUBE(_MainTex, pos)*_Brightness;
+				float y =  0.3*col.r + 0.59*col.g + 0.11*col.b;
+				col +=(1-y) * (_Brightness-1)*0.25;
 
 				return col;
 			}
