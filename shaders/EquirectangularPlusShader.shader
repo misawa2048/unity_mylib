@@ -8,6 +8,7 @@ Shader "Hidden/EquirectangularPlusShader"
 		_Rotarion ("Rotation", Vector) = (1, 0, 0, 0)
 		_Mode ("Mode", Int) = 0
 		_Zoom ("Zoom", Float) = 0
+		_Margin ("Margin", Float) = 0
 		_Brightness ("Brightness", Float) = 1
 	}
 	SubShader
@@ -34,6 +35,7 @@ Shader "Hidden/EquirectangularPlusShader"
 			float4 _Rotation;
 			int _Mode;
 			float _Zoom;
+			float _Margin;
 			float _Brightness;
 
 			struct appdata
@@ -65,6 +67,7 @@ Shader "Hidden/EquirectangularPlusShader"
 				#else
 					o.uv = v.uv;
 				#endif
+				o.uv = o.uv*(1+_Margin*2)-_Margin;
 				#ifdef USE_DOMEMODE
 				o.uv = o.uv*(1-_Zoom)+_Zoom*0.5;
 				#else
@@ -77,19 +80,20 @@ Shader "Hidden/EquirectangularPlusShader"
 			{
 				float2 coord;
 				float3 pos;
+				fixed4 baseCol = fixed4(0, 0, 0, 0);
 
 				#ifndef USE_DOMEMODE
-				if(i.uv.y<0){ return fixed4(0, 0, 0, 1); }
-				if(i.uv.y>1){ return fixed4(0, 0, 0, 1); }
+				if(i.uv.y<0){ return baseCol; }
+				if(i.uv.y>1){ return baseCol; }
 				#endif
 
 				#ifdef IS_SQUARE
 				#ifdef USE_DOMEMODE
-				if(i.uv.x<_Zoom*0.5){ return fixed4(0, 0, 0, 1); }
-				if(i.uv.x>(1-_Zoom*0.5)){ return fixed4(0, 0, 0, 1); }
+				if(i.uv.x<_Zoom*0.5){ return baseCol; }
+				if(i.uv.x>(1-_Zoom*0.5)){ return baseCol; }
 				#else
-				if(i.uv.x<0){ return fixed4(0, 0, 0, 1); }
-				if(i.uv.x>1){ return fixed4(0, 0, 0, 1); }
+				if(i.uv.x<0){ return baseCol; }
+				if(i.uv.x>1){ return baseCol; }
 				#endif
 				#endif
 
@@ -107,7 +111,7 @@ Shader "Hidden/EquirectangularPlusShader"
 				// Dome Master Mode
 					coord.y = (0.5 - distance(i.uv, 0.5)) * UNITY_PI;
 //					clip(coord.y < 0); // いらない部分をクリップ
-					if(coord.y < _Zoom*3.14*0.5){ return fixed4(0, 0, 0, 1); } // _Zoom
+					if(coord.y < _Zoom*3.14*0.5){ return baseCol; } // _Zoom
 					pos = float3(-0.5+i.uv.x, sin(coord.y), 0.5-i.uv.y);
 					pos.xz *= sqrt(1 - pos.y * pos.y) / distance(pos.xz, 0);
 				#endif

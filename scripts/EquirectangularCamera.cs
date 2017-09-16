@@ -50,7 +50,7 @@ namespace QTools {
 			Low = 512,
 			Middle = 1024,
 			High = 2048,
-//			VeryHigh = 4096,
+			VeryHigh = 4096,
 		}
 
 		[TooltipAttribute("内部で確保するCubeMapの解像度を一辺のピクセル数で指定してください")]
@@ -78,9 +78,11 @@ namespace QTools {
 		public bool hFlip;
 		[TooltipAttribute("正方形に投影したい場合はON")]
 		public bool isSquare;
-		[Range(-179f,90f)]
+		[Range(-179f,90f),TooltipAttribute("変位またはズーム")]
 		public float displacement = 0;
-		[Range(0.5f,4.0f)]
+		[Range(-0.25f,0.25f),TooltipAttribute("外枠マージン(短辺基準)")]
+		public float margin=0.0f;
+		[Range(0.5f,4.0f),TooltipAttribute("輝度調整")]
 		public float brightness=1.0f;
 
 		//Capture tool の　OnRenderImageで使用
@@ -144,6 +146,7 @@ namespace QTools {
 			Quaternion rot = transform.rotation;
 			equirectangularMaterial.SetVector("_Rotation", new Vector4(rot.x, rot.y, rot.z, rot.w));
 			equirectangularMaterial.SetFloat ("_Zoom", displacement/180f);
+			equirectangularMaterial.SetFloat("_Margin", margin);
 			equirectangularMaterial.SetFloat("_Brightness", brightness);
 			if (hFlip)
 				equirectangularMaterial.EnableKeyword ("USE_HFLIP");
