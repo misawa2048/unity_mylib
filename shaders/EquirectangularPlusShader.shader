@@ -119,9 +119,9 @@ Shader "Hidden/EquirectangularPlusShader"
 				// apply camera rot (http://www.geeks3d.com/20141201/how-to-rotate-a-vertex-by-a-quaternion-in-glsl/)
 				pos = pos + 2.0 * cross(_Rotation.xyz, cross(_Rotation.xyz, pos) + _Rotation.w * pos);
 
-				fixed4 col = texCUBE(_MainTex, pos)*_Brightness;
+				fixed4 col = texCUBE(_MainTex, pos)*float4(_Brightness,_Brightness,_Brightness,1);
 				float y =  0.3*col.r + 0.59*col.g + 0.11*col.b;
-				col +=(1-y) * (_Brightness-1)*0.25;
+				col.rgb +=(1-y) * (_Brightness-1)*0.25;
 
 				return col;
 			}
