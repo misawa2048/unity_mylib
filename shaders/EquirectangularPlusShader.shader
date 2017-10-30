@@ -109,7 +109,7 @@ Shader "Hidden/EquirectangularPlusShader"
 					pos.xz *= sqrt(1 - pos.y * pos.y);
 				#else
 				// Dome Master Mode
-					coord.y = (0.5 - distance(i.uv, 0.5)) * UNITY_PI;
+					coord.y = (0.5 - max(distance(i.uv, 0.5),0.004)) * UNITY_PI; //0.004:for centerposbug
 //					clip(coord.y < 0); // いらない部分をクリップ
 					if(coord.y < _Zoom*3.14*0.5){ return baseCol; } // _Zoom
 					pos = float3(-0.5+i.uv.x, sin(coord.y), 0.5-i.uv.y);
@@ -121,8 +121,7 @@ Shader "Hidden/EquirectangularPlusShader"
 
 				fixed4 col = texCUBE(_MainTex, pos)*float4(_Brightness,_Brightness,_Brightness,1);
 				float y =  0.3*col.r + 0.59*col.g + 0.11*col.b;
-				col.rgb +=(1-y) * (_Brightness-1)*0.25;
-
+				col.rgb +=((1-y) * (_Brightness-1)*0.25)*col.a;
 				return col;
 			}
 			ENDCG
