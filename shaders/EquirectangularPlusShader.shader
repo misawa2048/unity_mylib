@@ -104,7 +104,7 @@ Shader "Hidden/EquirectangularPlusShader"
 				#ifndef USE_DOMEMODE
 				// Equirectangular Mode
 					coord.x = i.uv.x * 2.0 * UNITY_PI + UNITY_PI;
-					coord.y = (i.uv.y - 0.5) * UNITY_PI;
+					coord.y = min(0.496,max(-0.496,(i.uv.y - 0.5)))*UNITY_PI; //0.496:for topbottomlinebug
 					pos = float3(sin(coord.x), sin(coord.y), -cos(coord.x));
 					pos.xz *= sqrt(1 - pos.y * pos.y);
 				#else
