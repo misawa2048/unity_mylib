@@ -100,6 +100,13 @@ namespace QTools {
 		bool useRuntimeCamera = false;
 
 		void Start(){
+			// 図法変換用マテリアルが無ければ生成する。
+			if (! equirectangularMaterial) {
+				Shader shader = Shader.Find("Hidden/EquirectangularPlusShader");
+				equirectangularMaterial = new Material(shader);
+				equirectangularMaterial.hideFlags = HideFlags.HideAndDontSave;
+			}
+
 			updateShaderSettings ();
 		}
 
@@ -139,12 +146,6 @@ namespace QTools {
 				cubeTexture.antiAliasing = _antiAliasing;
 				cubeTexture.dimension = UnityEngine.Rendering.TextureDimension.Cube;
 				cubeTexture.hideFlags = HideFlags.HideAndDontSave;
-			}
-			// 図法変換用マテリアルが無ければ生成する。
-			if (! equirectangularMaterial) {
-				Shader shader = Shader.Find("Hidden/EquirectangularPlusShader");
-				equirectangularMaterial = new Material(shader);
-				equirectangularMaterial.hideFlags = HideFlags.HideAndDontSave;
 			}
 
 			// カメラの回転をシェーダーの変数に設定する。
