@@ -99,6 +99,10 @@ namespace QTools {
 
 		bool useRuntimeCamera = false;
 
+		void Start(){
+			updateShaderSettings ();
+		}
+
 		void LateUpdate () {
 			
 			if (! cubeCam) {
@@ -115,7 +119,7 @@ namespace QTools {
 			}
 
 			// CubeMapのサイズを2の累乗に合わせる（最小256, 最大4096）
-			var cuveRes = (int)resolution;
+//			var cuveRes = (int)resolution;
 			if (_cube_resolution != (int)resolution) {
 				_cube_resolution = (int)resolution;
 			}
@@ -149,23 +153,10 @@ namespace QTools {
 				rot *= Quaternion.FromToRotation (Vector3.up, Vector3.forward);
 			}
 			equirectangularMaterial.SetVector("_Rotation", new Vector4(rot.x, rot.y, rot.z, rot.w));
-			equirectangularMaterial.SetFloat ("_Zoom", displacement/180f);
-			equirectangularMaterial.SetFloat("_Margin", margin);
-			equirectangularMaterial.SetFloat("_Brightness", brightness);
-			if (hFlip)
-				equirectangularMaterial.EnableKeyword ("USE_HFLIP");
-			else
-				equirectangularMaterial.DisableKeyword("USE_HFLIP");
 
-			if (mode == Mode.DomeMaster)
-				equirectangularMaterial.EnableKeyword ("USE_DOMEMODE");
-			else
-				equirectangularMaterial.DisableKeyword("USE_DOMEMODE");
-
-			if (isSquare)
-				equirectangularMaterial.EnableKeyword ("IS_SQUARE");
-			else
-				equirectangularMaterial.DisableKeyword("IS_SQUARE");
+			#if UNITY_EDITOR
+			updateShaderSettings ();
+			#endif
 
 			// CubeMapをレンダリングする
 			_on_cube_render = true;
@@ -207,6 +198,37 @@ namespace QTools {
 			}
 			cubeTexture = null;
 			equirectangularMaterial = null;
+		}
+
+		void updateShaderSettings(){
+			equirectangularMaterial.SetFloat ("_Zoom", displacement/180f);
+			equirectangularMaterial.SetFloat("_Margin", margin);
+			equirectangularMaterial.SetFloat("_Brightness", brightness);
+			if (hFlip)
+				equirectangularMaterial.EnableKeyword ("USE_HFLIP");
+			else
+				equirectangularMaterial.DisableKeyword("USE_HFLIP");
+
+			if (mode == Mode.DomeMaster)
+				equirectangularMaterial.EnableKeyword ("USE_DOMEMODE");
+			else
+				equirectangularMaterial.DisableKeyword("USE_DOMEMODE");
+
+			if (isSquare)
+				equirectangularMaterial.EnableKeyword ("IS_SQUARE");
+			else
+				equirectangularMaterial.DisableKeyword("IS_SQUARE");
+
+			if (displacement != 0f) {
+				equirectangularMaterial.EnableKeyword ("USE_ZOOM");
+			}else
+				equirectangularMaterial.DisableKeyword("USE_ZOOM");
+
+			if (brightness != 1f) {
+				equirectangularMaterial.EnableKeyword ("USE_BRIGHTNESS");
+			}else
+				equirectangularMaterial.DisableKeyword("USE_BRIGHTNESS");
+
 		}
 
 	}

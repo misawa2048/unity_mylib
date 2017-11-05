@@ -19,6 +19,8 @@ Shader "Hidden/EquirectangularPlusShader"
 		CGINCLUDE
 		#pragma multi_compile _ USE_HFLIP
 		#pragma multi_compile _ USE_DOMEMODE
+		#pragma multi_compile _ USE_ZOOM
+		#pragma multi_compile _ USE_BRIGHTNESS
 		#pragma multi_compile _ IS_SQUARE
 
 		#include "UnityCG.cginc"
@@ -68,11 +70,13 @@ Shader "Hidden/EquirectangularPlusShader"
 					o.uv = v.uv;
 				#endif
 				o.uv = o.uv*(1+_Margin*2)-_Margin;
+				#ifdef USE_ZOOM
 				#ifdef USE_DOMEMODE
 				o.uv = o.uv*(1-_Zoom)+_Zoom*0.5;
 				#else
 				o.uv.y -= _Zoom;
 				#endif
+				#endif // USE_ZOOM
 				return o;
 			}
 
@@ -89,8 +93,10 @@ Shader "Hidden/EquirectangularPlusShader"
 
 				#ifdef IS_SQUARE
 				#ifdef USE_DOMEMODE
+				#ifdef USE_ZOOM
 				if(i.uv.x<_Zoom*0.5){ return baseCol; }
 				if(i.uv.x>(1-_Zoom*0.5)){ return baseCol; }
+				#endif // USE_ZOOM
 				#else
 				if(i.uv.x<0){ return baseCol; }
 				if(i.uv.x>1){ return baseCol; }
@@ -111,17 +117,22 @@ Shader "Hidden/EquirectangularPlusShader"
 				// Dome Master Mode
 					coord.y = (0.5 - max(distance(i.uv, 0.5),0.004)) * UNITY_PI; //0.004:for centerposbug
 //					clip(coord.y < 0); // いらない部分をクリップ
+					#ifdef USE_ZOOM
 					if(coord.y < _Zoom*3.14*0.5){ return baseCol; } // _Zoom
+					#endif // USE_ZOOM
 					pos = float3(-0.5+i.uv.x, sin(coord.y), 0.5-i.uv.y);
 					pos.xz *= sqrt(1 - pos.y * pos.y) / distance(pos.xz, 0);
 				#endif
 
 				// apply camera rot (http://www.geeks3d.com/20141201/how-to-rotate-a-vertex-by-a-quaternion-in-glsl/)
 				pos = pos + 2.0 * cross(_Rotation.xyz, cross(_Rotation.xyz, pos) + _Rotation.w * pos);
-
-				fixed4 col = texCUBE(_MainTex, pos)*float4(_Brightness,_Brightness,_Brightness,1);
+//				pos.y=sin(pos.y*0.5*UNITY_PI)*0.7;
+				fixed4 col = texCUBE(_MainTex, pos);
+				#ifdef USE_BRIGHTNESS
+				col *= float4(_Brightness,_Brightness,_Brightness,1);
 				float y =  0.3*col.r + 0.59*col.g + 0.11*col.b;
 				col.rgb +=((1-y) * (_Brightness-1)*0.25)*col.a;
+				#endif // USE_BRIGHTNESS
 				return col;
 			}
 			ENDCG
