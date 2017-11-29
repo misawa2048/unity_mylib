@@ -1,11 +1,11 @@
-﻿#define TmLib_SingletonMonoBehaviour_DontDestroyOnLoad
-using UnityEngine;
+﻿using UnityEngine;
 
 // usage: public class xx : TmLib.SingletonMonoBehaviour<xx> {}
 namespace TmLib{
 	public class SingletonMonoBehaviour<T> : MonoBehaviour where T : MonoBehaviour {
 		public const string NAME = "_singleton";
 		//---------------------------------------------------------
+		protected bool isDontDestroy = true;
 		private static T m_Instance = null;
 		public static bool hasInstance{ get { return m_Instance!=null; } }
 		public static T Instance{
@@ -21,9 +21,9 @@ namespace TmLib{
 		protected void Awake () {
 			if(m_Instance==null){
 				m_Instance = FindObjectOfType<T>();
-				#if TmLib_SingletonMonoBehaviour_DontDestroyOnLoad
-				DontDestroyOnLoad(gameObject);
-				#endif
+				if (isDontDestroy) {
+					DontDestroyOnLoad(gameObject);
+				}
 			}else{
 				Destroy(this.gameObject);
 			}
