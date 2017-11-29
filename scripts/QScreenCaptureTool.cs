@@ -57,7 +57,8 @@ namespace QTools {
 		{
 			Graphics.Blit(src, dest);
 			#if !NOEQUCAM
-			if(eqScr.isCaptureImage){
+			if((!eqScr.enabled)||(eqScr.isCaptureImage)){
+//				if(eqScr.isCaptureImage){
 			#endif
 				if (captureSec > 0f) { // continuous capture mode
 					if (cnt < captureNum) {
@@ -65,6 +66,7 @@ namespace QTools {
 						cnt++;
 					} else {
 						GetComponent<Camera> ().targetTexture = null;
+						this.enabled = false;;
 					}
 				} else { // oneshot capture mode
 					if (captureOneshot) {
