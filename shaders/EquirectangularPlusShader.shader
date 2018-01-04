@@ -113,7 +113,7 @@ Shader "Hidden/EquirectangularPlusShader"
 
 				#ifndef USE_DOMEMODE
 				// Equirectangular Mode
-					coord.x = i.uv.x * 2.0 * UNITY_PI + UNITY_PI;
+					coord.x = (i.uv.x * 2.0+1) * UNITY_PI;
 					coord.y = min(0.496,max(-0.496,(i.uv.y - 0.5)))*UNITY_PI; //0.496:for topbottomlinebug
 					pos = float3(sin(coord.x), sin(coord.y), -cos(coord.x));
 					pos.xz *= sqrt(1 - pos.y * pos.y);
@@ -122,7 +122,7 @@ Shader "Hidden/EquirectangularPlusShader"
 					coord.y = (0.5 - max(distance(i.uv, 0.5),0.004)) * UNITY_PI; //0.004:for centerposbug
 //					clip(coord.y < 0); // いらない部分をクリップ
 					#ifdef USE_ZOOM
-					if(coord.y < _Zoom*3.14*0.5){ return baseCol; } // _Zoom
+					if(coord.y < _Zoom*UNITY_PI*0.5){ return baseCol; } // _Zoom
 					#endif // USE_ZOOM
 					pos = float3(-0.5+i.uv.x, sin(coord.y), 0.5-i.uv.y);
 					pos.xz *= sqrt(1 - pos.y * pos.y) / distance(pos.xz, 0);
