@@ -69,6 +69,14 @@ Shader "Hidden/EquirectangularPlusShader"
 				#else
 					o.uv = v.uv;
 				#endif
+				#ifndef USE_DOMEMODE
+				o.uv.x = 1-o.uv.x;
+				#endif
+
+				#ifdef USE_HFLIP
+					o.uv.x = 1-o.uv.x;
+				#endif
+
 				o.uv = o.uv*(1+_Margin*2)-_Margin;
 				#ifdef USE_ZOOM
 				#ifdef USE_DOMEMODE
@@ -101,10 +109,6 @@ Shader "Hidden/EquirectangularPlusShader"
 				if(i.uv.x<0){ return baseCol; }
 				if(i.uv.x>1){ return baseCol; }
 				#endif
-				#endif
-
-				#ifdef USE_HFLIP
-					i.uv.x = 1-i.uv.x;
 				#endif
 
 				#ifndef USE_DOMEMODE

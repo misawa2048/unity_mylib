@@ -46,15 +46,15 @@ namespace QTools {
 	[DisallowMultipleComponent]
 	public class EquirectangularCamera : MonoBehaviour {
 		public enum QubeResolution{
-			VeryLow = 256,
-			Low = 512,
-			Middle = 1024,
-			High = 2048,
-			VeryHigh = 4096,
+			VeryLow256 = 256,
+			Low512 = 512,
+			Middle1K = 1024,
+			High2K = 2048,
+			VeryHigh4K = 4096,
 		}
 
 		[TooltipAttribute("内部で確保するCubeMapの解像度を一辺のピクセル数で指定してください")]
-		public QubeResolution resolution = QubeResolution.Middle;
+		public QubeResolution resolution = QubeResolution.Middle1K;
 		[HideInInspector]
 		public int cubeResolution;
 
@@ -84,6 +84,7 @@ namespace QTools {
 		public float margin=0.0f;
 		[Range(0.5f,4.0f),TooltipAttribute("輝度調整")]
 		public float brightness=1.0f;
+		[TooltipAttribute("正面センター")]
 		public bool forwrdAsCenter=false;
 
 		//Capture tool の　OnRenderImageで使用
@@ -100,13 +101,6 @@ namespace QTools {
 		bool useRuntimeCamera = false;
 
 		void Start(){
-			// 図法変換用マテリアルが無ければ生成する。
-			if (! equirectangularMaterial) {
-				Shader shader = Shader.Find("Hidden/EquirectangularPlusShader");
-				equirectangularMaterial = new Material(shader);
-				equirectangularMaterial.hideFlags = HideFlags.HideAndDontSave;
-			}
-
 			updateShaderSettings ();
 		}
 
@@ -147,11 +141,21 @@ namespace QTools {
 				cubeTexture.dimension = UnityEngine.Rendering.TextureDimension.Cube;
 				cubeTexture.hideFlags = HideFlags.HideAndDontSave;
 			}
+			// 図法変換用マテリアルが無ければ生成する。
+			if (! equirectangularMaterial) {
+				Shader shader = Shader.Find("Hidden/EquirectangularPlusShader");
+				equirectangularMaterial = new Material(shader);
+				equirectangularMaterial.hideFlags = HideFlags.HideAndDontSave;
+			}
 
 			// カメラの回転をシェーダーの変数に設定する。
 			Quaternion rot = transform.rotation;
 			if (forwrdAsCenter) {
-				rot *= Quaternion.FromToRotation (Vector3.up, Vector3.forward);
+				if (mode == Mode.DomeMaster) {
+					rot *= Quaternion.AngleAxis (-90f, Vector3.left);
+				} else {
+					rot *= Quaternion.AngleAxis (180f, Vector3.up);
+				}
 			}
 			equirectangularMaterial.SetVector("_Rotation", new Vector4(rot.x, rot.y, rot.z, rot.w));
 
@@ -202,6 +206,9 @@ namespace QTools {
 		}
 
 		void updateShaderSettings(){
+			if (equirectangularMaterial == null) {
+				return;
+			}
 			equirectangularMaterial.SetFloat ("_Zoom", displacement/180f);
 			equirectangularMaterial.SetFloat("_Margin", margin);
 			equirectangularMaterial.SetFloat("_Brightness", brightness);
