@@ -292,7 +292,7 @@ namespace TmLib{
 			float ts = (b*b/4f) - c;
 			if ( ts >= 0.0 ) {
 				float rt = Mathf.Sqrt( -c + ( b * b ) / 4f);
-				float[] agl = new float[2]{Mathf.Atan( ( -b / 2f ) + rt ),Mathf.Atan( ( -b / 2f ) - rt )};
+				float[] agl = new float[2]{Mathf.Atan( ( -b / 2f ) - rt ),Mathf.Atan( ( -b / 2f ) + rt )};
 				ret = new Vector3[2];
 				for ( int i = 0; i < 2; i++ ){
 					ret[i] = distXZ.normalized * _v * Mathf.Cos(agl[i]);
@@ -306,24 +306,22 @@ namespace TmLib{
 		//! 重力gで距離distに最小エネルギーで物体を投げるときのVec(ts==0:b*b=4*c)
 		//! _g = Physics.gravity.y
 		//-----------------------------------------------------------------------
-		static public Vector3[] ParabolicVec(Vector3 _dist, float _g){
-			Vector3[] ret = null;
-			float x2 = _dist.x * _dist.x + _dist.z * _dist.z;
+		static public Vector3 ParabolicVec(Vector3 _dist, float _g){
+			Vector3 ret = Vector3.zero;
+			float xz2 = _dist.x * _dist.x + _dist.z * _dist.z;
 			float y = _dist.y;
-			float dd = _dist.magnitude; // Mathf.Sqrt (y * y + x2);
-			float e0 = (_g * x2) / (y - dd);
-			float e1 = (_g * x2) / (y + dd);
-			if ((e0 > 0f) || (e1 > 0f)) {
-				float x = Mathf.Sqrt (x2);
-				Vector3 nmlVec = new Vector3 (_dist.x, x, _dist.z).normalized; //45[deg]
-				List<Vector3> retList = new List<Vector3> ();
-				if (e0 > 0f) {
-					retList.Add(nmlVec * Mathf.Sqrt (e0));
+			float dd = _dist.magnitude; // Mathf.Sqrt (y * y + xz2);
+			if (xz2 > 0.01f) {
+				float e0 = (y - dd != 0f) ? (_g * xz2) / (y - dd) : -1f;
+				float e1 = (y + dd != 0f) ? (_g * xz2) / (y + dd) : -1f;
+				if ((e0 > 0f) || (e1 > 0f)) {
+					Vector3 nmlVec = new Vector3 (_dist.x, Mathf.Sqrt (xz2)+y*1.1f, _dist.z).normalized;
+					ret = (nmlVec * Mathf.Sqrt ((e0 > 0f) ? e0 : e1));
 				}
-				if (e1 > 0f) {
-					retList.Add(nmlVec * Mathf.Sqrt (e1));
+			} else { // v = sqrt(2*g*s) | 0
+				if (-_g * y > 0f) {
+					ret = Vector3.up * Mathf.Sqrt (2f * -_g * y);
 				}
-				ret = retList.ToArray ();
 			}
 			return ret;
 		}
