@@ -65,8 +65,8 @@ namespace QTools {
 			Eight = 8,
 		}
 
-		[TooltipAttribute("レンダリング時にアンチエイリアスをかけるピクセル数")]
-		public Antialias antiAliasing = Antialias.None;
+        /* antiAliasing 廃止 */
+        //		public Antialias antiAliasing = Antialias.None;
 
 		public enum Mode {
 			Equirectangular = 0,
@@ -100,7 +100,15 @@ namespace QTools {
 
 		bool useRuntimeCamera = false;
 
+        int propId_Zoom;
+        int propId_Margin;
+        int propId_Brightness;
+
 		void Start(){
+            _antiAliasing = 1; // antiAliasing 廃止 
+            propId_Zoom = Shader.PropertyToID("_Zoom");
+            propId_Margin = Shader.PropertyToID("_Margin");
+            propId_Brightness = Shader.PropertyToID("_Brightness");
 			updateShaderSettings ();
 		}
 
@@ -125,7 +133,7 @@ namespace QTools {
 				_cube_resolution = (int)resolution;
 			}
 			// 現在のCubeMapのサイズ、アンチエイリアスの値が合わなくなっていたらCubeMapを破棄する。
-			if (cubeTexture && cubeTexture.width != _cube_resolution || _antiAliasing != (int)antiAliasing) {
+			if (cubeTexture && cubeTexture.width != _cube_resolution /*|| _antiAliasing != (int)antiAliasing*/ ) {
 				if (Application.isPlaying)
 					Destroy(cubeTexture);
 				else
@@ -133,7 +141,7 @@ namespace QTools {
 				cubeTexture = null;
 			}
 
-			_antiAliasing = (int)antiAliasing;
+//			_antiAliasing = (int)antiAliasing;
 			// CubeMapが無ければ生成する。
 			if (! cubeTexture) {
 				cubeTexture = new RenderTexture(_cube_resolution, _cube_resolution, 0,RenderTextureFormat.ARGB32);
@@ -184,12 +192,12 @@ namespace QTools {
 				cubeCam.cullingMask = _cullingMask;
 		}
 
-		void OnRenderImage(RenderTexture src, RenderTexture dest)
+		void OnRenderImage(RenderTexture _src, RenderTexture _dest)
 		{
 			if (!isCaptureImage)
-				Graphics.Blit(src, dest);
+				Graphics.Blit(_src, _dest);
 			else
-				Graphics.Blit(cubeTexture, dest, equirectangularMaterial); //, (int)mode);
+				Graphics.Blit(cubeTexture, _dest, equirectangularMaterial); //, (int)mode);
 		}
 
 		void OnDisable()
@@ -209,9 +217,9 @@ namespace QTools {
 			if (equirectangularMaterial == null) {
 				return;
 			}
-			equirectangularMaterial.SetFloat ("_Zoom", displacement/180f);
-			equirectangularMaterial.SetFloat("_Margin", margin);
-			equirectangularMaterial.SetFloat("_Brightness", brightness);
+            equirectangularMaterial.SetFloat (propId_Zoom, displacement/180f);
+            equirectangularMaterial.SetFloat(propId_Margin, margin);
+            equirectangularMaterial.SetFloat(propId_Brightness, brightness);
 			if (hFlip)
 				equirectangularMaterial.EnableKeyword ("USE_HFLIP");
 			else
