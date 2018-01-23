@@ -57,8 +57,8 @@ namespace QTools {
 		{
 			Graphics.Blit(src, dest);
 			#if !NOEQUCAM
-			if((!eqScr.enabled)||(eqScr.isCaptureImage)){
-//				if(eqScr.isCaptureImage){
+//			if((!eqScr.enabled)||(eqScr.isCaptureImage)){
+            if(Camera.current.activeTexture.Equals(renderTexture)){
 			#endif
 				if (captureSec > 0f) { // continuous capture mode
 					if (cnt < captureNum) {
@@ -137,7 +137,7 @@ namespace QTools {
 			byte[] data = image.EncodeToPNG ();
 			File.WriteAllBytes (_fileame + ".png", data);
 			Destroy (image);
-			Debug.Log ("size=" + data.Length);
+//			Debug.Log ("size=" + data.Length);
 		}
 	}
 }
