@@ -371,6 +371,15 @@ namespace TmLib{
 			m[3,0] = 0f;  m[3,1] = 0f;  m[3,2] = e;   m[3,3] = 0f;
 			return m;
 		}
+
+        //-----------------------------------------------------------------------
+        //! axis平面に射影したfrom-toの角度
+        //! (transform.forward,dir,transform.up) でforward-dirのlocalxz方位角
+        //-----------------------------------------------------------------------
+        static public float SignedAngle(Vector3 from, Vector3 to, Vector3 axis)
+        {
+            return Mathf.Atan2(Vector3.Dot(axis, Vector3.Cross(from, to)), Vector3.Dot(from, to)) * Mathf.Rad2Deg;
+        }
 		
 	}
 } //namespace TmLib
