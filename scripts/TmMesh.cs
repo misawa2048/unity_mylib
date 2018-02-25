@@ -6,6 +6,37 @@ namespace TmLib
 	public class TmMesh
 	{
 		public enum AxisType { XY, XZ }
+        public static Mesh CreatePointCloud(Vector3[] _vertices, Color _cvtxCol){
+            Color[] _cvtxCols = new Color[] { _cvtxCol };
+            return CreatePointCloud(_vertices, _cvtxCols);
+        }
+        public static Mesh CreatePointCloud(Vector3[] _vertices, Color[] _cvtxCols)
+        {
+            int vertNum = _vertices.Length;
+            int[] incides = new int[vertNum];
+            Vector2[] uv = new Vector2[vertNum];
+            Color[] colors = new Color[vertNum];
+            Vector3[] normals = new Vector3[vertNum];
+
+            for (int ii = 0; ii < _vertices.Length; ++ii)
+            {
+                incides[ii] = ii;
+                uv[ii] = new Vector2(_vertices[ii].x + 0.5f, _vertices[ii].y + 0.5f);
+                colors[ii] = _cvtxCols[(_cvtxCols.Length > ii) ? ii : 0];
+                normals[ii] = _vertices[ii].normalized;
+            }
+            Mesh mesh = new Mesh();
+            mesh.vertices = _vertices;
+            mesh.uv = uv;
+            mesh.colors = colors;
+            mesh.normals = normals;
+//            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            mesh.SetIndices(incides, MeshTopology.Points, 0);
+            return mesh;
+        }
+
+
 		public static Mesh CreateLineGrid(int _width, int _height, AxisType _type)
 		{
 			return CreateLineGrid(_width, _height, _type, new Color(0.5f, 0.5f, 0.5f, 1.0f), false);
