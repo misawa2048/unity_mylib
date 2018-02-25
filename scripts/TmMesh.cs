@@ -96,7 +96,7 @@ namespace TmLib
 		};
 		public static Mesh CreateLine(Vector3[] _vertices, bool _isRing)
 		{
-			return CreateLine(_vertices, _isRing, new Color(0.5f, 0.5f, 0.5f, 1.0f));
+            return CreateLine(_vertices, LineMeshType.LineStrip, new Color(0.5f, 0.5f, 0.5f, 1.0f));
 		}
 		public static Mesh CreateLine (Vector3[] _vertices, LineMeshType _lineMeshType, Color _color)
 		{
