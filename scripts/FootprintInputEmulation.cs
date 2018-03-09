@@ -20,40 +20,61 @@ namespace TmLib{
         }
 
         [System.Serializable]
-        public struct TouchInfo{
-            public int id;
+        public struct PlayerInfo{
+            public int playerId;
             public Vector2 viewPos;
-            public TouchInfo(int _id, Vector2 _viewPos){
-                id = _id;
+            public PlayerInfo(int _playerId, Vector2 _viewPos){
+                playerId = _playerId;
+                viewPos = _viewPos;
+            }
+        }
+
+        [System.Serializable]
+        public struct TouchInfo{
+            public int playerId;
+            public int touchId;
+            public Vector2 viewPos;
+            public TouchInfo(int _playerId, int _touchId, Vector2 _viewPos){
+                playerId = _playerId;
+                touchId = _touchId;
                 viewPos = _viewPos;
             }
         }
 
         [SerializeField,Range(1,10)] int maxFootprintNum;
-        [SerializeField] Camera targetCamera;
+        [SerializeField] Camera m_targetCamera;
         [SerializeField] Rect innerRect = new Rect(0f,0f,1f,1f);
         [SerializeField, Range(0.005f, 0.2f)] float stepLength = 0.05f;
         [SerializeField, Range(0f, 1f)] float stepRandom = 0.1f;
         [SerializeField] GameObject dbgFootprintPrefab;
-        [SerializeField, Range(1, 1000)] float dbgDispDistance = 10f;
-        [SerializeField] private List<TouchInfo> _touchInfoList;
+        [SerializeField, Range(1, 1000)] float m_dbgDispDistance = 10f;
+        [SerializeField] List<PlayerInfo> m_playerInfoList;
+        [SerializeField] List<TouchInfo> m_touchInfoList;
         private List<FootprintInfo> footprintInfoList;
         private int ringPtr;
         private Vector3 oldVPos;
 
-        public TouchInfo[] touches { get { return _touchInfoList.ToArray(); }}
+        public PlayerInfo[] players { get { return m_playerInfoList.ToArray(); } }
+        public TouchInfo[] touches { get { return m_touchInfoList.ToArray(); }}
+        public float dbgDispDistance { get { return m_dbgDispDistance; }}
+        public Camera targetCamera { get { return m_targetCamera; } }
 
         // Use this for initialization
         void Start()
         {
             footprintInfoList = new List<FootprintInfo>();
-            _touchInfoList = new List<TouchInfo>();
+            m_playerInfoList = new List<PlayerInfo>();
+            m_touchInfoList = new List<TouchInfo>();
+            GameObject footPrintBase = new GameObject("FootprintBase");
+            footPrintBase.transform.SetParent(m_targetCamera.transform);
+            footPrintBase.transform.localPosition = Vector3.zero;
+            footPrintBase.transform.localRotation = Quaternion.identity;
             for (int i = 0; i < maxFootprintNum; ++i){
                 GameObject obj=null;
                 if(dbgFootprintPrefab!=null){
-                    obj = Instantiate(dbgFootprintPrefab, transform);
+                    obj = Instantiate(dbgFootprintPrefab,footPrintBase.transform);
                     obj.name = "footprint_" + i.ToString();
-                    obj.transform.localScale *= dbgDispDistance;
+                    obj.transform.localScale *= m_dbgDispDistance;
                 }
                 footprintInfoList.Add(new FootprintInfo(false, i, new Vector2(), obj));
             }
@@ -64,8 +85,8 @@ namespace TmLib{
         // Update is called once per frame
         void Update()
         {
-            if(targetCamera!=null){
-                Vector3 vPos = targetCamera.ScreenToViewportPoint(Input.mousePosition);
+            if(m_targetCamera!=null){
+                Vector3 vPos = m_targetCamera.ScreenToViewportPoint(Input.mousePosition);
                 bool isMoved = false;
                 if ((oldVPos - vPos).magnitude > stepLength){
                     oldVPos = vPos;
@@ -87,7 +108,7 @@ namespace TmLib{
                         vPos.z = dbgDispDistance;
                         info.viewPos = new Vector2(vPos.x, vPos.y);
                         if (info.debugObj != null){
-                            Vector3 wPos = targetCamera.ViewportToWorldPoint(vPos);
+                            Vector3 wPos = m_targetCamera.ViewportToWorldPoint(vPos);
                             info.debugObj.transform.position = wPos;
                             info.debugObj.transform.rotation = targetCamera.transform.rotation;
                         }
@@ -101,14 +122,28 @@ namespace TmLib{
                     }
                 }
 
-                _touchInfoList.Clear();
+                m_touchInfoList.Clear();
                 for (int i = 0; i < maxFootprintNum; ++i)
                 {
                     if(footprintInfoList[i].enabled){
-                        _touchInfoList.Add(new TouchInfo(i,footprintInfoList[i].viewPos));
+                        m_touchInfoList.Add(new TouchInfo(Mathf.FloorToInt(i / 2), i,footprintInfoList[i].viewPos));
                     }
                 }
-
+                m_playerInfoList.Clear();
+                Vector2[] tmpViewPos = new Vector2[Mathf.FloorToInt((m_touchInfoList.Count+1) / 2)];
+                int[] tmpViewPosCnt = new int[Mathf.FloorToInt((m_touchInfoList.Count+1) / 2)];
+                for (int i = 0; i < m_touchInfoList.Count; ++i)
+                {
+                    int plId = Mathf.FloorToInt(i / 2);
+                    if(tmpViewPos[plId]==null){
+                        tmpViewPos[plId] = Vector2.zero;
+                    }
+                    tmpViewPos[plId]+=m_touchInfoList[i].viewPos;
+                    tmpViewPosCnt[plId]++;
+                }
+                for (int i = 0; i < tmpViewPos.Length;++i){
+                    m_playerInfoList.Add(new PlayerInfo(i,tmpViewPos[i]/(float)tmpViewPosCnt[i]));
+                }
             }
         }
     }
