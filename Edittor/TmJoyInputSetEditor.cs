@@ -39,14 +39,14 @@ public static class TmJoyInputSetEditor
 	{
 		for (int i = 0; i < NUM_SETUP; ++i) {
 			string preName = "TmJoy" + (i + 1).ToString () + "_";
-			addAxis(preName + "ALX", 2, 0, i+1);
-			addAxis(preName + "ALY", 2, 1, i+1);
-			addAxis(preName + "DRR", 0, 2, i+1);
+			addAxis(preName + "ALX", 2, 0, false, i+1);
+			addAxis(preName + "ALY", 2, 1, true,  i+1);
+			addAxis(preName + "DRR", 0, 2, false, i+1);
 		}
 		m_serializedObject.ApplyModifiedProperties();
 	}
 
-	private static bool addAxis(string _name, int _type, int _axis, int _joyNum){
+	private static bool addAxis(string _name, int _type, int _axis, bool _invert, int _joyNum){
 		bool ret = HasAxis (m_axesProperty,_name);
 		if (!ret) {
 			m_axesProperty.arraySize++;
@@ -55,7 +55,8 @@ public static class TmJoyInputSetEditor
 			GetChildProperty(childElement, "positiveButton").stringValue = "joystick " + _joyNum.ToString () + " button "+ _axis.ToString();
 			GetChildProperty(childElement, "type").intValue = _type;
 			GetChildProperty(childElement, "axis").intValue = _axis;
-			GetChildProperty(childElement, "joyNum").intValue = _joyNum;
+            GetChildProperty(childElement, "invert").boolValue = _invert;
+            GetChildProperty(childElement, "joyNum").intValue = _joyNum;
 
 			GetChildProperty(childElement, "dead").floatValue = .5f;
 			GetChildProperty(childElement, "sensitivity").floatValue = 1f;

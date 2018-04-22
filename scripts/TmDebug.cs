@@ -61,5 +61,23 @@ namespace TmLib{
 			}
 			#endif
 		}
-	}
+        //---------------------------------------------------------------------------
+        public static Vector3 GetCenterOfsRotPos(Vector3 _center, Vector3 _ofs, Quaternion _rot)
+        {
+            return _center + _rot * _ofs;
+        }
+        public static void DrawRect(Vector3 _center, Vector2 _rect, Quaternion _rot, Color _col)
+        {
+#if TM_IS_DEBUG
+            Vector3 p1 = GetCenterOfsRotPos(_center, new Vector3(-_rect.x, 0f, -_rect.y), _rot);
+            Vector3 p2 = GetCenterOfsRotPos(_center, new Vector3(-_rect.x, 0f, _rect.y), _rot);
+            Vector3 p3 = GetCenterOfsRotPos(_center, new Vector3(_rect.x, 0f, _rect.y), _rot);
+            Vector3 p4 = GetCenterOfsRotPos(_center, new Vector3(_rect.x, 0f, -_rect.y), _rot);
+            Debug.DrawLine(p1, p2, _col);
+            Debug.DrawLine(p2, p3, _col);
+            Debug.DrawLine(p3, p4, _col);
+            Debug.DrawLine(p4, p1, _col);
+#endif
+        }
+    }
 } //namespace TmLib
