@@ -381,5 +381,48 @@ namespace TmLib{
             return Mathf.Atan2(Vector3.Dot(axis, Vector3.Cross(from, to)), Vector3.Dot(from, to)) * Mathf.Rad2Deg;
         }
 		
+		/// <summary>
+		/// Corrects the cam target.
+		/// playerCollision(Cupsule), カメラ視線_tgtPos-_camPosから、
+		/// Cupsuleの内側から始まる補正カメラtgtPosを返す
+		/// </summary>
+		/// <returns>The cam target.</returns>
+		/// <param name="_tgtPos">world Tgt position.</param>
+		/// <param name="_camPos">world Cam position.</param>
+		/// <param name="_plPos">world Pl position.</param>
+		/// <param name="_plHOfs">world Pl H ofs.</param>
+		/// <param name="_plRad">Pl RAD.</param>
+		/// <param name="_camRad">Cam RAD.</param>
+		/*
+		CapsuleCollider coll = GetComponent<CapsuleCollider> ();
+		coll.height = (m_plHalfH + m_plRad) * 2.0f;
+		coll.radius = m_plRad;
+		tgtPos = transform.position + transform.rotation * m_targetOfs;
+		camPos = tgtPos + transform.rotation * Quaternion.AngleAxis (m_cameraYaw, Vector3.right) * Vector3.back * m_cameraDist;
+		Vector3 plHOfs = transform.rotation * (Vector3.up * m_plHalfH);
+
+		Vector3 corTgt;
+		corTgt = CorrectCamTarget(tgtPos, camPos, transform.position, plHOfs, m_plRad, m_camRad);
+
+		Vector3 corCam = corTgt + transform.rotation * Quaternion.AngleAxis (m_cameraYaw, Vector3.right) * Vector3.back * m_cameraDist;
+		Debug.DrawLine (corTgt, corCam, Color.red);
+		*/
+		static public Vector3 CorrectCamTarget(Vector3 _tgtPos, Vector3 _camPos, Vector3 _plPos, Vector3 _plHOfs, float _plRad, float _camRad){
+			Vector3 retTgtPos = _tgtPos;
+			Vector3 _plPos0 = _plPos - _plHOfs;
+			Vector3 _plPos1 = _plPos + _plHOfs;
+			Vector3 p0, q0;
+			TmMath.LineToLineDistance (out p0, out q0, _plPos0, _plPos1, _tgtPos, _camPos, true);
+			q0 = TmMath.NearestPointOnLine (_tgtPos, _camPos, p0, true);
+			float dist = (q0 - p0).magnitude;
+			if (dist > (_plRad + _camRad)) {
+				retTgtPos = p0 + (q0 - p0).normalized * (_plRad + _camRad);
+			} else {
+				Vector3 dir = (_tgtPos-_camPos).normalized;
+				retTgtPos = q0 + dir * (dist - (_plRad + _camRad));
+			}
+			return retTgtPos;
+		}
+
 	}
 } //namespace TmLib
