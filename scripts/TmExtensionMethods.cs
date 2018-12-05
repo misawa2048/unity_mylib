@@ -7,7 +7,9 @@
 public static class TmExtensionMethods
 {
 
-#if UNITY_SWITCH || UNITY_EDITOR || NN_PLUGIN_ENABLE 
+#if UNITY_EDITOR
+#endif // 
+#if UNITY_SWITCH || UNITY_EDITOR || NN_PLUGIN_ENABLE
     public static UnityEngine.Vector2 F2V(this nn.util.Float2 f)
     {
         return new UnityEngine.Vector3(f.x, f.y);
