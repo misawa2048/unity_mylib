@@ -38,12 +38,25 @@ namespace TmLib{
 		public static float LeapBreak(float _oldRate, float _breakRate, float _deltaTime){
 			return(Mathf.Clamp01(_oldRate) * Mathf.Pow(_breakRate , _deltaTime));
 		}
-		
-		// ----------------
-		// GUI関係 
-		// ----------------
-		// カメラから、_onPlanePosが含まれる平面までの距離を取得 
-		public static float GetDistanceFromCameratoPlane(Camera _cam, Vector3 _onPlanePos){
+
+        // ----------------
+        // カメラ関係 
+        // ----------------
+        // カメラプロジェクションの比率を変更(ex:SideySide=(0.5f,1f))
+        public static void SetCameraProjection(Camera _cam, Vector2 _scale)
+        {
+            _cam.ResetProjectionMatrix();
+            Matrix4x4 mat = _cam.projectionMatrix;
+            mat.m00 *= _scale.x;
+            mat.m11 *= _scale.y;
+            _cam.projectionMatrix = mat;
+        }
+
+        // ----------------
+        // GUI関係 
+        // ----------------
+        // カメラから、_onPlanePosが含まれる平面までの距離を取得 
+        public static float GetDistanceFromCameratoPlane(Camera _cam, Vector3 _onPlanePos){
 			Plane plane = new Plane(_cam.transform.forward,_onPlanePos);
 			return -plane.GetDistanceToPoint(_cam.transform.position);
 		}
