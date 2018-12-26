@@ -3,10 +3,17 @@ using System.Collections.Generic;
 
 namespace TmLib{
 	public class TmMath {
-		//-----------------------------------------------------------------------------
-		//! ブラウン運動乱数 (0-1)
-		//-----------------------------------------------------------------------------
-		static public float BrownRandom(float _old, float _moveRate, float _baseValue=0f, float _baseStickeyRate=0.2f) {
+        //-----------------------------------------------------------------------------
+        //! 値を_divの符号内でループ
+        //-----------------------------------------------------------------------------
+        static public int SLoop(int _num, int _div)
+        {
+            return ((_num % _div) + _div) % _div;
+        }
+        //-----------------------------------------------------------------------------
+        //! ブラウン運動乱数 (0-1)
+        //-----------------------------------------------------------------------------
+        static public float BrownRandom(float _old, float _moveRate, float _baseValue=0f, float _baseStickeyRate=0.2f) {
 			float adjValue = (((_old - 0.5f) > _baseValue) ? -1f : 1f)*Mathf.Abs(_baseValue)*_baseStickeyRate;
 			float ret = Mathf.PingPong(_old + (Random.value-0.5f+adjValue) * _moveRate,1f);
 			return ret;
