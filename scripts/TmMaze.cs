@@ -5,7 +5,7 @@ using System.Collections;
 // GameObject mazeBase = mMaze.createWallObjs(wallPrefab);
 namespace TmLib{
 	public class TmMaze {
-		enum Dir{ L, R, U, D };
+		public enum Dir{ None, L, R, U, D };
 		public class clusteInfo{
 			public int id;
 			public bool wallLV;
@@ -87,9 +87,62 @@ namespace TmLib{
 			}
 			return baseObj;
 		}
-		
-		//------------------------------------------------------------------
-		private clusteInfo[,] createClusterArray(int _sx, int _sy){
+
+        //------------------------------------------------------------------
+        public int[,] getDistanceMap(int _x,int _y)
+        {
+            clusteInfo[,] tmpInfo = mInfo;
+            int sx = tmpInfo.GetLength(0) - 1; //meshSize.x
+            int sy = tmpInfo.GetLength(1) - 1; //meshSize.y
+            int[,] retMap = new int[sx, sy];
+            for(int y = 0; y < sy; ++y)
+            {
+                for(int x = 0; x < sx; ++x)
+                {
+                    retMap[x, y] = int.MaxValue;
+                }
+            }
+            getDistanceMapSub(ref retMap, 0, _x, _y);
+            return retMap;
+        }
+
+        //------------------------------------------------------------------
+        public bool isWall(int _x, int _y, Dir _dir)
+        {
+            //DH/LV
+            bool ret = true;
+            _x += (_dir == Dir.R) ? 1 : 0;
+            _y += (_dir == Dir.U) ? 1 : 0;
+            if ((_x >= 0) && (_x < mInfo.GetLength(0)) && (_y >= 0) && (_y < mInfo.GetLength(1)))
+            {
+                ret = ((_dir == Dir.R) || (_dir == Dir.L)) ? mInfo[_x, _y].wallLV : mInfo[_x, _y].wallDH;
+            }
+            return ret;
+        }
+
+        //------------------------------------------------------------------
+        private bool getDistanceMapSub( ref int[,] _retMap, int _dist, int _x, int _y)
+        {
+            bool ret = false;
+            int sx = _retMap.GetLength(0); //meshSize.x
+            int sy = _retMap.GetLength(1); //meshSize.y
+            if((_x>=0) && (_x<sx) && (_y >= 0) && (_y < sy))
+            {
+                if(_retMap[_x,_y] > _dist)
+                {
+                    _retMap[_x, _y] = _dist;
+                    if (!isWall(_x, _y, Dir.L)) { getDistanceMapSub(ref _retMap, _dist + 1, _x - 1, _y); }
+                    if (!isWall(_x, _y, Dir.R)) { getDistanceMapSub(ref _retMap, _dist + 1, _x + 1, _y); }
+                    if (!isWall(_x, _y, Dir.D)) { getDistanceMapSub(ref _retMap, _dist + 1, _x, _y - 1); }
+                    if (!isWall(_x, _y, Dir.U)) { getDistanceMapSub(ref _retMap, _dist + 1, _x, _y + 1); }
+                    ret = true;
+                }
+            }
+            return ret;
+        }
+
+        //------------------------------------------------------------------
+        private clusteInfo[,] createClusterArray(int _sx, int _sy){
 			clusteInfo[,] tmpInfo = new clusteInfo[_sx+1,_sy+1];
 			int id = 0;
 			for(int xx = 0; xx < _sx+1;++xx){
@@ -197,8 +250,8 @@ namespace TmLib{
 			}
 			return ret;
 		}
-		
-		private bool relate(ref clusteInfo[,] _info, int _id0, int _id1){
+
+        private bool relate(ref clusteInfo[,] _info, int _id0, int _id1){
 			int sx = _info.GetLength(0)-1; //meshSize.x
 			int sy = _info.GetLength(1)-1; //meshSize.y
 			bool ret = false;
@@ -234,5 +287,5 @@ namespace TmLib{
 			}
 			return ret;
 		}
-	}
+    }
 } //namespace TmLib

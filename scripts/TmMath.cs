@@ -431,5 +431,68 @@ namespace TmLib{
 			return retTgtPos;
 		}
 
-	}
+        //http://www.kurims.kyoto-u.ac.jp/~ooura/fftman/ftmn2_12.html#sec2_1_2
+        /// <summary>
+        /// 実数データの DFT :
+        /// F[k]=Σ_j=0^n-1 a[j]*exp(-2*pi*i*j*k/n),0<=k<n を計算する.
+        /// 出力 a[0...n/2], a[n/2+1...n-1] はそれぞれ F[0...n/2] の実部, 
+        /// F[n/2+1...n-1] の虚部に相当する．
+        /// </summary>
+        /// <param name="a">入力(2^N)</param>
+        /// <returns>出力</returns>
+        static public float[] RFFT(float[] a)
+        {
+            int m, mh, mq, i, j, k, jr, ji, kr, ki;
+            float theta, wr, wi, xr, xi;
+            int n = a.Length;
+            /* ---- scrambler ---- */
+            i = 0;
+            for (j = 1; j < n - 1; j++)
+            {
+                for (k = n >> 1; k > (i ^= k); k >>= 1) ;
+                if (j < i)
+                {
+                    xr = a[j];
+                    a[j] = a[i];
+                    a[i] = xr;
+                }
+            }
+            theta = -8 * Mathf.Atan(1.0f);  /* -2*pi */
+            for (mh = 1; (m = mh << 1) <= n; mh = m)
+            {
+                mq = mh >> 1;
+                theta *= 0.5f;
+                /* ---- real to real butterflies (W == 1) ---- */
+                for (jr = 0; jr < n; jr += m)
+                {
+                    kr = jr + mh;
+                    xr = a[kr];
+                    a[kr] = a[jr] - xr;
+                    a[jr] += xr;
+                }
+                /* ---- complex to complex butterflies (W != 1) ---- */
+                for (i = 1; i < mq; i++)
+                {
+                    wr = Mathf.Cos(theta * i);
+                    wi = Mathf.Sin(theta * i);
+                    for (j = 0; j < n; j += m)
+                    {
+                        jr = j + i;
+                        ji = j + mh - i;
+                        kr = j + mh + i;
+                        ki = j + m - i;
+                        xr = wr * a[kr] + wi * a[ki];
+                        xi = wr * a[ki] - wi * a[kr];
+                        a[kr] = -a[ji] + xi;
+                        a[ki] = a[ji] + xi;
+                        a[ji] = a[jr] - xr;
+                        a[jr] = a[jr] + xr;
+                    }
+                }
+                /* ---- real to complex butterflies are trivial ---- */
+            }
+            return a;
+        }
+
+    }
 } //namespace TmLib
