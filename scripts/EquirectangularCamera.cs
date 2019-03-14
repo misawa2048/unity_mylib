@@ -84,8 +84,8 @@ namespace QTools {
 		public float margin=0.0f;
 		[Range(0.5f,4.0f),TooltipAttribute("輝度調整")]
 		public float brightness=1.0f;
-		[TooltipAttribute("正面センター")]
-		public bool forwrdAsCenter=false;
+		[Range(0f, 90f), TooltipAttribute("正面センター")]
+		public float forwrdAngle=0f;
 
 		//Capture tool の　OnRenderImageで使用
 		public bool isCaptureImage { get { return !(_on_cube_render || !cubeTexture); } }
@@ -158,13 +158,14 @@ namespace QTools {
 
 			// カメラの回転をシェーダーの変数に設定する。
 			Quaternion rot = transform.rotation;
-			if (forwrdAsCenter) {
-				if (mode == Mode.DomeMaster) {
-					rot *= Quaternion.AngleAxis (-90f, Vector3.left);
-				} else {
-					rot *= Quaternion.AngleAxis (180f, Vector3.up);
-				}
-			}
+            if (mode == Mode.DomeMaster)
+            {
+                rot *= Quaternion.AngleAxis(-forwrdAngle, Vector3.left);
+            }
+            else
+            {
+                rot *= Quaternion.AngleAxis(forwrdAngle*2f, Vector3.up);
+            }
 			equirectangularMaterial.SetVector("_Rotation", new Vector4(rot.x, rot.y, rot.z, rot.w));
 
 			#if UNITY_EDITOR
