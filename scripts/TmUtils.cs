@@ -52,6 +52,76 @@ namespace TmLib{
             _cam.projectionMatrix = mat;
         }
 
+        // カメラ消失点オフセット
+        static public bool SetVanishingPoint(Vector2 perspectiveOffset, Camera cam)
+        {
+            if (cam != null)
+            {
+                cam.ResetProjectionMatrix();
+                Matrix4x4 m = cam.projectionMatrix;
+                float w = 2f * cam.nearClipPlane / m.m00;
+                float h = 2f * cam.nearClipPlane / m.m11;
+                float left = -w / 2f - perspectiveOffset.x;
+                float right = left + w;
+                float bottom = -h / 2f - perspectiveOffset.y;
+                float top = bottom + h;
+                cam.projectionMatrix = PerspectiveOffCenter(left, right, bottom, top, cam.nearClipPlane, cam.farClipPlane);
+            }
+            return (cam != null);
+        }
+
+        // perspectiveCenterOffset
+        static public Matrix4x4 PerspectiveOffCenter(float left, float right, float bottom, float top, float near, float far)
+        {
+            float x = (2f * near) / (right - left);
+            float y = (2f * near) / (top - bottom);
+            float a = (right + left) / (right - left);
+            float b = (top + bottom) / (top - bottom);
+            float c = -(far + near) / (far - near);
+            float d = -(2f * far * near) / (far - near);
+            float e = -1f;
+            Matrix4x4 m = new Matrix4x4();
+            m[0, 0] = x; m[0, 1] = 0f; m[0, 2] = a; m[0, 3] = 0f;
+            m[1, 0] = 0f; m[1, 1] = y; m[1, 2] = b; m[1, 3] = 0f;
+            m[2, 0] = 0f; m[2, 1] = 0f; m[2, 2] = c; m[2, 3] = d;
+            m[3, 0] = 0f; m[3, 1] = 0f; m[3, 2] = e; m[3, 3] = 0f;
+            return m;
+        }
+
+        // _rotType = 0:0[deg] 1:90[deg] 2:180[deg] 3:270[deg]
+        static public Texture2D RenderTexToTex2D(RenderTexture _renderTex, int _rotType = 0)
+        {
+            Texture2D retTex = null;
+            Texture2D defTex = new Texture2D(_renderTex.width, _renderTex.height, TextureFormat.ARGB32, false);
+            RenderTexture.active = _renderTex;
+            defTex.ReadPixels(new Rect(0, 0, _renderTex.width, _renderTex.height), 0, 0);
+            defTex.Apply();
+
+            switch (_rotType){
+            default:
+                retTex = defTex;
+                break;
+            case 1:
+            case 2:
+            case 3:
+                if (_rotType == 2)
+                    retTex = new Texture2D(defTex.width, defTex.height, TextureFormat.ARGB32, false);
+                else
+                    retTex = new Texture2D(defTex.height, defTex.width, TextureFormat.ARGB32, false);
+
+                for (int iy = 0; iy < defTex.height; ++iy){
+                    for (int ix = 0; ix < defTex.width; ++ix){
+                        int ry = (_rotType == 2) ? defTex.height - iy : ((_rotType == 1) ? defTex.width - ix : ix);
+                        int rx = (_rotType == 2) ? defTex.width - ix : ((_rotType == 1) ? iy : defTex.height - iy);
+                        retTex.SetPixel(rx, ry, defTex.GetPixel(ix, iy));
+                    }
+                }
+                retTex.Apply();
+                break;
+            }
+            return retTex;
+        }
+
         // ----------------
         // GUI関係 
         // ----------------
