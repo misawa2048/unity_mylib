@@ -122,6 +122,43 @@ namespace TmLib{
             return retTex;
         }
 
+        // _rotType = 0:0[deg] 1:90[deg] 2:180[deg] 3:270[deg]
+        static public Texture2D WebCamTexToTex2D(WebCamTexture _webCamTex, int _rotType = 0)
+        {
+            Texture2D retTex = null;
+            Texture2D defTex = new Texture2D(_webCamTex.width, _webCamTex.height, TextureFormat.ARGB32, false);
+            Color[] cols = _webCamTex.GetPixels();
+            defTex.SetPixels(cols);
+            defTex.Apply();
+
+            switch (_rotType)
+            {
+                default:
+                    retTex = defTex;
+                    break;
+                case 1:
+                case 2:
+                case 3:
+                    if (_rotType == 2)
+                        retTex = new Texture2D(defTex.width, defTex.height, TextureFormat.ARGB32, false);
+                    else
+                        retTex = new Texture2D(defTex.height, defTex.width, TextureFormat.ARGB32, false);
+
+                    for (int iy = 0; iy < defTex.height; ++iy)
+                    {
+                        for (int ix = 0; ix < defTex.width; ++ix)
+                        {
+                            int ry = (_rotType == 2) ? defTex.height - iy : ((_rotType == 1) ? defTex.width - ix : ix);
+                            int rx = (_rotType == 2) ? defTex.width - ix : ((_rotType == 1) ? iy : defTex.height - iy);
+                            retTex.SetPixel(rx, ry, defTex.GetPixel(ix, iy));
+                        }
+                    }
+                    retTex.Apply();
+                    break;
+            }
+            return retTex;
+        }
+
         // ----------------
         // GUI関係 
         // ----------------
