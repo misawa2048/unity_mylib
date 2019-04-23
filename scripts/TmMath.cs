@@ -11,6 +11,13 @@ namespace TmLib{
             return ((_num % _div) + _div) % _div;
         }
         //-----------------------------------------------------------------------------
+        //! (min,max) 間の値 r を(Min,Max)間の同じ位置の値 Rに置き換える
+        //-----------------------------------------------------------------------------
+        static public float Map(float _val, float _fromMin, float _fromMax, float _toMin, float _toMax)
+        {
+            return Mathf.LerpUnclamped(_toMin, _toMax, Mathf.LerpUnclamped(_fromMin, _fromMax, _val));
+        }
+        //-----------------------------------------------------------------------------
         //! ブラウン運動乱数 (0-1)
         //-----------------------------------------------------------------------------
         static public float BrownRandom(float _old, float _moveRate, float _baseValue=0f, float _baseStickeyRate=0.2f) {
