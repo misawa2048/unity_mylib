@@ -401,6 +401,24 @@ namespace TmLib{
 			return retTgtPos;
 		}
 
+        /// <summary>
+        /// Gets the diff pitch and yaw.
+        /// </summary>
+        /// <returns>The diff pitch.x and yaw.y.</returns>
+        /// <param name="_fromRot">From rot.</param>
+        /// <param name="_toRot">To rot.</param>
+        static public Vector2 GetDiffPitchAndYaw(Quaternion _fromRot, Quaternion _toRot)
+        {
+            Quaternion diffRot = _toRot * Quaternion.Inverse(_fromRot);
+            Vector3 ang = diffRot * Vector3.forward;
+            float xz = new Vector3(ang.x, 0f, ang.z).magnitude;
+            float angPitch = Mathf.Atan2(ang.y, xz) * Mathf.Rad2Deg;
+            float angYaw = Mathf.Atan2(ang.x, ang.z) * Mathf.Rad2Deg;
+            angPitch = Mathf.Repeat(angPitch + 180f, 360f) - 180f;
+            angYaw = Mathf.Repeat(angYaw + 180f, 360f) - 180f;
+            return new Vector2(angPitch, angYaw);
+        }
+
         //http://www.kurims.kyoto-u.ac.jp/~ooura/fftman/ftmn2_12.html#sec2_1_2
         /// <summary>
         /// 実数データの DFT :
