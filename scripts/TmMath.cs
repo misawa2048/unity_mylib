@@ -31,7 +31,7 @@ namespace TmLib{
         //-----------------------------------------------------------------------------
         static public float LerpV(float _p0, float _p1, float _a, float _fps)
         {
-            var b = 1f - Mathf.Pow(1f - _a, 60f * Time.deltaTime);
+            var b = 1f - Mathf.Pow(1f - _a, 60f / _fps);
             return Mathf.Lerp(_p0, _p1, b);
         }
         //-----------------------------------------------------------------------------
