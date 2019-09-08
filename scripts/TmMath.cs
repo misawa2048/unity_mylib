@@ -29,9 +29,9 @@ namespace TmLib{
         //! Mathf.Lerp(pn,1f,a) の可変フレームレート版
         //! https://www.youtube.com/watch?v=Pq5fMNrNkSQ
         //-----------------------------------------------------------------------------
-        static public float LerpV(float _p0, float _p1, float _a, float _fps)
+        static public float LerpV(float _p0, float _p1, float _a, float _deltaTime)
         {
-            var b = 1f - Mathf.Pow(1f - _a, 60f / _fps);
+            var b = 1f - Mathf.Pow(1f - _a, 60f / _deltaTime);
             return Mathf.Lerp(_p0, _p1, b);
         }
         //-----------------------------------------------------------------------------
