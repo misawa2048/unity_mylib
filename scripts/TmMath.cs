@@ -18,6 +18,14 @@ namespace TmLib{
             return Mathf.LerpUnclamped(_toMin, _toMax, Mathf.LerpUnclamped(_fromMin, _fromMax, _val));
         }
         //-----------------------------------------------------------------------------
+        //! p0=0f,0f<a<1, pn+1=Mathf.Lerp(pn,1f,a) をn回繰り返した時の pn
+        //! https://www.youtube.com/watch?v=Pq5fMNrNkSQ
+        //-----------------------------------------------------------------------------
+        static public float LerpNTimes(float _a, float _n)
+        {
+            return (1f-(1f-_a)^_n);
+        }
+        //-----------------------------------------------------------------------------
         //! ブラウン運動乱数 (0-1)
         //-----------------------------------------------------------------------------
         static public float BrownRandom(float _old, float _moveRate, float _baseValue=0f, float _baseStickeyRate=0.2f) {
