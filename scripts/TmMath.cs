@@ -23,7 +23,16 @@ namespace TmLib{
         //-----------------------------------------------------------------------------
         static public float LerpNTimes(float _a, float _n)
         {
-            return (1f-(1f-_a)^_n);
+            return (1f - Mathf.Pow(1f - _a, _n));
+        }
+        //-----------------------------------------------------------------------------
+        //! Mathf.Lerp(pn,1f,a) の可変フレームレート版
+        //! https://www.youtube.com/watch?v=Pq5fMNrNkSQ
+        //-----------------------------------------------------------------------------
+        static public float LerpV(float _p0, float _p1, float _a, float _fps)
+        {
+            var b = 1f - Mathf.Pow(1f - _a, 60f * Time.deltaTime);
+            return Mathf.Lerp(_p0, _p1, b);
         }
         //-----------------------------------------------------------------------------
         //! ブラウン運動乱数 (0-1)
