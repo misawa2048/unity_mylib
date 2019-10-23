@@ -18,6 +18,23 @@ namespace TmLib{
             return Mathf.LerpUnclamped(_toMin, _toMax, Mathf.LerpUnclamped(_fromMin, _fromMax, _val));
         }
         //-----------------------------------------------------------------------------
+        //! p0=0f,0f<a<1, pn+1=Mathf.Lerp(pn,1f,a) をn回繰り返した時の pn
+        //! https://www.youtube.com/watch?v=Pq5fMNrNkSQ
+        //-----------------------------------------------------------------------------
+        static public float LerpNTimes(float _a, float _n)
+        {
+            return (1f - Mathf.Pow(1f - _a, _n));
+        }
+        //-----------------------------------------------------------------------------
+        //! Mathf.Lerp(pn,1f,a) の可変フレームレート版
+        //! https://www.youtube.com/watch?v=Pq5fMNrNkSQ
+        //-----------------------------------------------------------------------------
+        static public float LerpV(float _p0, float _p1, float _a, float _deltaTime)
+        {
+            var b = 1f - Mathf.Pow(1f - _a, 60f / _deltaTime);
+            return Mathf.Lerp(_p0, _p1, b);
+        }
+        //-----------------------------------------------------------------------------
         //! ブラウン運動乱数 (0-1)
         //-----------------------------------------------------------------------------
         static public float BrownRandom(float _old, float _moveRate, float _baseValue=0f, float _baseStickeyRate=0.2f) {
