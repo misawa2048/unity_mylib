@@ -159,6 +159,14 @@ namespace TmLib{
             return retTex;
         }
 
+        // UVにスケール＆オフセットをかけたあとのUV 
+		public static Vector2 GetTexturUvByParam(Vector2 _uv, Vector2 _scl, Vector2 _ofs){
+			Vector2 destUv = Vector2.Scale(_uv,_scl);
+			destUv.x = Mathf.Repeat(_ofs.x + destUv.x,1f);
+			destUv.y = Mathf.Repeat(_ofs.y + destUv.y,1f);
+			return destUv;
+		}
+
         // ----------------
         // GUI関係 
         // ----------------
