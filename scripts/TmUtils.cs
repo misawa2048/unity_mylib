@@ -480,6 +480,11 @@ namespace TmLib{
 			doc.LoadXml(_xmlData.text);
 			return doc;
 		}
+
+		// Get frequency from MIDI note
+		public static float GetFrequencyFromMidiNote(int _note){
+			return 440f * Mathf.Pow(2f,((float)_note-69f)/12f);
+		}
 		
 	}
 } //namespace TmLib
