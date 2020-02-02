@@ -70,6 +70,27 @@ namespace TmLib{
             return (cam != null);
         }
 
+		// カメラから距離distの平面における画面内サイズ
+        public static Rect GetViewRectInPlane(Camera _cam, float _dist){
+            float w=0f,h=0f;
+            if(!_cam.orthographic){
+                Vector3[] frustumCorners = new Vector3[4];
+                _cam.CalculateFrustumCorners(new Rect(0, 0, 1, 1), -_dist, Camera.MonoOrStereoscopicEye.Mono, frustumCorners);
+                h = (frustumCorners[1]-frustumCorners[0]).magnitude*0.5f;
+                w = (frustumCorners[2]-frustumCorners[1]).magnitude*0.5f;
+            }else{
+                h = _cam.orthographicSize;
+                float wph = ((float)(Screen.width)/(float)(Screen.height));
+                w = h*wph;
+            }
+            return new Rect(0f,0f,w,h);
+        }
+        public static Rect GetViewRectInPlane(Camera _cam, Vector3 _poiOnPlane){
+            Plane zPl = new Plane(_cam.transform.forward,_poiOnPlane);
+            float distToZpl = -zPl.GetDistanceToPoint(_cam.transform.position);
+            return GetViewRectInPlane(_cam, distToZpl);
+        }
+
         // perspectiveCenterOffset
         static public Matrix4x4 PerspectiveOffCenter(float left, float right, float bottom, float top, float near, float far)
         {
