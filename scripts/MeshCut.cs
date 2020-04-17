@@ -133,7 +133,7 @@ namespace Q_BLINDED_AM_ME
         /// <param name="victim">Victim.</param>
         /// <param name="blade_plane">Blade plane.</param>
         /// <param name="capMaterial">Cap material.</param>
-        public static GameObject[] Cut(GameObject victim, Vector3 anchorPoint, Vector3 normalDirection, Material capMaterial)
+        public static GameObject[] Cut(GameObject victim, Vector3 anchorPoint, Vector3 normalDirection, Material capMaterial, bool disposeHalf = true)
         {
             // set the blade relative to victim
             // victimから相対的な平面（ブレード）をセット
@@ -254,6 +254,25 @@ namespace Q_BLINDED_AM_ME
             }
 
 
+            // assign the game objects
+
+            GameObject leftSideObj = victim;
+            // 元のオブジェクトを左側のオブジェクトに
+            string oldName = leftSideObj.name;
+            leftSideObj.name = oldName+"_LSide";
+            leftSideObj.GetComponent<MeshFilter>().mesh = left_HalfMesh;
+
+            // assign mats
+            // 新規生成したマテリアルリストをそれぞれのオブジェクトに適用する
+            leftSideObj.GetComponent<MeshRenderer>().materials = mats;
+
+
+            if (disposeHalf)
+            {
+                // 左のGameObjectの配列を返す
+                return new GameObject[] { leftSideObj };
+            }
+
             // Right Mesh
             // 右側のメッシュも同様に生成
             Mesh right_HalfMesh = new Mesh();
@@ -270,16 +289,7 @@ namespace Q_BLINDED_AM_ME
             }
 
 
-            // assign the game objects
-
-            // 元のオブジェクトを左側のオブジェクトに
-            string oldName = victim.name;
-            victim.name = oldName+"_LSide";
-            victim.GetComponent<MeshFilter>().mesh = left_HalfMesh;
-
-
             // 右側のオブジェクトは新規作成
-            GameObject leftSideObj = victim;
 
             GameObject rightSideObj = new GameObject(oldName + "_RSide", typeof(MeshFilter), typeof(MeshRenderer));
             rightSideObj.transform.position = leftSideObj.transform.position;
@@ -290,7 +300,6 @@ namespace Q_BLINDED_AM_ME
 
             // assign mats
             // 新規生成したマテリアルリストをそれぞれのオブジェクトに適用する
-            leftSideObj.GetComponent<MeshRenderer>().materials = mats;
             rightSideObj.GetComponent<MeshRenderer>().materials = mats;
 
             // 左右のGameObjectの配列を返す
