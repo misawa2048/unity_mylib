@@ -282,17 +282,16 @@ namespace Q_BLINDED_AM_ME
             GameObject leftSideObj = victim;
 
             GameObject rightSideObj = new GameObject(oldName + "_RSide", typeof(MeshFilter), typeof(MeshRenderer));
-            rightSideObj.transform.position = victim.transform.position;
-            rightSideObj.transform.rotation = victim.transform.rotation;
+            rightSideObj.transform.position = leftSideObj.transform.position;
+            rightSideObj.transform.rotation = leftSideObj.transform.rotation;
+            rightSideObj.transform.localScale = leftSideObj.transform.localScale; //!TMTM スケールを合わせる
+
             rightSideObj.GetComponent<MeshFilter>().mesh = right_HalfMesh;
 
             // assign mats
             // 新規生成したマテリアルリストをそれぞれのオブジェクトに適用する
             leftSideObj.GetComponent<MeshRenderer>().materials = mats;
             rightSideObj.GetComponent<MeshRenderer>().materials = mats;
-
-            //!TMTM スケールを合わせる
-            rightSideObj.transform.localScale = leftSideObj.transform.localScale;
 
             // 左右のGameObjectの配列を返す
             return new GameObject[] { leftSideObj, rightSideObj };
