@@ -1,4 +1,4 @@
-Shader "Universal Render Pipeline/2D/Sprite-Lit-3D"
+Shader "Universal Render Pipeline/2D/Sprite-Lit-3DTransparent"
 {
     Properties
     {
@@ -22,9 +22,9 @@ Shader "Universal Render Pipeline/2D/Sprite-Lit-3D"
 
     SubShader
     {
-        Tags {"Queue" = "Geometry" "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" }
+        Tags {"Queue" = "Transparent" "RenderType" = "Transparent" "RenderPipeline" = "UniversalPipeline" }
 
-        //Blend SrcAlpha OneMinusSrcAlpha
+        Blend SrcAlpha OneMinusSrcAlpha
         Cull Back
         ZWrite On
 
