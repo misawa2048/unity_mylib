@@ -88,7 +88,7 @@ Shader "Universal Render Pipeline/2D/Sprite-Lit-3D"
 
                 o.positionCS = TransformObjectToHClip(v.positionOS);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                float4 clipVertex = abs(o.positionCS / o.positionCS.w);
+                float4 clipVertex = o.positionCS / o.positionCS.w;
                 o.lightingUV = ComputeScreenPos(clipVertex).xy;
                 o.color = v.color * _BaseColor;
                 return o;
@@ -146,7 +146,7 @@ Shader "Universal Render Pipeline/2D/Sprite-Lit-3D"
                 o.uv = TRANSFORM_TEX(attributes.uv, _NormalMap);
                 o.uv = attributes.uv;
                 o.color = attributes.color;
-                o.normalWS = TransformObjectToWorldDir(float3(0, 0, -1));
+                o.normalWS = TransformObjectToWorldDir(attributes.positionOS);
                 o.tangentWS = TransformObjectToWorldDir(attributes.tangent.xyz);
                 o.bitangentWS = cross(o.normalWS, o.tangentWS) * attributes.tangent.w;
                 return o;
