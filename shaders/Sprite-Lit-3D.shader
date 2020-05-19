@@ -166,7 +166,7 @@ Shader "Universal Render Pipeline/2D/Sprite-Lit-3D"
         }
         Pass
         {
-            Tags { "LightMode" = "UniversalForward" "Queue"="Transparent" "RenderType"="Transparent"}
+            Tags { "LightMode" = "UniversalForward" "Queue"="Geometry" "RenderType"="Opacue"}
 
             HLSLPROGRAM
             #pragma prefer_hlslcc gles
