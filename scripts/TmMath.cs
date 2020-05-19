@@ -13,9 +13,19 @@ namespace TmLib{
         //-----------------------------------------------------------------------------
         //! (min,max) 間の値 r を(Min,Max)間の同じ位置の値 Rに置き換える
         //-----------------------------------------------------------------------------
+        static public float MapUnclamped(float _val, float _fromMin, float _fromMax, float _toMin, float _toMax)
+        {
+            return (_val - _fromMin) * (_toMax - _toMin) / (_fromMax - _fromMin) + _toMin;
+            //return Mathf.LerpUnclamped(_toMin, _toMax, Mathf.LerpUnclamped(_fromMin, _fromMax, _val));
+        }
         static public float Map(float _val, float _fromMin, float _fromMax, float _toMin, float _toMax)
         {
-            return Mathf.LerpUnclamped(_toMin, _toMax, Mathf.LerpUnclamped(_fromMin, _fromMax, _val));
+            float ret = MapUnclamped(_val, _fromMin, _fromMax, _toMin, _toMax);
+            if (_toMin < _toMax)
+                ret = (ret < _toMin) ? _toMin : (ret > _toMax) ? _toMax : ret;
+            else
+                ret = (ret < _toMax) ? _toMax : (ret > _toMin) ? _toMin : ret;
+            return ret;
         }
         //-----------------------------------------------------------------------------
         //! p0=0f,0f<a<1, pn+1=Mathf.Lerp(pn,1f,a) をn回繰り返した時の pn
