@@ -1,4 +1,4 @@
-﻿Shader "Unlit/NormalDispShader"
+﻿Shader "ModelToBump/NormalDispShader"
 {
     Properties
     {

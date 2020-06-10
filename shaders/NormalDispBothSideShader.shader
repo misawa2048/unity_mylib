@@ -1,4 +1,4 @@
-﻿Shader "Unlit/NormalDispShaderBothSide"
+﻿Shader "ModelToBump/NormalDispShaderBothSide"
 {
     Properties
     {
