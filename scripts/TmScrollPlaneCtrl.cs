@@ -26,6 +26,7 @@ namespace TmLib
         int m_nextIdx;
         bool m_isEasing;
         Vector2 m_targetPos;
+        Vector2 m_anchoredPosition;
 
         // Start is called before the first frame update
         void Start()
@@ -36,6 +37,7 @@ namespace TmLib
             m_nextIdx = m_selectedIdx;
             m_isEasing = false;
             m_targetPos = Vector2.zero;
+            m_anchoredPosition = Vector2.zero;
             m_scrollRect.movementType = ScrollRect.MovementType.Clamped;
             m_pageTrArr = new Transform[transform.childCount];
             for(int i=0;i< m_pageTrArr.Length; ++i)
@@ -56,19 +58,20 @@ namespace TmLib
             //m_dragImage.raycastTarget = !m_isEasing;
             if (m_isEasing)
             {
-                rt.anchoredPosition = Vector2.Lerp(rt.anchoredPosition, m_targetPos, 0.2f);
-                if ((rt.anchoredPosition - m_targetPos).magnitude < 5f)
+                m_anchoredPosition = Vector2.Lerp(m_anchoredPosition, m_targetPos, 0.2f);
+                if ((m_anchoredPosition - m_targetPos).magnitude < 5f)
                 {
                     m_isEasing = false;
                     if(m_targetPos.magnitude>0f)
                         m_targetPos = Vector2.zero;
-                    rt.anchoredPosition = m_targetPos;
+                    m_anchoredPosition = m_targetPos;
                     m_selectedIdx = m_nextIdx;
 
                     setDragImageCondition(m_selectedIdx);
 
                     relocateBySelectedIdx(m_selectedIdx);
                 }
+                rt.anchoredPosition = m_anchoredPosition;
             }
             else
             {
@@ -128,20 +131,22 @@ namespace TmLib
 
         public void OnSwipe(SwipeDirection _dir)
         {
-            if (_dir == SwipeDirection.none)
+            OnMoveTo(m_selectedIdx+(_dir == SwipeDirection.dec ? -1 : 1));
+        }
+
+        public void OnMoveTo(int _page)
+        {
+            int nextIdx = Mathf.Clamp(_page, 0, m_pageTrArr.Length - 1);
+            if (nextIdx == m_nextIdx)
                 return;
 
+            m_nextIdx = nextIdx;
             RectTransform rt = transform as RectTransform;
             float scale = getScaleByDir(m_dir);
-            m_nextIdx = Mathf.Clamp(m_nextIdx + (_dir == SwipeDirection.dec ? -1 : 1), 0, m_pageTrArr.Length - 1);
-            if (m_dir == SwipeDirecttion.Horizontal)
-            {
-                m_targetPos = new Vector2(scale * (_dir == SwipeDirection.dec ? 1f : -1f), 0f);
-            }
-            else
-            {
-                m_targetPos = new Vector2(0f, scale * (_dir == SwipeDirection.dec ? -1f : 1f));
-            }
+            //m_selectedIdx = m_nextIdx + ((m_nextIdx > m_selectedIdx) ? -1 : 1);
+            //relocateBySelectedIdx(m_selectedIdx);
+            float pt = scale * -(m_nextIdx - m_selectedIdx);
+            m_targetPos = (m_dir == SwipeDirecttion.Horizontal) ? new Vector2(pt, 0f) : new Vector2(0f, pt);
             m_isEasing = true;
             m_scrollRect.movementType = ScrollRect.MovementType.Clamped;
         }
