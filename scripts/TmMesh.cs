@@ -107,7 +107,6 @@ namespace TmLib
 			mesh.tangents = tangents;
 			//		mesh.RecalculateNormals ();
 			mesh.RecalculateBounds();
-			;
 			return mesh;
 		}
 
