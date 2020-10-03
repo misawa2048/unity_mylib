@@ -36,8 +36,55 @@ namespace TmLib
             return mesh;
         }
 
+        public static Mesh CreateQuadCloud(Vector3[] _vertices, Color[] _cvtxCols, float _sizeRate = 0.02f, bool _scaleByGrayScale = false)
+        {
+            int vertNum = _vertices.Length;
+            int[] incides = new int[vertNum * 4];
+            Vector2[] uv = new Vector2[vertNum * 4];
+            Color[] colors = new Color[vertNum * 4];
+            Vector3[] normals = new Vector3[vertNum * 4];
+            Vector3[] quadVertices = new Vector3[vertNum * 4];
 
-		public static Mesh CreateLineGrid(int _width, int _height, AxisType _type)
+            Vector2[] ofsUv = new Vector2[4];
+            ofsUv[0] = new Vector2(0f, 1f);
+            ofsUv[1] = new Vector2(1f, 1f);
+            ofsUv[2] = new Vector2(1f, 0f);
+            ofsUv[3] = new Vector2(0f, 0f);
+            float quadScale = _sizeRate;
+            for (int ii = 0; ii < _vertices.Length; ++ii)
+            {
+                if (_scaleByGrayScale)
+                {
+                    quadScale = _sizeRate * colors[ii].grayscale;
+                }
+                Quaternion dirRot = Quaternion.LookRotation(_vertices[ii]);
+                Vector3[] ofsDir = new Vector3[4];
+                ofsDir[0] = dirRot * new Vector3(-0.5f, 0.5f, 0f);
+                ofsDir[1] = dirRot * new Vector3(0.5f, 0.5f, 0f);
+                ofsDir[2] = dirRot * new Vector3(0.5f, -0.5f, 0f);
+                ofsDir[3] = dirRot * new Vector3(-0.5f, -0.5f, 0f);
+                float dist = _vertices[ii].magnitude;
+                for (int qi = 0; qi < 4; ++qi)
+                {
+                    incides[ii * 4 + qi] = ii * 4 + qi;
+                    quadVertices[ii * 4 + qi] = _vertices[ii] + ofsDir[qi] * dist * quadScale;
+                    uv[ii * 4 + qi] = ofsUv[qi];
+                    colors[ii * 4 + qi] = _cvtxCols[(_cvtxCols.Length > ii) ? ii : 0];
+                    normals[ii * 4 + qi] = -_vertices[ii].normalized; // to inside
+                }
+            }
+            Mesh mesh = new Mesh();
+            mesh.vertices = quadVertices;
+            mesh.uv = uv;
+            mesh.colors = colors;
+            mesh.normals = normals;
+            mesh.SetIndices(incides, MeshTopology.Quads, 0);
+            //mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        public static Mesh CreateLineGrid(int _width, int _height, AxisType _type)
 		{
 			return CreateLineGrid(_width, _height, _type, new Color(0.5f, 0.5f, 0.5f, 1.0f), false);
 		}
